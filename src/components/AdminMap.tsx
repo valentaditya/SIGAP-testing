@@ -23,7 +23,7 @@ function markerIcon(score: number) {
   });
 }
 
-export function AdminMap({ height = 420 }: { height?: number }) {
+export function AdminMap({ height = 420, fill = false }: { height?: number; fill?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
 
@@ -55,8 +55,19 @@ export function AdminMap({ height = 420 }: { height?: number }) {
 
     mapRef.current = map;
     const t = setTimeout(() => map.invalidateSize(), 300);
-    return () => { clearTimeout(t); map.remove(); mapRef.current = null; };
+    // Pantau perubahan ukuran container (flex/kolom) agar tile selalu pas
+    const ro = new ResizeObserver(() => map.invalidateSize());
+    if (ref.current) ro.observe(ref.current);
+    return () => { clearTimeout(t); ro.disconnect(); map.remove(); mapRef.current = null; };
   }, []);
 
-  return <div ref={ref} style={{ height }} className="w-full" role="application" aria-label="Peta sebaran laporan admin" />;
+  return (
+    <div
+      ref={ref}
+      style={fill ? undefined : { height }}
+      className={`w-full ${fill ? "h-full" : ""}`}
+      role="application"
+      aria-label="Peta sebaran laporan admin"
+    />
+  );
 }
