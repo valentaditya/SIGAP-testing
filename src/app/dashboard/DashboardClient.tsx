@@ -15,13 +15,14 @@ import {
 } from "@/lib/data";
 import {
   FileText, Clock, CheckCircle2, TrendingUp, Flame, ThumbsUp, Camera, ArrowUpDown,
-  Search, X, RotateCcw, Filter, MapPin, CalendarDays,
+  Search, X, RotateCcw, Filter, MapPin,
   Wrench, BadgeCheck, UserCheck, FilePlus2,
 } from "lucide-react";
+import { useApp } from "@/lib/store";
 
 const AdminMap = dynamic(() => import("@/components/AdminMap").then((m) => m.AdminMap), {
   ssr: false,
-  loading: () => <div className="grid h-[460px] place-items-center text-sm text-ink-500">Memuat peta…</div>,
+  loading: () => <div className="grid h-[300px] place-items-center text-sm text-ink-500">Memuat peta…</div>,
 });
 
 type SortKey = "id" | "judul" | "kategori" | "dukungan" | "priority" | "status";
@@ -57,9 +58,14 @@ export default function DashboardClient() {
    OVERVIEW — peta di highlight duluan → KPI → kegiatan 1 hari → analitik
    ============================================================ */
 function Overview({ onGoLaporan }: { onGoLaporan: () => void }) {
+  const { user } = useApp();
   const [day, setDay] = useState(KEGIATAN_HARI[0].key);
+  const [expanded, setExpanded] = useState(false);
   const kegiatan = KEGIATAN[day] ?? [];
   const dayInfo = KEGIATAN_HARI.find((h) => h.key === day);
+  const nama = user?.nama?.trim() || "Admin";
+  const sapaan = /^(pak|bu)\s/i.test(nama) ? nama : `Pak ${nama}`;
+  const tampil = expanded ? kegiatan : kegiatan.slice(0, 6);
 
   const aktif = LAPORAN.filter((x) => x.status !== "resolved");
   const avg = Math.round((LAPORAN.reduce((a, b) => a + b.ai.priorityScore, 0) / LAPORAN.length) * 10) / 10;
@@ -82,7 +88,7 @@ function Overview({ onGoLaporan }: { onGoLaporan: () => void }) {
       <Reveal className="mb-7 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-extrabold md:text-3xl">
-            Selamat pagi, <span className="text-brand-600">Pak Bimo</span>{" "}
+            Selamat pagi, <span className="text-brand-600">{sapaan}</span>{" "}
             <span role="img" aria-label="lambaian tangan">👋</span>
           </h1>
           <p className="mt-1 text-sm text-ink-500">
@@ -98,62 +104,7 @@ function Overview({ onGoLaporan }: { onGoLaporan: () => void }) {
         </button>
       </Reveal>
 
-      {/* ===== 01 · PETA — di highlight duluan ===== */}
-      <section id="peta" className="mb-8">
-        <Reveal className="mb-5 flex items-baseline justify-between border-t-2 border-cream pt-4">
-          <div>
-            <h2 className="font-display text-xl font-bold md:text-2xl">Peta Sebaran Laporan</h2>
-            <p className="mt-1 text-sm text-ink-500">
-              Seluruh titik laporan dalam satu peta — warna penanda = tingkat prioritas AI Multi-Agent
-            </p>
-          </div>
-          <p className="micro-label text-sage">01 · fokus utama</p>
-        </Reveal>
-
-        <Reveal delay={80}>
-          <div className="relative overflow-hidden rounded-3xl border-2 border-tan/50 bg-surface shadow-[var(--shadow-pop)]">
-            {/* Badge highlight */}
-            <div className="pointer-events-none absolute left-4 top-4 z-[900] flex items-center gap-2 rounded-full bg-bg/90 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[.14em] text-tan ring-1 ring-tan/40 backdrop-blur">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-tan opacity-60" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-tan" />
-              </span>
-              Fokus Utama
-            </div>
-            {/* Statistik ringkas */}
-            <div className="pointer-events-none absolute right-4 top-4 z-[900] hidden items-center gap-5 rounded-2xl bg-bg/90 px-4 py-2.5 ring-1 ring-white/10 backdrop-blur md:flex">
-              <div className="text-center">
-                <p className="font-display text-lg font-extrabold leading-none text-cream">{aktif.length}</p>
-                <p className="mt-1 text-[10px] uppercase tracking-[.12em] text-sage">Aktif</p>
-              </div>
-              <div className="h-8 w-px bg-ink-300" />
-              <div className="text-center">
-                <p className="font-display text-lg font-extrabold leading-none text-tan">{kritis}</p>
-                <p className="mt-1 text-[10px] uppercase tracking-[.12em] text-sage">Darurat ≥9</p>
-              </div>
-              <div className="h-8 w-px bg-ink-300" />
-              <div className="text-center">
-                <p className="font-display text-lg font-extrabold leading-none text-cream">{KATEGORI.length}</p>
-                <p className="mt-1 text-[10px] uppercase tracking-[.12em] text-sage">Kategori</p>
-              </div>
-            </div>
-
-            <AdminMap height={460} />
-
-            <div className="flex flex-wrap items-center gap-2 border-t border-ink-300 bg-ground px-5 py-4">
-              <span className="mr-1 inline-flex items-center gap-1.5 text-xs font-semibold text-sage-pale">
-                <MapPin size={13} className="text-tan" /> Legenda
-              </span>
-              <Chip tone="danger">Darurat (≥9)</Chip>
-              <Chip tone="warning">Tinggi (7–8.9)</Chip>
-              <Chip tone="success">Sedang / Rendah (&lt;7)</Chip>
-              <span className="ml-auto hidden text-xs text-sage-pale sm:block">Klik penanda untuk melihat detail laporan</span>
-            </div>
-          </div>
-        </Reveal>
-      </section>
-
-      {/* ===== KPI ===== */}
+      {/* ===== KPI — di atas peta ===== */}
       <div className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
         {kpis.map((k, i) => {
           const Ic = k.icon;
@@ -174,88 +125,127 @@ function Overview({ onGoLaporan }: { onGoLaporan: () => void }) {
         })}
       </div>
 
-      {/* ===== 02 · KEGIATAN HARI INI — seluruh kegiatan proses 1 hari ===== */}
-      <section id="kegiatan" className="mb-8">
-        <Reveal delay={110} className="mb-5 flex items-baseline justify-between border-t-2 border-cream pt-4">
+      {/* ===== 01 · PETA (kecil) + LOG KEGIATAN (ringkas) berdampingan ===== */}
+      <section id="peta" className="mb-8">
+        <Reveal className="mb-5 flex items-baseline justify-between border-t-2 border-cream pt-4">
           <div>
-            <h2 className="font-display text-xl font-bold">Kegiatan Hari Ini</h2>
-            <p className="mt-1 text-sm text-ink-500">Seluruh kegiatan proses laporan selama satu hari</p>
+            <h2 className="font-display text-xl font-bold md:text-2xl">Peta &amp; Log Kegiatan</h2>
+            <p className="mt-1 text-sm text-ink-500">
+              Sebaran laporan di peta — di sebelahnya, kegiatan proses yang terjadi hari ini
+            </p>
           </div>
-          <p className="micro-label text-sage">02 · log proses</p>
+          <p className="micro-label text-sage">01 · fokus utama</p>
         </Reveal>
 
-        <Reveal delay={150} className="rounded-2xl bg-surface p-6 shadow-[var(--shadow-card)]">
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h3 className="font-display text-lg font-bold">Log Kegiatan Proses</h3>
-              <p className="mt-0.5 text-sm text-ink-500">
-                <span className="font-semibold text-cream">{kegiatan.length} kegiatan</span> tercatat · {dayInfo?.tanggal}
-              </p>
-            </div>
-            <div className="flex gap-1.5">
-              {KEGIATAN_HARI.map((h) => (
-                <button
-                  key={h.key}
-                  onClick={() => setDay(h.key)}
-                  className={`inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-xs font-bold transition-all ${
-                    day === h.key
-                      ? "border-tan bg-tan text-white"
-                      : "border-ink-300 text-sage-pale hover:border-tan hover:text-tan"
-                  }`}
-                >
-                  <CalendarDays size={13} />
-                  {h.label}
-                </button>
-              ))}
-            </div>
-          </div>
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.15fr_.85fr]">
+          {/* Peta — ukuran kecil agar log muat di sampingnya */}
+          <Reveal delay={80}>
+            <div className="relative h-full overflow-hidden rounded-3xl border-2 border-tan/50 bg-surface shadow-[var(--shadow-pop)]">
+              <div className="pointer-events-none absolute left-4 top-4 z-[900] flex items-center gap-2 rounded-full bg-bg/90 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[.14em] text-tan ring-1 ring-tan/40 backdrop-blur">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-tan opacity-60" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-tan" />
+                </span>
+                Fokus Utama
+              </div>
+              <div className="pointer-events-none absolute right-4 top-4 z-[900] hidden items-center gap-4 rounded-2xl bg-bg/90 px-3.5 py-2 ring-1 ring-white/10 backdrop-blur sm:flex">
+                <div className="text-center">
+                  <p className="font-display text-base font-extrabold leading-none text-cream">{aktif.length}</p>
+                  <p className="mt-0.5 text-[9px] uppercase tracking-[.12em] text-sage">Aktif</p>
+                </div>
+                <div className="h-7 w-px bg-ink-300" />
+                <div className="text-center">
+                  <p className="font-display text-base font-extrabold leading-none text-tan">{kritis}</p>
+                  <p className="mt-0.5 text-[9px] uppercase tracking-[.12em] text-sage">Darurat</p>
+                </div>
+              </div>
 
-          <ul className="space-y-1">
-            {kegiatan.map((k, i) => {
-              const meta = TIPE_META[k.tipe];
-              const Ic = meta.icon;
-              const l = LAPORAN.find((x) => x.id === k.laporanId);
-              const kat = l ? getKategori(l.kategori) : null;
-              const isLast = i === kegiatan.length - 1;
-              return (
-                <li key={k.id} className="flex gap-4">
-                  {/* Jam */}
-                  <div className="w-[3.5rem] shrink-0 pt-2 text-right">
-                    <span className="font-mono text-xs font-semibold text-tan">{k.jam}</span>
-                  </div>
-                  {/* Rail */}
-                  <div className="flex flex-col items-center">
-                    <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-full ${meta.cls}`}>
-                      <Ic size={14} />
-                    </span>
-                    {!isLast && <span className="w-px flex-1 bg-ink-300" />}
-                  </div>
-                  {/* Isi */}
-                  <div className="min-w-0 pb-5">
-                    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-                      <span className="text-sm font-bold">{KEGIATAN_LABEL[k.tipe]}</span>
-                      {kat && (
-                        <span
-                          className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
-                          style={{ background: `${kat.warna}1a`, color: kat.warna }}
-                        >
-                          <span className="h-[6px] w-[6px] rounded-full" style={{ background: kat.warna }} />
-                          {kat.nama}
-                        </span>
-                      )}
-                      <span className="text-xs text-ink-500">{k.aktor}</span>
+              <AdminMap height={300} />
+
+              <div className="flex flex-wrap items-center gap-2 border-t border-ink-300 bg-ground px-4 py-3">
+                <span className="mr-1 inline-flex items-center gap-1.5 text-xs font-semibold text-sage-pale">
+                  <MapPin size={13} className="text-tan" /> Legenda
+                </span>
+                <Chip tone="danger">Darurat (≥9)</Chip>
+                <Chip tone="warning">Tinggi (7–8.9)</Chip>
+                <Chip tone="success">Sedang / Rendah</Chip>
+              </div>
+            </div>
+          </Reveal>
+
+          {/* Log kegiatan — ringkas, tidak terlalu panjang */}
+          <Reveal delay={120} className="flex h-full flex-col rounded-2xl bg-surface p-5 shadow-[var(--shadow-card)]">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h3 className="font-display text-base font-bold">Log Kegiatan</h3>
+                <p className="text-xs text-ink-500">{dayInfo?.tanggal} · {kegiatan.length} kegiatan</p>
+              </div>
+              <div className="flex gap-1">
+                {KEGIATAN_HARI.map((h) => (
+                  <button
+                    key={h.key}
+                    onClick={() => { setDay(h.key); setExpanded(false); }}
+                    className={`rounded-full border px-3 py-1.5 text-[11px] font-bold transition-all ${
+                      day === h.key
+                        ? "border-tan bg-tan text-white"
+                        : "border-ink-300 text-sage-pale hover:border-tan hover:text-tan"
+                    }`}
+                  >
+                    {h.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <ul id="kegiatan" className="space-y-0.5">
+              {tampil.map((k, i) => {
+                const meta = TIPE_META[k.tipe];
+                const Ic = meta.icon;
+                const l = LAPORAN.find((x) => x.id === k.laporanId);
+                const kat = l ? getKategori(l.kategori) : null;
+                const isLast = i === tampil.length - 1;
+                return (
+                  <li key={k.id} className="flex gap-3">
+                    <div className="w-[2.75rem] shrink-0 pt-1.5 text-right">
+                      <span className="font-mono text-[11px] font-semibold text-tan">{k.jam}</span>
                     </div>
-                    <p className="mt-0.5 text-sm font-medium text-ink-700">{l?.judul ?? k.laporanId}</p>
-                    <p className="mt-0.5 text-xs text-ink-500">
-                      <span className="font-mono">{k.laporanId}</span>
-                      {k.catatan ? <span> · {k.catatan}</span> : null}
-                    </p>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </Reveal>
+                    <div className="flex flex-col items-center">
+                      <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full ${meta.cls}`}>
+                        <Ic size={12} />
+                      </span>
+                      {!isLast && <span className="w-px flex-1 bg-ink-300" />}
+                    </div>
+                    <div className="min-w-0 pb-3">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                        <span className="text-[13px] font-bold">{KEGIATAN_LABEL[k.tipe]}</span>
+                        {kat && (
+                          <span
+                            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                            style={{ background: `${kat.warna}1a`, color: kat.warna }}
+                          >
+                            <span className="h-1.5 w-1.5 rounded-full" style={{ background: kat.warna }} />
+                            {kat.nama}
+                          </span>
+                        )}
+                        <span className="text-[11px] text-ink-500">{k.aktor}</span>
+                      </div>
+                      <p className="mt-0.5 truncate text-[13px] font-medium text-ink-700">{l?.judul ?? k.laporanId}</p>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+
+            {kegiatan.length > 6 && (
+              <button
+                onClick={() => setExpanded((e) => !e)}
+                className="mt-auto inline-flex items-center justify-center gap-1.5 rounded-xl border border-ink-300 px-4 py-2 text-xs font-bold text-sage-pale transition-colors hover:border-tan hover:text-tan"
+              >
+                {expanded ? "Sembunyikan" : `Lihat ${kegiatan.length - 6} kegiatan lainnya`}
+              </button>
+            )}
+          </Reveal>
+        </div>
       </section>
 
       {/* ===== 03 · ANALITIK — hanya di bagian bawah ===== */}
@@ -265,7 +255,7 @@ function Overview({ onGoLaporan }: { onGoLaporan: () => void }) {
             <h2 className="font-display text-xl font-bold">Analitik</h2>
             <p className="mt-1 text-sm text-ink-500">Performa penanganan dan pembentukan skor prioritas</p>
           </div>
-          <p className="micro-label text-sage">03 · performa penanganan</p>
+          <p className="micro-label text-sage">02 · performa penanganan</p>
         </Reveal>
         <div className="mb-5 grid grid-cols-1 gap-5 xl:grid-cols-[1.2fr_.8fr]">
           <Reveal delay={150} className="rounded-2xl bg-surface p-6 shadow-[var(--shadow-card)]">
