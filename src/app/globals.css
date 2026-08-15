@@ -224,14 +224,61 @@ body {
   opacity: 0 !important;
 }
 
-/* Mode cache (intro sudah pernah dilihat): hero tampil INSTAN tanpa
-   animasi per-huruf agar tidak berat / ter-skip saat load. Reveal
-   saat scroll di bawah fold tetap berjalan normal. */
-.intro-seen .hero-quick [data-rev],
-.intro-seen .hero-quick [data-words] .wletter {
+/* ============================================================
+   HERO LANDING — efek ringan & bertahap (CSS animation, jalan
+   dari paint pertama tanpa JS → tidak patah / tiba-tiba):
+   - huruf judul "LAPOR CEPAT, KOTA TANGGAP." drop per-huruf
+     (hanya ~21 huruf, staggered via --td)
+   - elemen lain (label, paragraf, CTA, statistik) fade+naik
+     ringan dengan stagger --d
+   Mode cache & kunjungan pertama memakai jalur yang sama:
+   saat intro diputar (.intro-lock), animasi dijeda supaya
+   baru berjalan setelah intro selesai. */
+.hero-quick [data-rev] {
+  transition: none !important;
+  animation: heroRise 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+.hero-quick [data-words]:not(.hero-title) {
+  animation: heroFade 0.9s ease both;
+  animation-delay: var(--d, 0ms);
+}
+.hero-quick [data-words]:not(.hero-title) .wletter {
   opacity: 1 !important;
   transform: none !important;
   transition: none !important;
+}
+/* Judul: drop per-huruf ringan */
+.hero-quick [data-words].hero-title .wletter {
+  transform: translateY(-120%);
+  opacity: 0;
+  transition: none !important;
+  animation: letterDrop 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--td, 0ms);
+}
+@keyframes heroRise {
+  from { opacity: 0; transform: translateY(0.5em); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes heroFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes letterDrop {
+  from { transform: translateY(-120%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+/* Saat intro preload: animasi hero dijeda, tetap tersembunyi */
+.intro-lock .hero-quick [data-rev],
+.intro-lock .hero-quick [data-words] {
+  animation: none !important;
+  opacity: 0 !important;
+  transform: translateY(0.4em) !important;
+}
+.intro-lock .hero-quick [data-words].hero-title .wletter {
+  animation: none !important;
+  opacity: 0 !important;
+  transform: translateY(-120%) !important;
 }
 
 /* Per-huruf: slide-down lewat jendela clip vertikal, stagger via transitionDelay.
@@ -345,6 +392,7 @@ details.faq[open] .faq-plus { transform: rotate(45deg); }
 /* Hormati prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce) {
   [data-rev], .reveal, .wletter, .sd-letter { opacity: 1 !important; transform: none !important; transition: none !important; }
+  .hero-quick [data-rev], .hero-quick [data-words], .hero-quick [data-words].hero-title .wletter { animation: none !important; opacity: 1 !important; transform: none !important; }
   .ambient-line, .sos-pulse, .typing-cursor { animation: none; }
   .row-in, .anim-fade-up, .anim-fade-in, .anim-pop { animation: none !important; opacity: 1 !important; }
   html { scroll-behavior: auto; }

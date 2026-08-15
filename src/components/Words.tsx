@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import { revealAtom } from "@/lib/reveal";
 
 /* Pecah teks menjadi huruf per huruf; tiap huruf turun lewat jendela
@@ -34,7 +34,7 @@ export function Words({
             const d = (base + idx++) * step;
             return (
               <span key={ci} className="inline-block overflow-hidden align-bottom">
-                <span className="wletter inline-block will-change-transform" style={{ transitionDelay: `${d}ms` }}>
+                <span className="wletter inline-block will-change-transform" style={{ transitionDelay: `${d}ms`, "--td": `${d}ms` } as CSSProperties}>
                   {ch}
                 </span>
               </span>

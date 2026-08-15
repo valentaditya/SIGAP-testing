@@ -106,9 +106,11 @@ export default async function Home() {
               className="font-display mt-5 text-cream-hi"
               style={{ fontSize: "min(clamp(52px,15vw,220px), calc(90vw / (20 * .44)))", whiteSpace: "nowrap" }}
             >
-              <Words text="LAPOR CEPAT," base={1} />
+              <Words text="LAPOR CEPAT," base={1} className="hero-title" />
               <br />
-              <span className="text-tan"><Words text="KOTA TANGGAP." base={3} /></span>
+              <span className="text-tan" style={{ "--d": "140ms" } as React.CSSProperties}>
+                <Words text="KOTA TANGGAP." base={3} className="hero-title" />
+              </span>
             </h1>
             <div className="mt-8 border-t-2 border-cream pt-6">
               <div className="flex flex-wrap items-end justify-between gap-6">
