@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SIGAP — Smart Community Platform
 
-## Getting Started
+> **Sistem Informasi & Gerak Aktif Pelaporan** — platform pelaporan warga dengan **AI Multi-Agent** untuk kota yang lebih responsif, transparan, dan partisipatif.
 
-First, run the development server:
+Dibangun untuk **INFINITERA 2.0 Web Development Competition** oleh **Tim Susah Senang Bareng** — Universitas Atma Jaya Yogyakarta.
+
+## ✨ Fitur (12 sesuai proposal)
+
+1. **Citizen Reporting** — lapor dengan kategori, deskripsi, foto, lokasi
+2. **Geotagging & Interactive Map** — peta sebaran laporan (Leaflet)
+3. **AI Multi-Agent Analysis** — klasifikasi, severity, dampak, prioritas
+4. **Priority Score** — skor urgensi 0–100 + estimasi SLA
+5. **Admin Dashboard** — KPI, chart, tabel sortable, peta
+6. **Issue Tracking** — Reported → Verified → Assigned → In Progress → Resolved
+7. **Real-Time Notification** — lonceng notifikasi status
+8. **Community Engagement** — upvote, poin, level, lencana, leaderboard
+9. **Community Safety & Early Warning** — peringatan area rawan
+10. **Emergency Button** — sinyal darurat cepat (FAB)
+11. **Anonymous Reporting** — lapor tanpa identitas
+12. **City Impact Dashboard** — statistik dampak kota
+
+## 🛠️ Tech Stack
+
+- **Next.js 16** (App Router) + **React 19** + **TypeScript**
+- **Tailwind CSS v4** (design token SIGAP)
+- **Lucide Icons** (ikon SVG, bukan emoji)
+- **Chart.js** + **Leaflet** (visualisasi & peta)
+- State global: React Context + `localStorage`
+
+## 🚀 Menjalankan Lokal
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev        # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Build produksi:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build
+npm start
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## ☁️ Deploy ke Vercel
 
-## Learn More
+1. Push repo ini ke GitHub.
+2. Di [Vercel](https://vercel.com) → **Add New Project** → import repo.
+3. Framework terdeteksi otomatis **Next.js** (lihat `vercel.json`).
+4. Klik **Deploy** — selesai.
 
-To learn more about Next.js, take a look at the following resources:
+Atau via CLI:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm i -g vercel
+vercel        # preview
+vercel --prod # produksi
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 👥 Peran & Halaman
 
-## Deploy on Vercel
+| Peran | Login → Redirect | Halaman |
+|---|---|---|
+| Warga | `/warga` | Dashboard poin, laporan saya, upvote |
+| Admin | `/dashboard` | Verifikasi & kelola laporan |
+| Petugas | `/petugas` | Daftar tugas & update penanganan |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Halaman publik: `/` (landing), `/lapor`, `/dampak`, `/login`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 👨‍💻 Tim
+
+- Valent Aditya Hermanus — 241712920
+- Christian Vieri Santosa — 241712892
+- Made Kresna Praba Wistara — 241712921
+
+Universitas Atma Jaya Yogyakarta · Sistem Informasi · 2026

@@ -1,26 +1,337 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* ===== SIGAP — Swiss Poster Register (light default) =====
+     Kertas hangat + tinta + satu merah panas.
+     Nama token dipertahankan agar fitur tidak berubah.
+     Mapping: cream/cream-hi = teks utama (TINTA di light),
+     tan = MERAH, ground/surface/brand-* = permukaan kertas,
+     ink-900/ink-700 = teks TINTA (dipakai di band terang). */
+  --color-ground: #f1ebe1;        /* panel / stage alternatif */
+  --color-ground-2: #ece5d8;      /* blok sedikit lebih dalam */
+  --color-cream: #111010;         /* teks utama = TINTA */
+  --color-cream-hi: #111010;      /* headline = TINTA */
+  --color-tan: #dc201e;           /* MERAH panas, satu-satunya aksen */
+  --color-sage: #8c8880;          /* muted */
+  --color-sage-pale: #5a564f;     /* copy sekunder, tetap terbaca */
+  --color-brand-900: #f1ebe1;
+  --color-brand-700: #b01a18;
+  --color-brand-600: #dc201e;
+  --color-brand-500: #dc201e;
+  --color-brand-100: rgba(220, 32, 30, 0.14);
+  --color-brand-50: rgba(220, 32, 30, 0.07);
+  --color-ink-900: #111010;
+  --color-ink-700: #111010;
+  --color-ink-500: #8c8880;
+  --color-ink-300: rgba(17, 16, 16, 0.16);   /* hairline */
+  --color-surface: #f8f3ec;       /* kertas */
+  --color-bg: #f8f3ec;
+  --color-danger: #dc201e;
+  --color-danger-bg: rgba(220, 32, 30, 0.08);
+  --color-warning: #a06a00;
+  --color-warning-bg: rgba(220, 32, 30, 0.06);
+  --color-success: #1c7a4d;
+  --color-success-bg: rgba(28, 122, 77, 0.10);
+  --color-info: #5a564f;
+  --color-info-bg: rgba(17, 16, 16, 0.05);
+
+  /* Tipografi: Anton (display) + Archivo (body) + JetBrains Mono (label) */
+  --font-display: "Anton", "Archivo", ui-sans-serif, sans-serif;
+  --font-body: "Archivo", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-grotesk: "JetBrains Mono", ui-monospace, monospace;
+
+  /* Swiss: tanpa radius, tanpa shadow */
+  --radius-card: 0px;
+  --radius-chip: 0px;
+  --shadow-card: none;
+  --shadow-pop: none;
+  --nav-h: 64px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ===== DARK MODE: kertas gelap, tinta jadi kertas, merah tetap ===== */
+.dark {
+  --color-ground: #0e0d0c;
+  --color-ground-2: #131211;
+  --color-cream: #f2ede3;
+  --color-cream-hi: #f8f3ec;
+  --color-tan: #ff4438;
+  --color-sage: #6f6a62;
+  --color-sage-pale: #a39d92;
+  --color-brand-900: #131211;
+  --color-brand-700: #e03428;
+  --color-brand-600: #ff4438;
+  --color-brand-500: #ff4438;
+  --color-brand-100: rgba(255, 68, 56, 0.18);
+  --color-brand-50: rgba(255, 68, 56, 0.09);
+  --color-ink-900: #f2ede3;
+  --color-ink-700: #d8d2c6;
+  --color-ink-500: #8c8880;
+  --color-ink-300: rgba(242, 237, 227, 0.16);
+  --color-surface: #161514;
+  --color-bg: #0a0908;
+  --color-danger: #ff4438;
+  --color-danger-bg: rgba(255, 68, 56, 0.12);
+  --color-warning: #e0a63c;
+  --color-warning-bg: rgba(224, 166, 60, 0.10);
+  --color-success: #3fae7c;
+  --color-success-bg: rgba(63, 174, 124, 0.12);
+  --color-info: #a39d92;
+  --color-info-bg: rgba(242, 237, 227, 0.06);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: calc(var(--nav-h) + 16px);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  background: var(--color-bg);
+  color: var(--color-cream);
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* Anton: uppercase, tracking ketat, leading rapat */
+.font-display:where(h1, h2, h3, p, span) {
+  letter-spacing: -0.012em;
+  line-height: 0.94;
+  text-transform: uppercase;
+  font-weight: 400;
+}
+
+/* Label mikro: JetBrains Mono 11px + tracking lebar uppercase */
+.micro-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+}
+
+/* Garis struktural */
+.rule-2 { border-color: var(--color-cream); border-width: 2px; }
+
+/* Permukaan mendapat hairline, BUKAN shadow/radius */
+:is(.bg-surface, .bg-brand-50, .bg-brand-100, .bg-success-bg, .bg-danger-bg, .bg-warning-bg, .bg-info-bg):not(.bg-cream-hi) {
+  border: 1px solid var(--color-ink-300);
+}
+
+/* Grid modular 44px dari dua linear-gradient menyilang */
+.grid-overlay {
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--color-cream) 8%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--color-cream) 8%, transparent) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+
+/* ============================================================
+   SlideDown (huruf per huruf) + Rolodex (slot machine 3D)
+   ============================================================ */
+.sd-letter {
+  transform: translateY(-110%);
+  opacity: 0;
+  transition:
+    transform 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.55s ease;
+}
+.sd-letter.sd-up { transform: translateY(110%); }
+.is-rev .sd-letter {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.rolo-word {
+  transition:
+    transform 0.6s cubic-bezier(0.34, 1.1, 0.4, 1),
+    opacity 0.45s ease;
+  backface-visibility: hidden;
+  will-change: transform;
+}
+.rolo-in {
+  animation: roloIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes roloIn {
+  from { transform: rotateX(90deg) translateY(30%); opacity: 0; }
+  to { transform: rotateX(0deg) translateY(0); opacity: 1; }
+}
+
+/* Hormati prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .sd-letter { transform: none !important; opacity: 1 !important; transition: none !important; }
+  .punch-letter { transform: none !important; opacity: 1 !important; transition: none !important; }
+  .punch-swap { animation: none !important; transform: none !important; opacity: 1 !important; }
+  .rolo-word, .rolo-in { transition: none !important; animation: none !important; transform: none !important; opacity: 1 !important; }
+}
+
+/* ============================================================
+   Punchline hero: slide-down per huruf + swap masalah
+   ============================================================ */
+.punch-letter {
+  transition:
+    transform 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.7s ease;
+}
+.punch-swap {
+  animation: punchDown 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes punchDown {
+  from { transform: translateY(-110%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Seleksi teks merah */
+::selection { background: #dc201e; color: #f8f3ec; }
+
+/* ============================================================
+   SISTEM ANIMASI — satu mekanik: CSS custom property + IO
+   ============================================================ */
+
+/* Per-atom reveal: setiap [data-rev] naik 0.4em dengan --d delay-nya */
+[data-rev] {
+  opacity: 0;
+  transform: translateY(0.4em);
+  transition:
+    opacity 0.55s ease var(--d, 0ms),
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1) var(--d, 0ms);
+  will-change: opacity, transform;
+}
+[data-rev].is-rev {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Kunci animasi landing selama intro (preload): elemen yang sudah
+   ditandai .is-rev oleh observer TETAP tersembunyi & tanpa transisi
+   sampai .intro-lock dilepas — lalu observer menandai ulang dan
+   animasi reveal berjalan normal. */
+.intro-lock [data-rev],
+.intro-lock [data-words] {
+  opacity: 0 !important;
+  transform: translateY(0.4em) !important;
+}
+.intro-lock [data-words] .wletter {
+  transform: translateY(-120%) !important;
+  opacity: 0 !important;
+}
+
+/* Per-huruf: slide-down lewat jendela clip vertikal, stagger via transitionDelay.
+   Jendela overflow-hidden + huruf turun dari -120% → terlihat jelas "menetes". */
+.wletter {
+  transform: translateY(-120%);
+  opacity: 0;
+  transition:
+    transform 0.85s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.6s ease;
+}
+.is-rev .wletter,
+[data-words].is-rev .wletter {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* Kompat: komponen Reveal lama tetap bekerja */
+.reveal {
+  opacity: 0;
+  transform: translateY(0.4em);
+  transition:
+    opacity 0.6s ease var(--reveal-delay, 0ms),
+    transform 0.6s cubic-bezier(0.22, 1, 0.36, 1) var(--reveal-delay, 0ms);
+}
+.reveal.is-visible { opacity: 1; transform: translateY(0); }
+
+/* Hairline merah ambient 38 detik melintasi dasar hero (BUKAN marquee) */
+@keyframes ambientLine {
+  from { transform: translateX(-10vw) scaleX(0.12); }
+  50% { transform: translateX(45vw) scaleX(1); }
+  to { transform: translateX(105vw) scaleX(0.12); }
+}
+.ambient-line {
+  transform-origin: left center;
+  animation: ambientLine 38s linear infinite;
+}
+
+/* Kursor ketik */
+@keyframes blinkCursor {
+  0%, 45% { opacity: 1; }
+  50%, 95% { opacity: 0; }
+}
+.typing-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 3px;
+  vertical-align: -0.12em;
+  background: var(--color-tan);
+  animation: blinkCursor 1.1s steps(1) infinite;
+}
+
+/* Denyut SOS + kepala rute */
+@keyframes sosPulse {
+  0% { box-shadow: 0 0 0 0 rgba(220, 32, 30, 0.5); }
+  70% { box-shadow: 0 0 0 16px rgba(220, 32, 30, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(220, 32, 30, 0); }
+}
+.sos-pulse { animation: sosPulse 2.2s ease-out infinite; }
+
+/* Masuk halaman */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(0.4em); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pop { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.anim-fade-up { animation: fadeUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.anim-fade-in { animation: fadeIn 0.5s ease both; }
+.anim-pop { animation: pop 0.28s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.anim-float { animation: none; }
+
+/* Interaksi: tanpa shadow, yang berubah warna & posisi saja */
+.card-hover { transition: background-color 0.25s ease, border-color 0.25s ease; }
+.card-hover:hover { border-color: var(--color-cream) !important; }
+.btn-anim { transition: background-color 0.2s ease, color 0.2s ease, transform 0.12s ease; }
+.btn-anim:hover { transform: translateY(-1px); }
+.btn-anim:active { transform: translateY(1px); }
+
+/* FAQ accordion: plus CSS-only + transisi tinggi */
+details.faq > summary { list-style: none; }
+details.faq > summary::-webkit-details-marker { display: none; }
+details.faq .faq-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.45s ease;
+}
+details.faq[open] .faq-body { grid-template-rows: 1fr; }
+details.faq .faq-body > div { overflow: hidden; }
+details.faq .faq-plus { transition: transform 0.45s ease; }
+details.faq[open] .faq-plus { transform: rotate(45deg); }
+
+/* sr-only */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* ===== Leaflet (Swiss) ===== */
+.leaflet-container { border-radius: 0; font-family: var(--font-body); z-index: 1; overflow: hidden; background: var(--color-ground); }
+.leaflet-pane, .leaflet-tile-container { will-change: transform; }
+.sigap-marker { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50% 50% 50% 4px; transform: rotate(-45deg); border: 2px solid var(--color-cream-hi); color: #fff; }
+.sigap-marker > * { transform: rotate(45deg); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--color-ink-300); }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* Hormati prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  [data-rev], .reveal, .wletter, .sd-letter { opacity: 1 !important; transform: none !important; transition: none !important; }
+  .ambient-line, .sos-pulse, .typing-cursor { animation: none; }
+  html { scroll-behavior: auto; }
 }
