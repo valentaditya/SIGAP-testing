@@ -45,7 +45,7 @@ export default function DashboardClient() {
   }, [view]);
 
   return (
-    <div className="grid min-h-screen w-full grid-cols-1 lg:grid-cols-[240px_1fr]">
+    <div className="grid min-h-[calc(100vh-var(--nav-h))] w-full grid-cols-1 lg:grid-cols-[240px_1fr]">
       <Sidebar view={view} onChange={setView} />
       <main className="w-full max-w-none p-5 md:p-8">
         {view === "overview" ? <Overview onGoLaporan={() => setView("laporan")} /> : <LaporanView />}
@@ -138,9 +138,9 @@ function Overview({ onGoLaporan }: { onGoLaporan: () => void }) {
         </Reveal>
 
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.15fr_.85fr]">
-          {/* Peta — mengisi tinggi agar bawahnya sejajar dengan log kegiatan */}
+          {/* Peta — ukuran kecil agar log muat di sampingnya */}
           <Reveal delay={80}>
-            <div className="relative flex h-full flex-col overflow-hidden rounded-3xl border-2 border-tan/50 bg-surface shadow-[var(--shadow-pop)]">
+            <div className="relative h-full overflow-hidden rounded-3xl border-2 border-tan/50 bg-surface shadow-[var(--shadow-pop)]">
               <div className="pointer-events-none absolute left-4 top-4 z-[900] flex items-center gap-2 rounded-full bg-bg/90 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[.14em] text-tan ring-1 ring-tan/40 backdrop-blur">
                 <span className="relative flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-tan opacity-60" />
@@ -160,9 +160,7 @@ function Overview({ onGoLaporan }: { onGoLaporan: () => void }) {
                 </div>
               </div>
 
-              <div className="min-h-[260px] flex-1 max-h-[560px]">
-                <AdminMap fill />
-              </div>
+              <AdminMap height={300} />
 
               <div className="flex flex-wrap items-center gap-2 border-t border-ink-300 bg-ground px-4 py-3">
                 <span className="mr-1 inline-flex items-center gap-1.5 text-xs font-semibold text-sage-pale">

@@ -18,9 +18,8 @@ export function Navbar() {
   const [open, setOpen] = useState(false);
   const { user, logout, theme, toggleTheme } = useApp();
   const isAdminArea = pathname.startsWith("/dashboard");
-  // Sembunyikan navbar di menu utama tiap role — fokus ke menu
+  // Menu utama tiap role → fokus ke menu, teks menu tengah disembunyikan
   const isMainMenu = pathname.startsWith("/dashboard") || pathname.startsWith("/petugas") || pathname.startsWith("/warga");
-  if (isMainMenu) return null;
 
   return (
     <header className="sticky top-0 z-[100] h-[var(--nav-h)] border-b-2 border-cream bg-bg">
@@ -36,7 +35,8 @@ export function Navbar() {
           )}
         </Link>
 
-        {/* Menu tengah (desktop) */}
+        {/* Menu tengah (desktop) — disembunyikan di menu utama */}
+        {!isMainMenu && (
         <nav aria-label="Navigasi utama" className="absolute left-1/2 hidden -translate-x-1/2 md:block">
           <ul className="flex items-center gap-7">
             {LINKS.map((l) => {
@@ -64,6 +64,7 @@ export function Navbar() {
             )}
           </ul>
         </nav>
+        )}
 
         {/* Aksi kanan */}
         <div className="ml-auto flex items-center gap-2.5 md:ml-0">
@@ -114,7 +115,7 @@ export function Navbar() {
       {open && (
         <nav className="anim-fade-in border-b-2 border-cream bg-bg px-6 pb-7 pt-5 md:hidden">
           <ul className="flex flex-col gap-4">
-            {LINKS.map((l) => (
+            {!isMainMenu && LINKS.map((l) => (
               <li key={l.href}>
                 <Link href={l.href} onClick={() => setOpen(false)} className={`micro-label block no-underline ${pathname === l.href ? "text-tan" : "text-sage-pale"}`}>
                   {l.label}

@@ -1,14 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { RequireAuth } from "@/components/RequireAuth";
 import { useApp } from "@/lib/store";
 import { Chip } from "@/components/Chip";
 import { STATUS_LABEL_ID as STATUS_LABEL, statusTone, priorityColor, getKategori } from "@/lib/data";
 import {
   FileText, Award, Star, TrendingUp, Plus, ThumbsUp, MapPin, Camera,
-  Trophy, Medal, Crown, ChevronRight, LogOut,
+  Trophy, Medal, Crown, ChevronRight,
 } from "lucide-react";
 
 const LEVEL_NAMA = ["", "Warga Baru", "Warga Aktif", "Warga Peduli", "Pahlawan Lingkungan", "Guardian Kota"];
@@ -25,8 +24,7 @@ const LEADERBOARD = [
 const RANK_ICON = [Crown, Medal, Award];
 
 export default function WargaDashboard() {
-  const { user, laporanWarga, upvote, upvoted, tambahPoin, logout } = useApp();
-  const router = useRouter();
+  const { user, laporanWarga, upvote, upvoted, tambahPoin } = useApp();
   const nama = user?.nama ?? "Warga";
   const poin = user?.poin ?? 40;
   const level = user?.level ?? 1;
@@ -37,25 +35,16 @@ export default function WargaDashboard() {
 
   return (
     <RequireAuth role="warga">
-    <main className="mx-auto max-w-[1160px] px-6 pt-6 pb-12">
+    <main className="mx-auto max-w-[1160px] px-6 py-10">
       {/* Sapaan + poin */}
       <div className="anim-fade-up mb-8 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="micro-label text-sage">SIGAP · Menu Warga</p>
           <h1 className="font-display text-2xl font-extrabold md:text-3xl">Halo, <span className="text-brand-600">{nama}</span></h1>
           <p className="mt-1 text-sm text-ink-500">Pantau laporanmu dan kumpulkan poin dengan berkontribusi.</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Link href="/lapor" className="btn-anim inline-flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-3 font-semibold text-ink-900 no-underline hover:bg-brand-700">
-            <Plus size={18} /> Buat Laporan
-          </Link>
-          <button
-            onClick={() => { logout(); router.replace("/login"); }}
-            className="btn-anim inline-flex items-center gap-2 rounded-xl border border-ink-300 px-4 py-3 text-sm font-semibold text-sage-pale transition-colors hover:border-danger hover:text-danger"
-          >
-            <LogOut size={15} /> Keluar
-          </button>
-        </div>
+        <Link href="/lapor" className="btn-anim inline-flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-3 font-semibold text-ink-900 no-underline hover:bg-brand-700">
+          <Plus size={18} /> Buat Laporan
+        </Link>
       </div>
 
       {/* Kartu poin & level */}
