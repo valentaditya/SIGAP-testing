@@ -25,6 +25,7 @@ export interface Notif {
 
 interface AppState {
   user: User | null;
+  hydrated: boolean;
   login: (nama: string, email: string, role: Role) => void;
   logout: () => void;
   notifs: Notif[];
@@ -138,7 +139,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const value: AppState = {
-    user, login, logout,
+    user, hydrated, login, logout,
     notifs, tandaiBaca, tandaiSemuaBaca, tambahNotif,
     laporanWarga, tambahLaporan, upvoted, upvote, tambahPoin,
     theme, toggleTheme,

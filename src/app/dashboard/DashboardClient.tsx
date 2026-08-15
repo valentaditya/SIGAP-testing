@@ -22,7 +22,7 @@ import { useApp } from "@/lib/store";
 
 const AdminMap = dynamic(() => import("@/components/AdminMap").then((m) => m.AdminMap), {
   ssr: false,
-  loading: () => <div className="grid h-[300px] place-items-center text-sm text-ink-500">Memuat peta…</div>,
+  loading: () => <div className="grid h-full place-items-center text-sm text-ink-500">Memuat peta…</div>,
 });
 
 type SortKey = "id" | "judul" | "kategori" | "dukungan" | "priority" | "status";
@@ -138,9 +138,9 @@ function Overview({ onGoLaporan }: { onGoLaporan: () => void }) {
         </Reveal>
 
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.15fr_.85fr]">
-          {/* Peta — ukuran kecil agar log muat di sampingnya */}
+          {/* Peta — mengisi tinggi agar bawahnya sejajar dengan log kegiatan */}
           <Reveal delay={80}>
-            <div className="relative h-full overflow-hidden rounded-3xl border-2 border-tan/50 bg-surface shadow-[var(--shadow-pop)]">
+            <div className="relative flex h-full flex-col overflow-hidden rounded-3xl border-2 border-tan/50 bg-surface shadow-[var(--shadow-pop)]">
               <div className="pointer-events-none absolute left-4 top-4 z-[900] flex items-center gap-2 rounded-full bg-bg/90 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[.14em] text-tan ring-1 ring-tan/40 backdrop-blur">
                 <span className="relative flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-tan opacity-60" />
@@ -160,7 +160,9 @@ function Overview({ onGoLaporan }: { onGoLaporan: () => void }) {
                 </div>
               </div>
 
-              <AdminMap height={300} />
+              <div className="min-h-[260px] flex-1 max-h-[560px]">
+                <AdminMap fill />
+              </div>
 
               <div className="flex flex-wrap items-center gap-2 border-t border-ink-300 bg-ground px-4 py-3">
                 <span className="mr-1 inline-flex items-center gap-1.5 text-xs font-semibold text-sage-pale">

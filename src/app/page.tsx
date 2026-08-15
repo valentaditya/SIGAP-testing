@@ -7,6 +7,7 @@ import { TimelineLive } from "@/components/TimelineLive";
 import { RouteMap } from "@/components/RouteMap";
 import { JsonViewer } from "@/components/JsonViewer";
 import { IntroGate } from "@/components/IntroGate";
+import { ForceGuest } from "@/components/ForceGuest";
 
 export const metadata = { title: "Beranda" };
 
@@ -72,6 +73,8 @@ const FAQ = [
 
 export default function Home() {
   return (
+    <>
+    <ForceGuest />
     <IntroGate>
     <main>
       {/* ======================================================
@@ -461,5 +464,6 @@ export default function Home() {
       </footer>
     </main>
     </IntroGate>
+    </>
   );
 }
