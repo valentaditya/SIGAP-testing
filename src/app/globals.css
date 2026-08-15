@@ -248,6 +248,9 @@ body {
     transform 0.6s cubic-bezier(0.22, 1, 0.36, 1) var(--reveal-delay, 0ms);
 }
 .reveal.is-visible { opacity: 1; transform: translateY(0); }
+/* Baris tabel dashboard: masuk berurutan saat halaman dibuka */
+.row-in { animation: rowFade 0.4s ease-out both; }
+@keyframes rowFade { from { opacity: 0; } to { opacity: 1; } }
 
 /* Hairline merah ambient 38 detik melintasi dasar hero (BUKAN marquee) */
 @keyframes ambientLine {
@@ -333,5 +336,6 @@ details.faq[open] .faq-plus { transform: rotate(45deg); }
 @media (prefers-reduced-motion: reduce) {
   [data-rev], .reveal, .wletter, .sd-letter { opacity: 1 !important; transform: none !important; transition: none !important; }
   .ambient-line, .sos-pulse, .typing-cursor { animation: none; }
+  .row-in, .anim-fade-up, .anim-fade-in, .anim-pop { animation: none !important; opacity: 1 !important; }
   html { scroll-behavior: auto; }
 }

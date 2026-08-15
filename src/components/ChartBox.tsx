@@ -53,6 +53,7 @@ export function ChartBox({ def, height = 280 }: { def: ChartDef; height?: number
         },
         options: {
           responsive: true, maintainAspectRatio: false,
+          animation: { duration: 850, easing: "easeOutQuart", delay: (ctx: any) => (ctx.type === "bar" ? ctx.datasetIndex * 140 + ctx.dataIndex * 45 : 0) },
           plugins: { legend: { position: "bottom", labels: { font: FONT, boxWidth: 12, usePointStyle: true } }, tooltip: { enabled: true } },
           scales: {
             x: { stacked: true, grid: { display: false }, ticks: { font: FONT, maxRotation: 40 } },
@@ -68,7 +69,7 @@ export function ChartBox({ def, height = 280 }: { def: ChartDef; height?: number
       cfg = {
         type: "doughnut",
         data: { datasets: [{ data: [v, 10 - v], backgroundColor: [color, "#EEF1F0"], borderWidth: 0, circumference: 180, rotation: 270, cutout: "78%" }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: false } } },
+        options: { responsive: true, maintainAspectRatio: false, animation: { animateRotate: true, duration: 1000, easing: "easeOutCubic" }, plugins: { legend: { display: false }, tooltip: { enabled: false } } },
       };
     }
 
@@ -84,6 +85,7 @@ export function ChartBox({ def, height = 280 }: { def: ChartDef; height?: number
         },
         options: {
           responsive: true, maintainAspectRatio: false,
+          animation: { duration: 950, easing: "easeOutQuart", delay: (ctx: any) => (ctx.type === "line" ? ctx.dataIndex * 65 : 0) },
           plugins: { legend: { position: "bottom", labels: { font: FONT, boxWidth: 12, usePointStyle: true } } },
           scales: { x: { grid: { display: false }, ticks: { font: FONT } }, y: { beginAtZero: true, ticks: { font: FONT }, grid: { color: GRID } } },
         },
@@ -99,6 +101,7 @@ export function ChartBox({ def, height = 280 }: { def: ChartDef; height?: number
         },
         options: {
           responsive: true, maintainAspectRatio: false,
+          animation: { duration: 850, easing: "easeOutQuart" },
           plugins: { legend: { display: false } },
           scales: { r: { beginAtZero: true, max: 10, ticks: { display: false }, grid: { color: GRID }, angleLines: { color: GRID }, pointLabels: { font: { ...FONT, size: 10 }, color: "#6B7280" } } },
         },
@@ -109,11 +112,14 @@ export function ChartBox({ def, height = 280 }: { def: ChartDef; height?: number
       cfg = {
         type: "doughnut",
         data: { labels: def.labels, datasets: [{ data: def.data, backgroundColor: def.colors, borderWidth: 2, borderColor: "#fff" }] },
-        options: { responsive: true, maintainAspectRatio: false, cutout: "62%", plugins: { legend: { position: "bottom", labels: { font: FONT, boxWidth: 12, usePointStyle: true } } } },
+        options: { responsive: true, maintainAspectRatio: false, cutout: "62%", animation: { duration: 750, easing: "easeOutQuart" }, plugins: { legend: { position: "bottom", labels: { font: FONT, boxWidth: 12, usePointStyle: true } } } },
       };
     }
 
-    if (cfg) chartRef.current = new Chart(ref.current, cfg);
+    if (cfg) {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) cfg.animation = false;
+      chartRef.current = new Chart(ref.current, cfg);
+    }
     return () => { chartRef.current?.destroy(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(def)]);

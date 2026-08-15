@@ -5,6 +5,8 @@ import dynamic from "next/dynamic";
 import { Sidebar } from "@/components/Sidebar";
 import { Chip } from "@/components/Chip";
 import { ChartBox } from "@/components/ChartBox";
+import { Counter } from "@/components/Counter";
+import { Reveal } from "@/components/Reveal";
 import {
   LAPORAN, KATEGORI, STATUS_ORDER, STATUS_LABEL, statusTone,
   priorityColor, priorityLabel, getKategori,
@@ -78,7 +80,7 @@ export default function DashboardClient() {
 
       <main id="overview" className="w-full max-w-none p-5 md:p-8">
         {/* ===== Header ===== */}
-        <div className="mb-7 flex flex-wrap items-center justify-between gap-4">
+        <Reveal className="mb-7 flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="font-display text-2xl font-extrabold md:text-3xl">
               Selamat pagi, <span className="text-brand-600">Pak Bimo</span>{" "}
@@ -95,73 +97,77 @@ export default function DashboardClient() {
           >
             Tinjau Antrean Verifikasi
           </a>
-        </div>
+        </Reveal>
 
         {/* ===== KPI ===== */}
         <div className="mb-7 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
-          {kpis.map((k) => {
+          {kpis.map((k, i) => {
             const Ic = k.icon;
             return (
-              <div key={k.lbl} className="rounded-2xl bg-surface p-5 shadow-[var(--shadow-card)]">
+              <Reveal key={k.lbl} delay={i * 80} className="rounded-2xl bg-surface p-5 shadow-[var(--shadow-card)]">
                 <div className="mb-1.5 flex items-center justify-between">
                   <p className="text-xs font-semibold uppercase tracking-[.06em] text-ink-500">{k.lbl}</p>
                   <Ic size={16} className="text-ink-300" />
                 </div>
-                <p className="font-display text-3xl font-extrabold leading-tight">{k.val}</p>
+                <p className="font-display text-3xl font-extrabold leading-tight">
+                  <Counter to={k.val} dur={850} delay={i * 80} />
+                </p>
                 <div className="mt-2">
                   <Chip tone={k.tone === "neutral" ? "neutral" : k.tone}>{k.sub}</Chip>
                 </div>
-              </div>
+              </Reveal>
             );
           })}
         </div>
 
         {/* ===== Analitik ===== */}
         <section id="analitik" className="mb-7">
-          <div className="mb-5 flex items-baseline justify-between border-t-2 border-cream pt-4">
+          <Reveal delay={110} className="mb-5 flex items-baseline justify-between border-t-2 border-cream pt-4">
             <h2 className="font-display text-xl font-bold">Analitik</h2>
             <p className="micro-label text-sage">02 · performa penanganan</p>
-          </div>
+          </Reveal>
           <div className="mb-5 grid grid-cols-1 gap-5 xl:grid-cols-[1.2fr_.8fr]">
-            <div className="rounded-2xl bg-surface p-6 shadow-[var(--shadow-card)]">
+            <Reveal delay={150} className="rounded-2xl bg-surface p-6 shadow-[var(--shadow-card)]">
               <h3 className="font-display text-lg font-bold">Antrean per Kategori & Prioritas</h3>
               <p className="mb-4 text-sm text-ink-500">Laporan aktif (belum selesai) — batang merah menandai banyak kasus darurat</p>
               <ChartBox def={{ kind: "barKatPrio" }} height={300} />
-            </div>
-            <div className="rounded-2xl bg-surface p-6 shadow-[var(--shadow-card)]">
+            </Reveal>
+            <Reveal delay={190} className="rounded-2xl bg-surface p-6 shadow-[var(--shadow-card)]">
               <h3 className="font-display text-lg font-bold">Rata-rata Priority Score</h3>
               <p className="mb-4 text-sm text-ink-500">Seluruh laporan aktif saat ini</p>
               <div className="relative">
                 <ChartBox def={{ kind: "gauge", value: avg }} height={220} />
                 <div className="pointer-events-none absolute inset-x-0 bottom-2 text-center">
-                  <div className="font-display text-4xl font-extrabold" style={{ color: priorityColor(avg) }}>{avg}</div>
+                  <div className="font-display text-4xl font-extrabold" style={{ color: priorityColor(avg) }}>
+                    <Counter to={avg} decimals={1} dur={950} delay={340} />
+                  </div>
                   <div className="text-sm text-ink-500">{priorityLabel(avg)}</div>
                 </div>
               </div>
-            </div>
+            </Reveal>
           </div>
 
           {/* ===== Analitik bawah ===== */}
           <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.2fr_.8fr]">
-            <div className="rounded-2xl bg-surface p-6 shadow-[var(--shadow-card)]">
+            <Reveal delay={230} className="rounded-2xl bg-surface p-6 shadow-[var(--shadow-card)]">
               <h3 className="font-display text-lg font-bold">Tren 6 Bulan Terakhir</h3>
               <p className="mb-4 text-sm text-ink-500">Laporan masuk vs diselesaikan</p>
               <ChartBox def={{ kind: "tren" }} height={260} />
-            </div>
-            <div className="rounded-2xl bg-surface p-6 shadow-[var(--shadow-card)]">
+            </Reveal>
+            <Reveal delay={270} className="rounded-2xl bg-surface p-6 shadow-[var(--shadow-card)]">
               <h3 className="font-display text-lg font-bold">Faktor Pembentuk Skor</h3>
               <p className="mb-4 text-sm text-ink-500">Kontribusi rata-rata tiap faktor analisis AI</p>
               <ChartBox def={{ kind: "radar" }} height={260} />
-            </div>
+            </Reveal>
           </div>
         </section>
 
         {/* ===== Tabel laporan ===== */}
-        <div className="mb-5 flex items-baseline justify-between border-t-2 border-cream pt-4">
+        <Reveal delay={310} className="mb-5 flex items-baseline justify-between border-t-2 border-cream pt-4">
           <h2 className="font-display text-xl font-bold">Laporan</h2>
           <p className="micro-label text-sage">03 · antrean kerja</p>
-        </div>
-        <section id="laporan" className="mb-5 rounded-2xl bg-surface p-6 shadow-[var(--shadow-card)]">
+        </Reveal>
+        <section id="laporan" className="anim-fade-in mb-5 rounded-2xl bg-surface p-6 shadow-[var(--shadow-card)]" style={{ animationDelay: "360ms" }}>
           <h3 className="font-display text-lg font-bold">Daftar Laporan</h3>
           <p className="mb-4 text-sm text-ink-500">Klik judul kolom untuk mengurutkan · diurutkan berdasarkan Priority Score secara bawaan</p>
 
@@ -194,10 +200,10 @@ export default function DashboardClient() {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((l) => {
+                {rows.map((l, ri) => {
                   const k = getKategori(l.kategori);
                   return (
-                    <tr key={l.id} className="transition-colors hover:bg-brand-50">
+                    <tr key={l.id} className="row-in transition-colors hover:bg-brand-50" style={{ animationDelay: `${ri * 45}ms` }}>
                       <td className="border-b border-ink-300 px-4 py-3.5 align-middle font-mono text-[.8rem] font-semibold text-ink-700">{l.id}</td>
                       <td className="border-b border-ink-300 px-4 py-3.5 align-middle">
                         <div className="font-semibold">{l.judul}</div>
@@ -245,11 +251,11 @@ export default function DashboardClient() {
         </section>
 
         {/* ===== Peta ===== */}
-        <div className="mb-5 flex items-baseline justify-between border-t-2 border-cream pt-4">
+        <Reveal delay={400} className="mb-5 flex items-baseline justify-between border-t-2 border-cream pt-4">
           <h2 className="font-display text-xl font-bold">Peta</h2>
           <p className="micro-label text-sage">04 · sebaran wilayah</p>
-        </div>
-        <section id="peta" className="rounded-2xl bg-surface p-6 shadow-[var(--shadow-card)]">
+        </Reveal>
+        <section id="peta" className="anim-fade-in rounded-2xl bg-surface p-6 shadow-[var(--shadow-card)]" style={{ animationDelay: "440ms" }}>
           <h3 className="font-display text-lg font-bold">Peta Sebaran Laporan</h3>
           <p className="mb-4 text-sm text-ink-500">Warna penanda = tingkat prioritas dari AI Multi-Agent</p>
           <AdminMap />
