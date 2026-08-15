@@ -23,13 +23,14 @@ function markerIcon(score: number) {
   });
 }
 
-export function AdminMap() {
+export function AdminMap({ height = 420 }: { height?: number }) {
   const ref = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
 
   useEffect(() => {
     if (!ref.current || mapRef.current) return;
-    const map = L.map(ref.current, { scrollWheelZoom: true }).setView([-7.7956, 110.3695], 12);
+    const map = L.map(ref.current, { scrollWheelZoom: true, zoomControl: false }).setView([-7.7956, 110.3695], 12);
+    L.control.zoom({ position: "bottomright" }).addTo(map);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
       maxZoom: 19,
@@ -57,5 +58,5 @@ export function AdminMap() {
     return () => { clearTimeout(t); map.remove(); mapRef.current = null; };
   }, []);
 
-  return <div ref={ref} className="h-[420px] w-full" role="application" aria-label="Peta sebaran laporan admin" />;
+  return <div ref={ref} style={{ height }} className="w-full" role="application" aria-label="Peta sebaran laporan admin" />;
 }

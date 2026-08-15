@@ -165,3 +165,73 @@ export function statusTone(status: StatusId): "neutral" | "info" | "warning" | "
     default: return "neutral";
   }
 }
+
+// ============================================================
+// Log kegiatan harian — seluruh kegiatan proses selama satu hari
+// ============================================================
+
+export type KegiatanTipe = "baru" | "verifikasi" | "penugasan" | "penanganan" | "selesai";
+
+export interface Kegiatan {
+  id: string;
+  tipe: KegiatanTipe;
+  laporanId: string;
+  jam: string; // "06:55"
+  aktor: string;
+  catatan?: string;
+}
+
+export const KEGIATAN_LABEL: Record<KegiatanTipe, string> = {
+  baru: "Laporan baru masuk",
+  verifikasi: "Verifikasi",
+  penugasan: "Penugasan",
+  penanganan: "Penanganan di lapangan",
+  selesai: "Selesai",
+};
+
+export const KEGIATAN_HARI: { key: string; label: string; tanggal: string }[] = [
+  { key: "2026-01-15", label: "Hari Ini", tanggal: "15 Jan 2026" },
+  { key: "2026-01-14", label: "Kemarin", tanggal: "14 Jan 2026" },
+];
+
+// Seluruh kegiatan proses laporan — satu hari penuh, urut naik oleh jam.
+export const KEGIATAN: Record<string, Kegiatan[]> = {
+  "2026-01-15": [
+    { id: "A-01", tipe: "penanganan", laporanId: "SGP-2026-0112", jam: "06:55", aktor: "Petugas · Tim Jalan", catatan: "Perbaikan lubang Jl. Kaliurang dilanjutkan" },
+    { id: "A-02", tipe: "verifikasi", laporanId: "SGP-2026-0109", jam: "07:15", aktor: "Admin · Bimo", catatan: "Verifikasi selesai — menunggu penugasan" },
+    { id: "A-03", tipe: "verifikasi", laporanId: "SGP-2026-0089", jam: "07:40", aktor: "Admin · Bimo", catatan: "Masuk antrean verifikasi pagi" },
+    { id: "A-04", tipe: "penugasan", laporanId: "SGP-2026-0108", jam: "08:02", aktor: "Admin · Bimo", catatan: "Ditugaskan ke unit banjir Gondokusuman" },
+    { id: "A-05", tipe: "verifikasi", laporanId: "SGP-2026-0095", jam: "08:20", aktor: "Admin · Bimo", catatan: "Verifikasi selesai — skor 7.6" },
+    { id: "A-06", tipe: "penanganan", laporanId: "SGP-2026-0098", jam: "08:45", aktor: "Petugas · Tim Evakuasi", catatan: "Evakuasi pohon — satu lajur dibuka" },
+    { id: "A-07", tipe: "penugasan", laporanId: "SGP-2026-0092", jam: "09:10", aktor: "Admin · Bimo", catatan: "Ditugaskan ke tim penerangan" },
+    { id: "A-08", tipe: "selesai", laporanId: "SGP-2026-0105", jam: "09:35", aktor: "Petugas · Tim Penerangan", catatan: "Dokumentasi 6 titik PJU menyala kembali" },
+    { id: "A-09", tipe: "selesai", laporanId: "SGP-2026-0103", jam: "10:20", aktor: "Petugas · Satpol PP", catatan: "Portal liar dibongkar — lalu lintas normal" },
+    { id: "A-10", tipe: "penanganan", laporanId: "SGP-2026-0112", jam: "11:05", aktor: "Petugas · Tim Jalan", catatan: "Pengaspalan — progres 60%" },
+    { id: "A-11", tipe: "verifikasi", laporanId: "SGP-2026-0085", jam: "11:40", aktor: "Admin · Bimo", catatan: "Menunggu verifikasi — SLA 24 jam" },
+    { id: "A-12", tipe: "selesai", laporanId: "SGP-2026-0101", jam: "13:15", aktor: "Petugas · Dinas Taman", catatan: "Ayunan baru terpasang di Taman Pintar" },
+    { id: "A-13", tipe: "penanganan", laporanId: "SGP-2026-0108", jam: "14:05", aktor: "Petugas · Unit Banjir", catatan: "Pengerukan drainase dimulai" },
+    { id: "A-14", tipe: "selesai", laporanId: "SGP-2026-0082", jam: "15:30", aktor: "Petugas · Dinas Perhubungan", catatan: "Atap halte diperbaiki — kursi diganti" },
+    { id: "A-15", tipe: "penanganan", laporanId: "SGP-2026-0098", jam: "16:20", aktor: "Petugas · Tim Evakuasi", catatan: "Sisa ranting dibersihkan — jalan normal" },
+  ],
+  "2026-01-14": [
+    { id: "B-01", tipe: "verifikasi", laporanId: "SGP-2026-0109", jam: "08:10", aktor: "Admin · Bimo", catatan: "Verifikasi selesai — menunggu penugasan" },
+    { id: "B-02", tipe: "penanganan", laporanId: "SGP-2026-0112", jam: "09:00", aktor: "Petugas · Tim Jalan", catatan: "Tim lapangan mulai bekerja di lokasi" },
+    { id: "B-03", tipe: "penugasan", laporanId: "SGP-2026-0108", jam: "10:25", aktor: "Admin · Bimo", catatan: "Ditugaskan ke unit banjir" },
+    { id: "B-04", tipe: "penanganan", laporanId: "SGP-2026-0098", jam: "11:40", aktor: "Petugas · Tim Evakuasi", catatan: "Petugas di lokasi — evakuasi pohon" },
+    { id: "B-05", tipe: "penugasan", laporanId: "SGP-2026-0092", jam: "13:15", aktor: "Admin · Bimo", catatan: "Ditugaskan ke tim penerangan" },
+    { id: "B-06", tipe: "selesai", laporanId: "SGP-2026-0105", jam: "14:50", aktor: "Petugas · Tim Penerangan", catatan: "Dokumentasi penyelesaian diunggah" },
+    { id: "B-07", tipe: "verifikasi", laporanId: "SGP-2026-0085", jam: "15:30", aktor: "Admin · Bimo", catatan: "Pengingat SLA otomatis — 24 jam" },
+    { id: "B-08", tipe: "verifikasi", laporanId: "SGP-2026-0089", jam: "16:05", aktor: "Admin · Bimo", catatan: "Pengingat SLA otomatis — 72 jam" },
+  ],
+};
+
+// Opsi tanggal yang tersedia untuk filter (dari waktu laporan)
+export const HARI_LAPORAN = Array.from(
+  new Set(LAPORAN.map((l) => l.waktu.slice(0, 10)))
+).sort((a, b) => (a < b ? 1 : -1));
+
+export function formatHari(k: string): string {
+  const [, m, d] = k.split("-");
+  const bulan = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+  return `${Number(d)} ${bulan[Number(m) - 1]}`;
+}
