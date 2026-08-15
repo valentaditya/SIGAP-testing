@@ -8,17 +8,20 @@ import { PunchlineHero } from "@/components/PunchlineHero";
    observer termuat & menghitung posisi sebelum tampil — sehingga
    saat intro selesai, landing muncul mulus tanpa "patah".
 
-   Intro di-cache di localStorage (sigap_intro_seen): hanya
+   Intro di-cache (sigap_intro_seen di localStorage + cookie): hanya
    ditayangkan sekali; kunjungan berikutnya langsung masuk tanpa
-   menunggu animasi. Flag dibaca lewat useEffect (bukan initializer)
-   karena initializer ikut jalan saat SSR sehingga selalu false. */
-export function IntroGate({ children }: { children: ReactNode }) {
-  const [done, setDone] = useState(false);
-  const [ready, setReady] = useState(false);
+   menunggu animasi. Flag dibaca dari server (cookie) agar SSR sudah
+   merender hero terlihat (tidak ada flash kosong), lalu diverifikasi
+   di client lewat localStorage. */
+export function IntroGate({ children, introSeen = false }: { children: ReactNode; introSeen?: boolean }) {
+  const [done, setDone] = useState(introSeen);
+  const [cached, setCached] = useState(introSeen);
+  const [ready, setReady] = useState(introSeen);
 
   useEffect(() => {
-    let seen = false;
+    let seen = introSeen;
     try { seen = localStorage.getItem("sigap_intro_seen") === "1"; } catch { /* abaikan */ }
+    setCached(seen);
     setDone(seen);
     setReady(true);
   }, []);
@@ -37,7 +40,10 @@ export function IntroGate({ children }: { children: ReactNode }) {
     document.documentElement.style.overflow = "";
     window.scrollTo(0, 0);
     setDone(true);
-    try { localStorage.setItem("sigap_intro_seen", "1"); } catch { /* abaikan */ }
+    try {
+      localStorage.setItem("sigap_intro_seen", "1");
+      document.cookie = "sigap_intro_seen=1; path=/; max-age=31536000; samesite=lax";
+    } catch { /* abaikan */ }
     // Landing di-preload tersembunyi → animasi per-huruf hero sudah
     // sempat habis terputar. Reset & putar ulang reveal untuk elemen
     // yang terlihat sekarang, sehingga "LAPOR CEPAT, KOTA TANGGAP."
@@ -62,7 +68,7 @@ export function IntroGate({ children }: { children: ReactNode }) {
   return (
     <>
       <div
-        className={showIntro ? "intro-lock" : "anim-fade-up"}
+        className={`${cached ? "intro-seen " : ""}${showIntro ? "intro-lock" : "anim-fade-up"}`}
         style={showIntro ? { visibility: "hidden", height: "100svh", overflow: "hidden" } : undefined}
         aria-hidden={showIntro}
         inert={showIntro ? true : undefined}

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { cookies } from "next/headers";
 import { ArrowUpRight } from "lucide-react";
 import { Stage } from "@/components/Stage";
 import { Words, Atom } from "@/components/Words";
@@ -71,11 +72,14 @@ const FAQ = [
 
 /* ================= HALAMAN ================= */
 
-export default function Home() {
+export default async function Home() {
+  // Intro di-cache via cookie → SSR bisa langsung merender tanpa animasi
+  const c = await cookies();
+  const introSeen = c.get("sigap_intro_seen")?.value === "1";
   return (
     <>
     <ForceGuest />
-    <IntroGate>
+    <IntroGate introSeen={introSeen}>
     <main>
       {/* ======================================================
           STAGE 1 — POSTER HERO (280svh)
@@ -88,7 +92,7 @@ export default function Home() {
           className="grid-overlay pointer-events-none absolute inset-0"
           style={{ transform: "translateY(calc(var(--p, 0) * -60px))" }}
         />
-        <div className="relative mx-auto flex h-full max-w-[1180px] flex-col justify-center px-6">
+        <div className="hero-quick relative mx-auto flex h-full max-w-[1180px] flex-col justify-center px-6">
           <div
             style={{
               transform: "translateY(calc(var(--p, 0) * -44px))",

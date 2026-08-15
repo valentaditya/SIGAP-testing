@@ -224,6 +224,16 @@ body {
   opacity: 0 !important;
 }
 
+/* Mode cache (intro sudah pernah dilihat): hero tampil INSTAN tanpa
+   animasi per-huruf agar tidak berat / ter-skip saat load. Reveal
+   saat scroll di bawah fold tetap berjalan normal. */
+.intro-seen .hero-quick [data-rev],
+.intro-seen .hero-quick [data-words] .wletter {
+  opacity: 1 !important;
+  transform: none !important;
+  transition: none !important;
+}
+
 /* Per-huruf: slide-down lewat jendela clip vertikal, stagger via transitionDelay.
    Jendela overflow-hidden + huruf turun dari -120% → terlihat jelas "menetes". */
 .wletter {
