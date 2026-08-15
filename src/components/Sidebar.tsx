@@ -1,5 +1,7 @@
 "use client";
-import { LayoutGrid, FileText } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { LayoutGrid, FileText, LogOut } from "lucide-react";
+import { useApp } from "@/lib/store";
 
 export type DashboardView = "overview" | "laporan";
 
@@ -16,10 +18,26 @@ export function Sidebar({
   view: DashboardView;
   onChange: (v: DashboardView) => void;
 }) {
+  const { logout } = useApp();
+  const router = useRouter();
+
+  function keluar() {
+    logout();
+    router.replace("/login");
+  }
+
   return (
     <aside aria-label="Navigasi dashboard" className="border-r border-ink-300 bg-ground">
-      <div className="sticky top-[var(--nav-h)] h-[calc(100vh-var(--nav-h))] overflow-y-auto py-7">
-        <p className="micro-label mb-4 px-6 text-sage">Menu</p>
+      <div className="sticky top-0 flex h-screen flex-col overflow-y-auto py-6">
+        {/* Brand */}
+        <div className="mb-6 px-6">
+          <p className="font-display text-2xl text-cream-hi">
+            SI<span className="text-tan">GAP</span>
+          </p>
+          <p className="micro-label mt-1 text-sage">Menu Admin</p>
+        </div>
+
+        {/* Tab menu */}
         <nav className="space-y-1">
           {MENU.map((s) => {
             const Icon = s.icon;
@@ -45,8 +63,18 @@ export function Sidebar({
             );
           })}
         </nav>
-        <p className="micro-label mt-8 px-6 text-sage">Wilayah</p>
-        <p className="px-6 text-xs text-sage-pale">Kota Yogyakarta, DIY</p>
+
+        {/* Wilayah + Keluar */}
+        <div className="mt-auto px-6 pt-8">
+          <p className="micro-label text-sage">Wilayah</p>
+          <p className="mt-1 text-xs text-sage-pale">Kota Yogyakarta, DIY</p>
+          <button
+            onClick={keluar}
+            className="mt-5 flex w-full items-center gap-2 border-t border-ink-300 pt-4 text-sm font-semibold text-sage-pale transition-colors hover:text-danger"
+          >
+            <LogOut size={15} /> Keluar
+          </button>
+        </div>
       </div>
     </aside>
   );

@@ -45,7 +45,7 @@ export default function DashboardClient() {
   }, [view]);
 
   return (
-    <div className="grid min-h-[calc(100vh-var(--nav-h))] w-full grid-cols-1 lg:grid-cols-[240px_1fr]">
+    <div className="grid min-h-screen w-full grid-cols-1 lg:grid-cols-[240px_1fr]">
       <Sidebar view={view} onChange={setView} />
       <main className="w-full max-w-none p-5 md:p-8">
         {view === "overview" ? <Overview onGoLaporan={() => setView("laporan")} /> : <LaporanView />}

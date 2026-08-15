@@ -1,16 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { RequireAuth } from "@/components/RequireAuth";
 import { useApp } from "@/lib/store";
 import { Chip } from "@/components/Chip";
 import { STATUS_LABEL_ID as STATUS_LABEL, statusTone, priorityColor, getKategori, type StatusId } from "@/lib/data";
 import {
-  ClipboardList, MapPin, Navigation, Camera, CheckCircle2, Upload, PlayCircle,
+  ClipboardList, MapPin, Navigation, Camera, CheckCircle2, Upload, PlayCircle, LogOut,
 } from "lucide-react";
 
 export default function PetugasDashboard() {
-  const { laporanWarga, tambahNotif } = useApp();
+  const { laporanWarga, tambahNotif, logout } = useApp();
+  const router = useRouter();
   const tugas = laporanWarga.filter((l) => ["assigned", "in_progress"].includes(l.status));
   const [statusMap, setStatusMap] = useState<Record<string, StatusId>>({});
   const [bukti, setBukti] = useState<Record<string, number>>({});
@@ -27,10 +29,19 @@ export default function PetugasDashboard() {
 
   return (
     <RequireAuth role="petugas">
-    <main className="mx-auto max-w-[1000px] px-6 py-10">
-      <div className="anim-fade-up mb-8">
-        <h1 className="font-display text-2xl font-extrabold md:text-3xl">Dashboard <span className="text-brand-600">Petugas</span></h1>
-        <p className="mt-1 text-sm text-ink-500">Daftar tugas penanganan yang ditugaskan kepadamu.</p>
+    <main className="mx-auto max-w-[1000px] px-6 pt-6 pb-12">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="anim-fade-up">
+          <p className="micro-label text-sage">SIGAP · Menu Petugas</p>
+          <h1 className="font-display text-2xl font-extrabold md:text-3xl">Dashboard <span className="text-brand-600">Petugas</span></h1>
+          <p className="mt-1 text-sm text-ink-500">Daftar tugas penanganan yang ditugaskan kepadamu.</p>
+        </div>
+        <button
+          onClick={() => { logout(); router.replace("/login"); }}
+          className="btn-anim inline-flex items-center gap-2 rounded-xl border border-ink-300 px-4 py-2.5 text-sm font-semibold text-sage-pale transition-colors hover:border-danger hover:text-danger"
+        >
+          <LogOut size={15} /> Keluar
+        </button>
       </div>
 
       <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-3">

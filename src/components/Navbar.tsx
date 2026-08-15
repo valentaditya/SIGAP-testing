@@ -18,6 +18,9 @@ export function Navbar() {
   const [open, setOpen] = useState(false);
   const { user, logout, theme, toggleTheme } = useApp();
   const isAdminArea = pathname.startsWith("/dashboard");
+  // Sembunyikan navbar di menu utama tiap role — fokus ke menu
+  const isMainMenu = pathname.startsWith("/dashboard") || pathname.startsWith("/petugas") || pathname.startsWith("/warga");
+  if (isMainMenu) return null;
 
   return (
     <header className="sticky top-0 z-[100] h-[var(--nav-h)] border-b-2 border-cream bg-bg">
