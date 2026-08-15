@@ -71,7 +71,7 @@ export function Navbar() {
           >
             {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
           </button>
-          <NotifBell />
+          {user && <NotifBell />}
           {user ? (
             <>
               <Link
