@@ -10,7 +10,7 @@ import {
   Bot, Network, Gauge, Sparkles, Ticket, EyeOff, UserRound,
 } from "lucide-react";
 import { useApp } from "@/lib/store";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 const MiniMap = dynamic(() => import("@/components/MiniMap").then((m) => m.MiniMap), {
   ssr: false,
@@ -27,15 +27,26 @@ const AGENT_STEPS = [
   { icon: Gauge, nama: "Agent 3 — Prioritas", desc: "Menghitung Skor Urgensi (1–10) & SLA…" },
 ];
 
+// Dibuat di luar komponen supaya jelas ini efek samping milik event,
+// bukan nilai yang boleh dihitung selama render.
+function buatNomorTiket() {
+  return `SGP-2026-0${113 + Math.floor(Math.random() * 40)}`;
+}
+
 export default function LaporClient() {
   const { user, tambahLaporan, tambahPoin, tambahNotif } = useApp();
-  const router = useRouter();
+  const params = useSearchParams();
   const [step, setStep] = useState<Step>(1);
   const [phase, setPhase] = useState<Phase>("form");
   const [runIdx, setRunIdx] = useState(0);
-  const [anonim, setAnonim] = useState(false);
 
-  const [kategori, setKategori] = useState<KategoriId>("jalan");
+  // Jalur "tanpa akun" dari halaman masuk membuka form dalam mode siap pakai:
+  // ?anonim=1 → identitas disembunyikan, ?darurat=1 → kategori keamanan.
+  const [anonim, setAnonim] = useState(params.get("anonim") === "1");
+
+  const [kategori, setKategori] = useState<KategoriId>(
+    params.get("darurat") === "1" ? "keamanan" : "jalan",
+  );
   const [pos, setPos] = useState<{ lat: number; lng: number } | null>(null);
   const [alamat, setAlamat] = useState("");
   const [judul, setJudul] = useState("");
@@ -48,13 +59,25 @@ export default function LaporClient() {
     const panjang = Math.min(deskripsi.length / 40, 1.2);
     const score = Math.round(Math.min(base + panjang + foto * 0.2, 9.8) * 10) / 10;
     const severity = score;
-    const conf = (0.85 + Math.random() * 0.13).toFixed(2);
+    // Confidence diturunkan dari kelengkapan input, bukan acak.
+    // Sebelumnya Math.random() membuat angka berubah tiap render
+    // sehingga nilai yang tampil ≠ nilai yang tersimpan.
+    const lengkap = (deskripsi.length >= 40 ? 1 : deskripsi.length / 40) * 0.08 + Math.min(foto, 3) * 0.017;
+    const conf = Math.min(0.85 + lengkap, 0.98).toFixed(2);
     const darurat = score >= SKOR_DARURAT;
     const sla = darurat ? "Segera (< 12 jam)" : score >= 8 ? "24 jam" : score >= 5.5 ? "48–72 jam" : "5–7 hari";
     return { k, score, severity, conf, sla, darurat };
   }, [kategori, deskripsi, foto]);
 
+  // Nomor tiket dibuat sekali saat pelapor menekan kirim, bukan saat render.
+  // Sebelumnya dihitung inline sehingga berubah tiap render — nomor yang
+  // tersimpan di store bisa berbeda dari yang dibaca pelapor di layar.
+  const [tiket, setTiket] = useState("");
+  const pelaporNama = anonim ? "Anonim" : (user?.nama ?? "Warga");
+
   function submit() {
+    const nomor = buatNomorTiket();
+    setTiket(nomor);
     setPhase("running");
     setRunIdx(0);
     let i = 0;
@@ -63,18 +86,17 @@ export default function LaporClient() {
       setRunIdx(i);
       if (i >= AGENT_STEPS.length) {
         clearInterval(t);
-        setTimeout(() => { selesaiAnalisis(); setPhase("done"); }, 500);
+        // `nomor` dioper eksplisit: closure ini terbentuk sebelum state
+        // `tiket` sempat commit, jadi membacanya dari state akan kosong.
+        setTimeout(() => { selesaiAnalisis(nomor); setPhase("done"); }, 500);
       }
     }, 900);
   }
 
-  const tiket = `SGP-2026-0${113 + Math.floor(Math.random() * 40)}`;
-  const pelaporNama = anonim ? "Anonim" : (user?.nama ?? "Warga");
-
-  function selesaiAnalisis() {
+  function selesaiAnalisis(nomor: string) {
     const k = KATEGORI.find((x) => x.id === kategori)!;
     tambahLaporan({
-      id: tiket, judul, kategori,
+      id: nomor, judul, kategori,
       lokasi: { lat: pos?.lat ?? -7.7956, lng: pos?.lng ?? 110.3695, alamat },
       pelapor: pelaporNama, waktu: new Date().toISOString(), status: "reported",
       foto, dukungan: 0,
@@ -82,7 +104,7 @@ export default function LaporClient() {
       sla: result.sla,
     });
     tambahPoin(25);
-    tambahNotif({ judul: "Laporan Terkirim", pesan: `${tiket} — ${judul}. +25 poin`, waktu: "Baru saja", tone: "success" });
+    tambahNotif({ judul: "Laporan Terkirim", pesan: `${nomor} — ${judul}. +25 poin`, waktu: "Baru saja", tone: "success" });
   }
 
   const input =

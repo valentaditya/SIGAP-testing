@@ -59,18 +59,31 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
-  // Hydrate dari localStorage
+  // Hydrate dari localStorage.
+  // Semua pembacaan digabung jadi SATU commit batch supaya tidak memicu
+  // render berantai. localStorage mustahil dibaca saat render server,
+  // jadi efek sekali-jalan ini memang satu-satunya tempat yang benar.
   useEffect(() => {
+    let u: User | null = null;
+    let up: Set<string> = new Set();
+    let th: "light" | "dark" = "light";
     try {
-      const u = localStorage.getItem("sigap_user");
-      if (u) setUser(JSON.parse(u));
-      const up = localStorage.getItem("sigap_upvoted");
-      if (up) setUpvoted(new Set(JSON.parse(up)));
-      const th = localStorage.getItem("sigap_theme");
-      if (th === "dark" || th === "light") setTheme(th);
-      else if (window.matchMedia("(prefers-color-scheme: dark)").matches) setTheme("dark");
+      const rawU = localStorage.getItem("sigap_user");
+      if (rawU) u = JSON.parse(rawU) as User;
+      const rawUp = localStorage.getItem("sigap_upvoted");
+      if (rawUp) up = new Set(JSON.parse(rawUp) as string[]);
+      const rawTh = localStorage.getItem("sigap_theme");
+      if (rawTh === "dark" || rawTh === "light") th = rawTh;
+      else if (window.matchMedia("(prefers-color-scheme: dark)").matches) th = "dark";
     } catch {}
+    // React membatch keempatnya menjadi satu commit, jadi hanya ada
+    // satu render tambahan setelah hidrasi.
+    /* eslint-disable react-hooks/set-state-in-effect */
+    if (u) setUser(u);
+    if (up.size) setUpvoted(up);
+    setTheme(th);
     setHydrated(true);
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
   useEffect(() => {

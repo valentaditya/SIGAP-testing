@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Anton, Archivo, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { AppProvider } from "@/lib/store";
@@ -30,17 +30,41 @@ export const metadata: Metadata = {
     "Sistem Informasi & Gerak Aktif Pelaporan — platform pelaporan warga dengan AI Multi-Agent untuk kota yang lebih responsif.",
 };
 
+// Warna bilah browser mengikuti tema; interactiveWidget menjaga layout
+// tetap benar saat keyboard virtual muncul di Android.
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f8f3ec" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0908" },
+  ],
+  colorScheme: "light dark",
+  interactiveWidget: "resizes-content",
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="id" className={`${display.variable} ${body.variable} ${mono.variable}`}>
+    // suppressHydrationWarning wajib di sini: skrip di bawah sengaja
+    // mengubah className <html> sebelum React hidrasi, sehingga markup
+    // server dan klien memang berbeda. Tanpa ini React membanjiri konsol
+    // dengan peringatan mismatch pada setiap muat halaman.
+    <html
+      lang="id"
+      className={`${display.variable} ${body.variable} ${mono.variable}`}
+      suppressHydrationWarning
+    >
       <head>
-        {/* Terapkan tema tersimpan sebelum paint agar tidak flash */}
+        {/* Terapkan tema tersimpan sebelum paint agar tidak berkedip putih */}
         <script dangerouslySetInnerHTML={{ __html: `try{var t=localStorage.getItem("sigap_theme");if(t==="dark"||(!t&&matchMedia("(prefers-color-scheme: dark)").matches))document.documentElement.classList.add("dark")}catch(e){}` }} />
       </head>
       <body>
         <AppProvider>
+          {/* Lompat langsung ke konten — wajib bagi pengguna keyboard
+              agar tidak menyusuri seluruh navigasi tiap pindah halaman. */}
+          <a href="#konten" className="sr-only sr-only-focusable">
+            Lewati ke konten
+          </a>
           <Navbar />
-          {children}
+          <div id="konten">{children}</div>
           <EmergencyButton />
         </AppProvider>
       </body>

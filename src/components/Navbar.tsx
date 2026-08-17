@@ -25,7 +25,7 @@ export function Navbar() {
     <header className="sticky top-0 z-[100] h-[var(--nav-h)] border-b-2 border-cream bg-bg">
       <div className="relative mx-auto flex h-full max-w-[1400px] items-center px-6">
         {/* Brand kiri: wordmark Anton, separuh merah */}
-        <Link href="/" className="group mr-auto flex items-baseline gap-2 no-underline">
+        <Link href="/" aria-label="SIGAP — beranda" className="group mr-auto flex items-baseline gap-2 py-3 no-underline">
           <span className="font-display text-2xl text-cream-hi">
             SI<span className="text-tan">GAP</span>
           </span>
@@ -38,7 +38,9 @@ export function Navbar() {
         {/* Menu tengah (desktop) — disembunyikan di menu utama */}
         {!isMainMenu && (
         <nav aria-label="Navigasi utama" className="absolute left-1/2 hidden -translate-x-1/2 md:block">
-          <ul className="flex items-center gap-7">
+          {/* gap dikecilkan tapi tiap tautan diberi padding vertikal:
+             area ketuk jadi setinggi bilah, jarak visual tetap lega. */}
+          <ul className="flex items-center gap-5">
             {LINKS.map((l) => {
               const active = pathname === l.href;
               return (
@@ -46,7 +48,7 @@ export function Navbar() {
                   <Link
                     href={l.href}
                     aria-current={active ? "page" : undefined}
-                    className={`micro-label no-underline transition-colors ${
+                    className={`micro-label flex min-h-[44px] items-center px-2 no-underline transition-colors ${
                       active ? "text-tan" : "text-sage-pale hover:text-cream-hi"
                     }`}
                   >
@@ -57,7 +59,11 @@ export function Navbar() {
             })}
             {user?.role === "admin" && (
               <li>
-                <Link href="/dashboard" className={`micro-label no-underline transition-colors ${pathname === "/dashboard" ? "text-tan" : "text-sage-pale hover:text-cream-hi"}`}>
+                <Link
+                  href="/dashboard"
+                  aria-current={pathname === "/dashboard" ? "page" : undefined}
+                  className={`micro-label flex min-h-[44px] items-center px-2 no-underline transition-colors ${pathname === "/dashboard" ? "text-tan" : "text-sage-pale hover:text-cream-hi"}`}
+                >
                   Dashboard
                 </Link>
               </li>
@@ -71,7 +77,7 @@ export function Navbar() {
           <button
             onClick={toggleTheme}
             aria-label={theme === "dark" ? "Mode terang" : "Mode gelap"}
-            className="grid h-[42px] w-[42px] place-items-center text-sage-pale transition-colors hover:bg-ground"
+            className="grid h-11 w-11 place-items-center text-sage-pale transition-colors hover:bg-ground"
           >
             {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
           </button>
@@ -95,16 +101,16 @@ export function Navbar() {
           ) : (
             <Link
               href="/login"
-              className="btn-anim hidden items-center gap-2 border-2 border-cream px-5 py-2.5 font-mono text-[11px] uppercase tracking-[0.2em] text-cream no-underline transition-colors hover:bg-cream hover:text-bg md:inline-flex"
+              className="btn-anim hidden min-h-[44px] items-center gap-2 border-2 border-cream px-5 font-mono text-[11px] uppercase tracking-[0.2em] text-cream no-underline transition-colors hover:bg-cream hover:text-bg md:inline-flex"
             >
-              <LogIn size={15} /> Masuk
+              <LogIn size={15} aria-hidden="true" /> Masuk
             </Link>
           )}
           <button
             onClick={() => setOpen(!open)}
             aria-label={open ? "Tutup menu" : "Buka menu"}
             aria-expanded={open}
-            className="grid h-[42px] w-[42px] place-items-center text-sage-pale md:hidden"
+            className="grid h-11 w-11 place-items-center text-sage-pale md:hidden"
           >
             {open ? <X size={22} /> : <Menu size={22} />}
           </button>
