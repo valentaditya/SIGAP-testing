@@ -2,71 +2,102 @@
 import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import { revealAtom } from "@/lib/reveal";
 
-/* Pecah teks menjadi huruf per huruf; tiap huruf turun lewat jendela
-   clip vertikal (slide-down) dengan stagger — dipakai di SELURUH landing.
-   Satu IntersectionObserver (di lib/reveal) yang mengungkap semuanya. */
-export function Words({
-  text, className = "", base = 0, as: Tag = "span",
+/* ============================================================
+   ClipSlide — teks turun huruf demi huruf lewat jendela clip
+   vertikal. Efek ini MAHAL (satu kotak layout per huruf), jadi
+   sengaja dibatasi: hanya untuk satu headline penutup, bukan
+   dipakai di seluruh halaman.
+
+   Batas keras 34 karakter mencegahnya dipakai untuk paragraf,
+   yang dulu membuat 2.500+ span dan menghancurkan performa scroll.
+   ============================================================ */
+export function ClipSlide({
+  text,
+  className = "",
+  step = 45,
+  base = 0,
+  as: Tag = "span",
 }: {
   text: string;
   className?: string;
+  step?: number;
   base?: number;
-  as?: "span" | "p" | "h1" | "h2" | "h3" | "div";
+  as?: "span" | "h1" | "h2" | "p" | "div";
 }) {
   const ref = useRef<HTMLElement | null>(null);
+
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    el.classList.add("is-rev");
     return revealAtom(el);
   }, []);
-  const Comp: any = Tag;
+
+  if (process.env.NODE_ENV !== "production" && text.length > 34) {
+    console.warn(
+      `[ClipSlide] "${text.slice(0, 20)}…" (${text.length} karakter) terlalu panjang. ` +
+      `Efek per huruf hanya untuk headline pendek; gunakan <Rise> untuk teks biasa.`,
+    );
+  }
+
+  const Comp = Tag as React.ElementType;
   let idx = 0;
-  /* Stagger adaptif: teks panjang pakai step lebih kecil supaya total
-     durasi reveal tetap wajar (maks ~1.6 detik). */
-  const total = text.replace(/ /g, "").length || 1;
-  const step = Math.min(45, Math.max(12, Math.round(1600 / total)));
+
   return (
-    <Comp ref={ref} data-words className={className} aria-label={text}>
-      {text.split(" ").map((word, wi) => (
-        <span key={wi} aria-hidden className="inline-block whitespace-nowrap">
-          {word.split("").map((ch, ci) => {
-            const d = (base + idx++) * step;
+    <Comp ref={ref} data-clip className={className} aria-label={text}>
+      {text.split(" ").map((kata, wi, arr) => (
+        <span key={wi} aria-hidden="true" className="inline-block whitespace-nowrap">
+          {kata.split("").map((ch, ci) => {
+            const d = base + idx++ * step;
             return (
               <span key={ci} className="inline-block overflow-hidden align-bottom">
-                <span className="wletter inline-block will-change-transform" style={{ transitionDelay: `${d}ms`, "--td": `${d}ms` } as CSSProperties}>
+                <span
+                  className="cs-letter inline-block"
+                  style={{ transitionDelay: `${d}ms` } as CSSProperties}
+                >
                   {ch}
                 </span>
               </span>
             );
           })}
-          {wi < text.split(" ").length - 1 ? "\u00A0" : ""}
+          {wi < arr.length - 1 ? "\u00A0" : ""}
         </span>
       ))}
     </Comp>
   );
 }
 
-/* Atom tunggal dengan delay sendiri (40–100ms × indeks) */
-export function Atom({
-  children, d = 0, className = "", as: Tag = "div",
+/* ============================================================
+   Rise — kerja keras halaman: satu elemen naik dan memudar.
+   Menggantikan pemakaian <Words> untuk judul & paragraf biasa.
+   Satu transisi per blok, bukan per huruf.
+   ============================================================ */
+export function Rise({
+  children,
+  d = 0,
+  className = "",
+  as: Tag = "div",
 }: {
   children: ReactNode;
   d?: number;
   className?: string;
-  as?: "div" | "span" | "li" | "p" | "h3" | "summary";
+  as?: "div" | "span" | "li" | "p" | "h1" | "h2" | "h3" | "summary";
 }) {
   const ref = useRef<HTMLElement | null>(null);
+
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    el.classList.add("is-rev");
     return revealAtom(el);
   }, []);
-  const Comp: any = Tag;
+
+  const Comp = Tag as React.ElementType;
   return (
-    <Comp ref={ref} data-rev className={className} style={{ "--d": `${d}ms` } as React.CSSProperties}>
+    <Comp ref={ref} data-rev className={className} style={{ "--d": `${d}ms` } as CSSProperties}>
       {children}
     </Comp>
   );
 }
+
+/* Nama lama dipertahankan agar halaman yang belum dimigrasi tetap
+   berjalan; keduanya kini memakai mekanik satu elemen yang murah. */
+export const Atom = Rise;

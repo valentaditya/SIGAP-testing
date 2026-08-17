@@ -1,185 +1,108 @@
 "use client";
-
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Typewriter } from "@/components/Typewriter";
 
 /* ============================================================
-   HERO PUNCHLINE — ala mockup "Sigap-Hero-Dynamic-Punchline".
-   Kicker atas → "ADA MASALAH?" → ROTATOR masalah (slide-down
-   dari atas ke bawah, merah) → "SIGAPin AJA" raksasa → CTA.
-   Semua reveal dari atas ke bawah, lembut, hormat reduced-motion.
+   INTRO — dulu menahan pengguna 8,6 detik tanpa jalan keluar.
+   Sekarang: headline diketik per karakter (50ms), total sekitar
+   3,4 detik, dan BISA dilewati kapan saja (klik, tombol apa pun,
+   atau scroll). Intro yang tidak bisa dilewati adalah pola yang
+   menghukum pengunjung berulang.
    ============================================================ */
 
-const MASALAH = ["BANJIR?", "JALAN RUSAK?", "SAMPAH NUMPUK?", "LAMPU MATI?", "DARURAT?"];
-
-/* Rotator CEPAT: masalah berganti tiap 700ms, lalu rotasi TERAKHIR
-   menggulung "SIGAPin AJA" masuk lewat mekanik rolling yang sama. */
-const ROLL_MS = 700;
-
-function SlideDownText({
-  text, base = 0, step = 40, className = "", active,
-}: {
-  text: string; base?: number; step?: number; className?: string; active: boolean;
-}) {
-  return (
-    <span className={`inline-block ${className}`} aria-label={text}>
-      {text.split("").map((ch, i) => (
-        <span key={i} aria-hidden className="inline-block overflow-hidden align-bottom">
-          <span
-            className="punch-letter inline-block will-change-transform"
-            style={{
-              transitionDelay: `${base + i * step}ms`,
-              transform: active ? "translateY(0)" : "translateY(-120%)",
-              opacity: active ? 1 : 0,
-            }}
-          >
-            {ch === " " ? "\u00A0" : ch}
-          </span>
-        </span>
-      ))}
-    </span>
-  );
-}
+const HEADLINE = "ADA MASALAH? SIGAPin AJA.";
+const MASALAH = ["BANJIR", "JALAN RUSAK", "SAMPAH NUMPUK", "LAMPU MATI"];
 
 export function PunchlineHero({ onDone }: { onDone: () => void }) {
-  const [show, setShow] = useState(false);
+  const [keluar, setKeluar] = useState(false);
+  const [selesaiKetik, setSelesaiKetik] = useState(false);
   const [mi, setMi] = useState(0);
-  const [showSolusi, setShowSolusi] = useState(false);
-  const [leaving, setLeaving] = useState(false);
-  const root = useRef<HTMLDivElement>(null);
   const done = useRef(false);
 
-  useEffect(() => {
-    const t = setTimeout(() => setShow(true), 80);
-    return () => clearTimeout(t);
-  }, []);
-
-  /* Rotator masalah: cepat, berhenti di masalah terakhir */
-  useEffect(() => {
-    const t = setInterval(() => setMi((v) => Math.min(v + 1, MASALAH.length - 1)), ROLL_MS);
-    return () => clearInterval(t);
-  }, []);
-
-  /* Setelah rolling selesai, "SIGAPin AJA" muncul DI BAWAH masalah terakhir */
-  useEffect(() => {
-    const t = setTimeout(() => setShowSolusi(true), ROLL_MS * MASALAH.length + 500);
-    return () => clearTimeout(t);
-  }, []);
-
-  /* Auto lanjut ke landing setelah beberapa detik */
-  useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      const t = setTimeout(finish, 400);
-      return () => clearTimeout(t);
-    }
-    const t = setTimeout(finish, 8600);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  function finish() {
+  const finish = useCallback(() => {
     if (done.current) return;
     done.current = true;
-    setLeaving(true);
-    setTimeout(onDone, 1100);
-  }
+    setKeluar(true);
+    setTimeout(onDone, 620);
+  }, [onDone]);
+
+  /* Rotator kata masalah berjalan setelah headline selesai diketik. */
+  useEffect(() => {
+    if (!selesaiKetik) return;
+    const t = setInterval(() => setMi((v) => v + 1), 620);
+    return () => clearInterval(t);
+  }, [selesaiKetik]);
+
+  /* Tutup otomatis, tapi jauh lebih cepat dari sebelumnya. */
+  useEffect(() => {
+    const kurangGerak = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const t = setTimeout(finish, kurangGerak ? 300 : 4200);
+    return () => clearTimeout(t);
+  }, [finish]);
+
+  /* Bisa dilewati: klik, tombol apa pun, scroll, atau sentuh. */
+  useEffect(() => {
+    const lewati = () => finish();
+    window.addEventListener("keydown", lewati);
+    window.addEventListener("wheel", lewati, { passive: true });
+    window.addEventListener("touchstart", lewati, { passive: true });
+    return () => {
+      window.removeEventListener("keydown", lewati);
+      window.removeEventListener("wheel", lewati);
+      window.removeEventListener("touchstart", lewati);
+    };
+  }, [finish]);
 
   return (
     <div
-      ref={root}
-      className={`fixed inset-0 z-[200] flex h-[100svh] flex-col overflow-hidden bg-bg transition-all duration-[1100ms] ${
-        leaving ? "-translate-y-10 opacity-0" : "translate-y-0 opacity-100"
+      onClick={finish}
+      role="button"
+      tabIndex={0}
+      aria-label="Lewati intro"
+      className={`fixed inset-0 z-[200] flex h-[100svh] cursor-pointer flex-col items-center justify-center overflow-hidden bg-bg px-6 transition-all duration-[620ms] ${
+        keluar ? "pointer-events-none -translate-y-6 opacity-0" : "opacity-100"
       }`}
       style={{ transitionTimingFunction: "cubic-bezier(0.22,1,0.36,1)" }}
     >
-      {/* grid halus */}
-      <div aria-hidden className="grid-overlay pointer-events-none absolute inset-0 opacity-60" />
+      <div aria-hidden="true" className="grid-overlay pointer-events-none absolute inset-0 opacity-50" />
 
-      {/* kicker atas */}
-      <div className="relative z-10 flex justify-center pt-10">
-        <div className="flex items-center gap-3">
-          <span className="h-px w-8 bg-ink-300" />
-          <p className="micro-label text-sage-pale">KOTA TANGGAP, SELESAI.</p>
-          <span className="h-px w-8 bg-ink-300" />
-        </div>
-      </div>
+      <div className="relative z-10 w-full max-w-[1100px] text-center">
+        <p className="micro-label mb-8 text-sage">Sistem Informasi &amp; Gerak Aktif Pelaporan</p>
 
-      {/* konten tengah */}
-      <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 text-center">
-        <h1 className="font-display leading-[0.9] text-cream" style={{ fontSize: "clamp(36px,7vw,86px)" }}>
-          <SlideDownText text="ADA MASALAH?" active={show} base={100} step={46} />
+        {/* Headline utama: diketik per karakter dengan jeda 50ms. */}
+        <h1
+          className="font-display leading-[0.95] text-cream-hi"
+          style={{ fontSize: "clamp(38px,8.5vw,104px)" }}
+        >
+          <Typewriter text={HEADLINE} speed={50} startDelay={250} onDone={() => setSelesaiKetik(true)} />
         </h1>
 
-        {/* rotator masalah — cepat, berhenti di masalah terakhir.
-            leading normal + tinggi 1.25em agar huruf turun tidak terpotong */}
-        <div
-          className="relative mt-2 flex h-[1.25em] items-center justify-center overflow-hidden"
-          style={{ fontSize: "clamp(34px,8vw,92px)" }}
-        >
-          <span className="invisible whitespace-nowrap px-2 font-display leading-normal">
-            {MASALAH.reduce((a, c) => (c.length > a.length ? c : a))}
+        {/* Kata masalah berganti setelah headline selesai, memberi
+            konteks konkret tanpa menambah waktu tunggu. */}
+        <div className="mt-9 flex h-7 items-center justify-center gap-3" aria-hidden="true">
+          <span
+            className={`h-px bg-ink-300 transition-all duration-500 ${selesaiKetik ? "w-10 opacity-100" : "w-0 opacity-0"}`}
+          />
+          <span className="micro-label overflow-hidden text-tan">
+            {selesaiKetik && (
+              <span key={mi} className="punch-swap inline-block">
+                {MASALAH[mi % MASALAH.length]}
+              </span>
+            )}
           </span>
           <span
-            key={mi}
-            className="punch-swap absolute inset-0 flex items-center justify-center whitespace-nowrap font-display uppercase leading-normal text-tan"
-          >
-            {MASALAH[mi]}
-          </span>
-        </div>
-
-        {/* pembatas */}
-        <div className="my-5 flex items-center gap-2">
-          <span className="h-1 w-1 rounded-full bg-ink-300" />
-          <span className="h-px w-16 bg-ink-300" />
-          <span className="h-1 w-1 rounded-full bg-tan" />
-          <span className="h-px w-16 bg-ink-300" />
-          <span className="h-1 w-1 rounded-full bg-ink-300" />
-        </div>
-
-        {/* solusi — muncul DI BAWAH masalah terakhir setelah rolling selesai */}
-        <h2
-          className="font-display leading-[0.82] tracking-[-0.03em] text-cream transition-all duration-700"
-          style={{
-            fontSize: "clamp(56px,14vw,160px)",
-            opacity: showSolusi ? 1 : 0,
-            transform: showSolusi ? "translateY(0)" : "translateY(0.35em)",
-            transitionTimingFunction: "cubic-bezier(0.22,1,0.36,1)",
-          }}
-        >
-          <span className="text-cream">SIGAP</span>
-          <span className="lowercase text-tan">in</span>
-          <span className="text-cream"> AJA</span>
-        </h2>
-
-        <div className="mt-10 flex flex-col items-center gap-5">
-          <SlideDownText
-            text="LAPORKAN. KAMI TANGGAP. SELESAI."
-            active={show}
-            base={1900}
-            step={16}
-            className="micro-label text-sage-pale"
+            className={`h-px bg-ink-300 transition-all duration-500 ${selesaiKetik ? "w-10 opacity-100" : "w-0 opacity-0"}`}
           />
-
         </div>
       </div>
 
-      {/* footer pojok */}
-      <div className="absolute bottom-6 left-6 z-10 hidden items-center gap-2.5 sm:flex">
-        <span className="relative flex h-2 w-2">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-tan opacity-60" />
-          <span className="relative inline-flex h-2 w-2 rounded-full bg-tan" />
-        </span>
-        <span className="micro-label text-sage">Live · 2.4k Laporan Aktif</span>
-      </div>
-      <div className="absolute bottom-6 right-6 z-10">
-        <p className="micro-label text-sage">SIGAP © 2026</p>
-      </div>
-
-      {/* watermark raksasa */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center overflow-hidden opacity-[0.04]">
-        <span className="whitespace-nowrap font-display leading-none tracking-[-0.05em] text-cream" style={{ fontSize: "22vw" }}>
-          SIGAP
-        </span>
-      </div>
+      <p
+        className={`micro-label absolute bottom-8 text-sage transition-opacity duration-500 ${
+          selesaiKetik ? "opacity-100" : "opacity-0"
+        }`}
+      >
+        Ketuk untuk lanjut
+      </p>
     </div>
   );
 }

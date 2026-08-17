@@ -142,165 +142,92 @@ body {
 }
 
 /* ============================================================
-   SlideDown (huruf per huruf) + Rolodex (slot machine 3D)
+   EFEK TEKS — tiga efek, masing masing dengan tugas jelas:
+   1. .typing-cursor  : kursor untuk headline yang diketik
+   2. .underline-draw : coretan tangan di bawah kata kunci
+   3. .cs-letter      : clip slide-down per huruf (headline pendek)
+
+   Prinsip: hanya properti transform & opacity yang dianimasikan
+   (keduanya ditangani compositor, tidak memicu layout/paint ulang).
+   will-change TIDAK dipasang permanen di CSS; dipasang sesaat oleh
+   observer lalu dilepas, supaya tidak menumpuk layer GPU.
    ============================================================ */
-.sd-letter {
-  transform: translateY(-110%);
-  opacity: 0;
-  transition:
-    transform 0.75s cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 0.55s ease;
+
+/* --- 2. Coretan tangan di bawah kata kunci --- */
+.underline-draw {
+  color: var(--color-tan);
 }
-.sd-letter.sd-up { transform: translateY(110%); }
-.is-rev .sd-letter {
-  transform: translateY(0);
-  opacity: 1;
+.underline-svg {
+  position: absolute;
+  left: 0;
+  bottom: -0.22em;
+  width: 100%;
+  height: 0.34em;
+  overflow: visible;
+  pointer-events: none;
+}
+.underline-svg path {
+  stroke-dasharray: 210;
+  stroke-dashoffset: 210;
+  transition: stroke-dashoffset 0.75s cubic-bezier(0.65, 0, 0.35, 1);
+}
+.underline-draw.is-drawn .underline-svg path {
+  stroke-dashoffset: 0;
 }
 
-.rolo-word {
-  transition:
-    transform 0.6s cubic-bezier(0.34, 1.1, 0.4, 1),
-    opacity 0.45s ease;
-  backface-visibility: hidden;
-  will-change: transform;
-}
-.rolo-in {
-  animation: roloIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-@keyframes roloIn {
-  from { transform: rotateX(90deg) translateY(30%); opacity: 0; }
-  to { transform: rotateX(0deg) translateY(0); opacity: 1; }
-}
-
-/* Hormati prefers-reduced-motion */
-@media (prefers-reduced-motion: reduce) {
-  .sd-letter { transform: none !important; opacity: 1 !important; transition: none !important; }
-  .punch-letter { transform: none !important; opacity: 1 !important; transition: none !important; }
-  .punch-swap { animation: none !important; transform: none !important; opacity: 1 !important; }
-  .rolo-word, .rolo-in { transition: none !important; animation: none !important; transform: none !important; opacity: 1 !important; }
-}
-
-/* ============================================================
-   Punchline hero: slide-down per huruf + swap masalah
-   ============================================================ */
-.punch-letter {
-  transition:
-    transform 0.9s cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 0.7s ease;
-}
+/* Pergantian kata pada intro: satu elemen, masuk dari atas. */
 .punch-swap {
-  animation: punchDown 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: punchDown 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 @keyframes punchDown {
   from { transform: translateY(-110%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+/* --- 3. Clip slide-down per huruf (dibatasi headline pendek) --- */
+.cs-letter {
+  transform: translateY(-115%);
+  opacity: 0;
+  transition:
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.5s ease;
+}
+[data-clip].is-rev .cs-letter {
+  transform: translateY(0);
+  opacity: 1;
 }
 
 /* Seleksi teks merah */
 ::selection { background: #dc201e; color: #f8f3ec; }
 
 /* ============================================================
-   SISTEM ANIMASI — satu mekanik: CSS custom property + IO
+   REVEAL DASAR — satu transisi per blok, bukan per huruf.
+   Inilah yang dipakai mayoritas halaman.
    ============================================================ */
-
-/* Per-atom reveal: setiap [data-rev] naik 0.4em dengan --d delay-nya */
 [data-rev] {
   opacity: 0;
   transform: translateY(0.4em);
   transition:
-    opacity 0.55s ease var(--d, 0ms),
-    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1) var(--d, 0ms);
-  will-change: opacity, transform;
+    opacity 0.5s ease var(--d, 0ms),
+    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1) var(--d, 0ms);
 }
 [data-rev].is-rev {
   opacity: 1;
   transform: translateY(0);
 }
 
-/* Kunci animasi landing selama intro (preload): elemen yang sudah
-   ditandai .is-rev oleh observer TETAP tersembunyi & tanpa transisi
-   sampai .intro-lock dilepas — lalu observer menandai ulang dan
-   animasi reveal berjalan normal. */
-.intro-lock [data-rev],
-.intro-lock [data-words] {
-  opacity: 0 !important;
-  transform: translateY(0.4em) !important;
-}
-.intro-lock [data-words] .wletter {
-  transform: translateY(-120%) !important;
-  opacity: 0 !important;
-}
-
-/* ============================================================
-   HERO LANDING — efek ringan & bertahap (CSS animation, jalan
-   dari paint pertama tanpa JS → tidak patah / tiba-tiba):
-   - huruf judul "LAPOR CEPAT, KOTA TANGGAP." drop per-huruf
-     (hanya ~21 huruf, staggered via --td)
-   - elemen lain (label, paragraf, CTA, statistik) fade+naik
-     ringan dengan stagger --d
-   Mode cache & kunjungan pertama memakai jalur yang sama:
-   saat intro diputar (.intro-lock), animasi dijeda supaya
-   baru berjalan setelah intro selesai. */
+/* Hero tampil segera lewat CSS animation (tanpa menunggu JS),
+   sehingga tidak ada kedipan konten kosong pada muat pertama. */
 .hero-quick [data-rev] {
-  transition: none !important;
-  animation: heroRise 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
-  animation-delay: var(--d, 0ms);
-}
-.hero-quick [data-words]:not(.hero-title) {
-  animation: heroFade 0.9s ease both;
-  animation-delay: var(--d, 0ms);
-}
-.hero-quick [data-words]:not(.hero-title) .wletter {
-  opacity: 1 !important;
-  transform: none !important;
-  transition: none !important;
-}
-/* Judul: drop per-huruf ringan */
-.hero-quick [data-words].hero-title .wletter {
-  transform: translateY(-120%);
   opacity: 0;
-  transition: none !important;
-  animation: letterDrop 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
-  animation-delay: var(--td, 0ms);
+  transform: none;
+  transition: none;
+  animation: heroRise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--d, 0ms);
 }
 @keyframes heroRise {
   from { opacity: 0; transform: translateY(0.5em); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes heroFade {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-@keyframes letterDrop {
-  from { transform: translateY(-120%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-/* Saat intro preload: animasi hero dijeda, tetap tersembunyi */
-.intro-lock .hero-quick [data-rev],
-.intro-lock .hero-quick [data-words] {
-  animation: none !important;
-  opacity: 0 !important;
-  transform: translateY(0.4em) !important;
-}
-.intro-lock .hero-quick [data-words].hero-title .wletter {
-  animation: none !important;
-  opacity: 0 !important;
-  transform: translateY(-120%) !important;
-}
-
-/* Per-huruf: slide-down lewat jendela clip vertikal, stagger via transitionDelay.
-   Jendela overflow-hidden + huruf turun dari -120% → terlihat jelas "menetes". */
-.wletter {
-  transform: translateY(-120%);
-  opacity: 0;
-  transition:
-    transform 0.85s cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 0.6s ease;
-}
-.is-rev .wletter,
-[data-words].is-rev .wletter {
-  transform: translateY(0);
-  opacity: 1;
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* Kompat: komponen Reveal lama tetap bekerja */
@@ -508,8 +435,10 @@ details.faq[open] .faq-plus { transform: rotate(45deg); }
 
 /* Hormati prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce) {
-  [data-rev], .reveal, .wletter, .sd-letter { opacity: 1 !important; transform: none !important; transition: none !important; }
-  .hero-quick [data-rev], .hero-quick [data-words], .hero-quick [data-words].hero-title .wletter { animation: none !important; opacity: 1 !important; transform: none !important; }
+  [data-rev], .reveal, .cs-letter { opacity: 1 !important; transform: none !important; transition: none !important; }
+  .hero-quick [data-rev] { animation: none !important; opacity: 1 !important; transform: none !important; }
+  .underline-svg path { transition: none !important; stroke-dashoffset: 0 !important; }
+  .punch-swap { animation: none !important; }
   .ambient-line, .sos-pulse, .typing-cursor { animation: none; }
   .row-in, .anim-fade-up, .anim-fade-in, .anim-pop { animation: none !important; opacity: 1 !important; }
   .shake, .spin { animation: none !important; }
