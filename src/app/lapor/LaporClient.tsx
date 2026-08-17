@@ -10,6 +10,7 @@ import {
   Bot, Network, Gauge, Sparkles, Ticket, EyeOff, UserRound,
 } from "lucide-react";
 import { useApp } from "@/lib/store";
+import { bisa } from "@/lib/roles";
 import { useSearchParams } from "next/navigation";
 
 const MiniMap = dynamic(() => import("@/components/MiniMap").then((m) => m.MiniMap), {
@@ -103,8 +104,19 @@ export default function LaporClient() {
       ai: { kategori: k.nama, confidence: parseFloat(result.conf), severity: result.severity, dampak: "Dianalisis AI Multi-Agent", priorityScore: result.score },
       sla: result.sla,
     });
-    tambahPoin(25);
-    tambahNotif({ judul: "Laporan Terkirim", pesan: `${nomor} — ${judul}. +25 poin`, waktu: "Baru saja", tone: "success" });
+    // Poin hanya untuk warga. Admin dan petugas memakai formulir ini
+    // untuk mencatat temuan dinas, bukan berlomba di papan peringkat;
+    // memberi mereka poin akan mengotori peringkat warga.
+    // Pelapor anonim juga tidak dapat poin, sebab tidak ada akun
+    // yang bisa dikreditkan.
+    const dapatPoin = bisa(user?.role, "gamifikasi") && !anonim;
+    if (dapatPoin) tambahPoin(25);
+    tambahNotif({
+      judul: "Laporan Terkirim",
+      pesan: `${nomor} — ${judul}.${dapatPoin ? " +25 poin" : ""}`,
+      waktu: "Baru saja",
+      tone: "success",
+    });
   }
 
   const input =

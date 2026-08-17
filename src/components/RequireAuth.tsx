@@ -2,7 +2,8 @@
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useApp, type Role } from "@/lib/store";
-import { ShieldAlert, LogIn } from "lucide-react";
+import { PERAN, berandaPeran } from "@/lib/roles";
+import { ShieldAlert, LogIn, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 // Proteksi halaman berdasarkan peran.
@@ -35,9 +36,10 @@ export function RequireAuth({
       return;
     }
     if (!cocok) {
-      router.replace(
-        user.role === "admin" ? "/dashboard" : user.role === "petugas" ? "/petugas" : "/warga",
-      );
+      // Tujuan diambil dari definisi peran terpusat. Sebelumnya rantai
+      // ternary ini diulang di beberapa berkas dan sempat tidak sinkron
+      // dengan navbar, sehingga petugas dikirim ke ruang warga.
+      router.replace(berandaPeran(user.role));
     }
   }, [hydrated, user, cocok, router, pathname]);
 
@@ -62,14 +64,27 @@ export function RequireAuth({
           <span className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full bg-danger-bg text-danger">
             <ShieldAlert size={30} aria-hidden="true" />
           </span>
-          <p className="font-display text-lg font-bold">Akses ditolak</p>
-          <p className="mt-1 text-sm text-ink-500">Halaman ini bukan untuk peranmu.</p>
-          <Link
-            href="/login"
-            className="btn-anim mt-5 inline-flex min-h-[44px] items-center gap-2 bg-tan px-5 font-semibold text-white no-underline hover:bg-brand-700"
-          >
-            <LogIn size={16} aria-hidden="true" /> Ganti Akun
-          </Link>
+          <p className="font-display text-lg font-bold">Halaman ini bukan untuk peran {PERAN[user.role].singkat}</p>
+          <p className="mt-1 text-sm text-ink-500">
+            Kami mengantar kamu kembali ke ruang {PERAN[user.role].singkat}.
+          </p>
+          {/* Dua jalan keluar yang jelas: lanjut ke ruang sendiri, atau
+              ganti akun. Sebelumnya hanya ada "Ganti Akun", yang memaksa
+              keluar padahal pengguna cuma salah alamat. */}
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              href={berandaPeran(user.role)}
+              className="btn-anim inline-flex min-h-[44px] items-center gap-2 bg-tan-solid px-5 font-semibold text-white no-underline hover:bg-brand-700"
+            >
+              Ke ruang {PERAN[user.role].singkat} <ArrowRight size={16} aria-hidden="true" />
+            </Link>
+            <Link
+              href="/login"
+              className="inline-flex min-h-[44px] items-center gap-2 border border-ink-300 px-5 font-semibold text-ink-700 no-underline transition-colors hover:border-cream"
+            >
+              <LogIn size={16} aria-hidden="true" /> Ganti akun
+            </Link>
+          </div>
         </div>
       </main>
     );
