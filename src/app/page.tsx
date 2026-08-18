@@ -10,6 +10,7 @@ import { RouteMap } from "@/components/RouteMap";
 import { JsonViewer } from "@/components/JsonViewer";
 import { IntroGate } from "@/components/IntroGate";
 import { ForceGuest } from "@/components/ForceGuest";
+import { StatCounter } from "@/components/StatCounter";
 import { KATEGORI, LAPORAN } from "@/lib/data";
 
 const PERSEN_SELESAI = Math.round(
@@ -55,10 +56,10 @@ const KATEGORI_TARIF = [
    Angka karangan seperti itu langsung meruntuhkan kepercayaan begitu
    pembaca membuka dashboard. */
 const STAT = [
-  { v: String(LAPORAN.length).padStart(2, "0"), l: "laporan terdata" },
-  { v: String(KATEGORI.length).padStart(2, "0"), l: "kategori masalah" },
-  { v: "03", l: "agen AI bekerja" },
-  { v: "24 JAM", l: "respons tercepat" },
+  { to: LAPORAN.length, pad: 2, l: "laporan terdata" },
+  { to: KATEGORI.length, pad: 2, l: "kategori masalah" },
+  { to: 3, pad: 2, l: "agen AI bekerja" },
+  { to: 24, suffix: " JAM", l: "respons tercepat" },
 ];
 
 const AGEN = [
@@ -144,7 +145,13 @@ export default async function Home() {
               <div className="mt-10 flex flex-wrap gap-x-10 gap-y-3">
                 {STAT.map((s, i) => (
                   <Rise key={s.l} d={320 + i * 60} className="flex items-baseline gap-3">
-                    <span className="font-display text-2xl text-cream-hi">{s.v}</span>
+                    <StatCounter
+                      to={s.to}
+                      pad={s.pad}
+                      suffix={s.suffix}
+                      delay={i * 140}
+                      className="font-display text-[clamp(1.8rem,4vw,3.2rem)] leading-none tabular-nums text-cream-hi"
+                    />
                     <span className="micro-label text-sage">{s.l}</span>
                   </Rise>
                 ))}
