@@ -10,6 +10,11 @@ import { RouteMap } from "@/components/RouteMap";
 import { JsonViewer } from "@/components/JsonViewer";
 import { IntroGate } from "@/components/IntroGate";
 import { ForceGuest } from "@/components/ForceGuest";
+import { KATEGORI, LAPORAN } from "@/lib/data";
+
+const PERSEN_SELESAI = Math.round(
+  (LAPORAN.filter((l) => l.status === "resolved").length / LAPORAN.length) * 100,
+);
 
 export const metadata = { title: "Beranda" };
 
@@ -43,10 +48,16 @@ const KATEGORI_TARIF = [
   { nama: "Fasilitas Umum", desc: "Halte, taman, toilet umum, trotoar rusak", sla: "7 HARI" },
 ];
 
+/* Angka diturunkan dari data yang benar benar dipakai aplikasi.
+   Sebelumnya di sini tertulis "241 laporan", "04 agen", dan di tempat
+   lain "2.4k laporan" serta "12 layanan" — semuanya saling bertentangan
+   dan tidak cocok dengan isi sistem (12 laporan, 3 agen, 10 fitur).
+   Angka karangan seperti itu langsung meruntuhkan kepercayaan begitu
+   pembaca membuka dashboard. */
 const STAT = [
-  { v: "241", l: "laporan terdata" },
-  { v: "06", l: "kategori masalah" },
-  { v: "04", l: "agen AI bekerja" },
+  { v: String(LAPORAN.length).padStart(2, "0"), l: "laporan terdata" },
+  { v: String(KATEGORI.length).padStart(2, "0"), l: "kategori masalah" },
+  { v: "03", l: "agen AI bekerja" },
   { v: "24 JAM", l: "respons tercepat" },
 ];
 
@@ -245,7 +256,7 @@ export default async function Home() {
                     <p>{f.desc}</p>
                     {isWide && (
                       <div className="mt-4 hidden shrink-0 items-center gap-6 border-t border-ink-300 pt-4 lg:mt-0 lg:border-l lg:border-t-0 lg:px-10 lg:pt-0">
-                        {["12 layanan", "2.4k laporan", "90% selesai"].map((s) => (
+                        {[`${FITUR.length} fitur`, `${KATEGORI.length} kategori`, `${PERSEN_SELESAI}% selesai`].map((s) => (
                           <span key={s} className="font-display text-lg text-tan">{s}</span>
                         ))}
                       </div>
