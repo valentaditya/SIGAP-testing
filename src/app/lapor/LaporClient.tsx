@@ -2,12 +2,12 @@
 
 import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import { KATEGORI, priorityLabel, priorityColor, SKOR_DARURAT, type KategoriId } from "@/lib/data";
+import { KATEGORI, priorityLabel, priorityColor, SKOR_DARURAT, deteksiWilayah, getWilayah, type KategoriId } from "@/lib/data";
 import { Icon } from "@/components/Icon";
 import { Chip } from "@/components/Chip";
 import {
   MapPin, Camera, FileText, CheckCircle2, ArrowRight, ArrowLeft,
-  Bot, Network, Gauge, Sparkles, Ticket, EyeOff, UserRound,
+  Bot, Network, Gauge, Sparkles, Ticket, EyeOff, UserRound, Building2,
 } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { bisa } from "@/lib/roles";
@@ -103,6 +103,7 @@ export default function LaporClient() {
       foto, dukungan: 0,
       ai: { kategori: k.nama, confidence: parseFloat(result.conf), severity: result.severity, dampak: "Dianalisis AI Multi-Agent", priorityScore: result.score },
       sla: result.sla,
+      wilayah: deteksiWilayah(alamat),
     });
     // Poin hanya untuk warga. Admin dan petugas memakai formulir ini
     // untuk mencatat temuan dinas, bukan berlomba di papan peringkat;
@@ -144,7 +145,7 @@ export default function LaporClient() {
                   {n}
                 </span>
                 <span className={`hidden text-sm font-semibold sm:block ${step >= n ? "text-ink-900" : "text-ink-500"}`}>
-                  {n === 1 ? "Lokasi & Kategori" : n === 2 ? "Detail" : "Tinjau"}
+                  {n === 1 ? "Kategori & Foto" : n === 2 ? "Detail & Lokasi" : "Tinjau"}
                 </span>
                 {n < 3 && <span className={`h-0.5 flex-1 rounded ${step > n ? "bg-brand-600" : "bg-ink-300"}`} />}
               </li>
@@ -181,28 +182,22 @@ export default function LaporClient() {
 
               <div>
                 <label className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
-                  <MapPin size={15} className="text-brand-600" /> Tandai Lokasi di Peta
+                  <Camera size={15} className="text-brand-600" /> Foto Pendukung
                 </label>
-                <MiniMap
-                  value={pos}
-                  onPick={(p) => {
-                    setPos(p);
-                    setAlamat(`Lat ${p.lat.toFixed(4)}, Lng ${p.lng.toFixed(4)}`);
-                  }}
-                />
-                <input
-                  className={`${input} mt-3`}
-                  placeholder="Atau ketik alamat lengkap…"
-                  value={alamat}
-                  onChange={(e) => setAlamat(e.target.value)}
-                />
+                <div
+                  onClick={() => setFoto((f) => Math.min(f + 1, 5))}
+                  className="grid cursor-pointer place-items-center rounded-xl border-2 border-dashed border-ink-300 bg-brand-50/50 p-8 text-center transition-colors hover:border-brand-600 hover:text-cream"
+                >
+                  <Camera size={28} className="text-ink-300" />
+                  <p className="mt-2 text-sm font-semibold text-ink-700">Klik untuk simulasi unggah foto</p>
+                  <p className="text-xs text-ink-500">{foto} foto terlampir (maks 5)</p>
+                </div>
               </div>
 
               <div className="flex justify-end">
                 <button
                   onClick={() => setStep(2)}
-                  disabled={!alamat}
-                  className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-brand-700"
                 >
                   Lanjut <ArrowRight size={18} />
                 </button>
@@ -228,16 +223,21 @@ export default function LaporClient() {
               </div>
               <div>
                 <label className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
-                  <Camera size={15} className="text-brand-600" /> Foto Pendukung
+                  <MapPin size={15} className="text-brand-600" /> Tandai Lokasi di Peta
                 </label>
-                <div
-                  onClick={() => setFoto((f) => Math.min(f + 1, 5))}
-                  className="grid cursor-pointer place-items-center rounded-xl border-2 border-dashed border-ink-300 bg-brand-50/50 p-8 text-center transition-colors hover:border-brand-600 hover:text-cream"
-                >
-                  <Camera size={28} className="text-ink-300" />
-                  <p className="mt-2 text-sm font-semibold text-ink-700">Klik untuk simulasi unggah foto</p>
-                  <p className="text-xs text-ink-500">{foto} foto terlampir (maks 5)</p>
-                </div>
+                <MiniMap
+                  value={pos}
+                  onPick={(p) => {
+                    setPos(p);
+                    setAlamat(`Lat ${p.lat.toFixed(4)}, Lng ${p.lng.toFixed(4)}`);
+                  }}
+                />
+                <input
+                  className={`${input} mt-3`}
+                  placeholder="Atau ketik alamat lengkap…"
+                  value={alamat}
+                  onChange={(e) => setAlamat(e.target.value)}
+                />
               </div>
               <div className="flex justify-between">
                 <button onClick={() => setStep(1)} className="inline-flex items-center gap-2 rounded-xl border border-ink-300 px-5 py-3 font-semibold text-ink-700 hover:border-brand-600 hover:text-cream">
@@ -245,7 +245,7 @@ export default function LaporClient() {
                 </button>
                 <button
                   onClick={() => setStep(3)}
-                  disabled={!judul || !deskripsi}
+                  disabled={!judul || !deskripsi || !alamat}
                   className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   Lanjut <ArrowRight size={18} />
@@ -344,6 +344,26 @@ export default function LaporClient() {
               <Ticket size={15} /> Nomor tiket: <span className="font-mono font-bold text-ink-900">{tiket}</span>
             </p>
           </div>
+
+          {/* AUTO-ROUTING TO DINAS BANNER */}
+          {(() => {
+            const wTarget = getWilayah(deteksiWilayah(alamat));
+            return (
+              <div className="mb-6 flex items-center gap-4 rounded-2xl border border-brand-600/30 bg-brand-50/50 p-4">
+                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-brand-600 text-white">
+                  <Building2 size={22} />
+                </span>
+                <div className="min-w-0 flex-1 text-left">
+                  <p className="text-xs font-bold uppercase tracking-wide text-brand-700">Diteruskan Otomatis Ke Instansi Dinas</p>
+                  <p className="font-display text-base font-extrabold text-cream">{wTarget.nama}</p>
+                  <p className="text-xs text-ink-500 font-mono mt-0.5">{wTarget.dinasEmail}</p>
+                </div>
+                <span className="rounded-full bg-success-bg px-3 py-1 text-xs font-bold text-success shrink-0">
+                  Tersampaikan ✓
+                </span>
+              </div>
+            );
+          })()}
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-xl border border-ink-300/60 p-5">

@@ -4,7 +4,7 @@ import LoginClient from "./LoginClient";
 export const metadata = {
   title: "Masuk",
   description:
-    "Masuk ke SIGAP sebagai warga, admin pemerintah, atau petugas lapangan untuk melaporkan dan menangani masalah lingkungan kota.",
+    "Masuk ke SIGAP sebagai warga, admin pemerintah, petugas lapangan, atau dinas instansi untuk melaporkan dan menangani masalah lingkungan kota.",
 };
 
 export default function LoginPage() {

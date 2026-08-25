@@ -11,16 +11,13 @@ const JENIS = [
   { icon: HeartPulse, label: "Medis / Kecelakaan" },
 ];
 
-// Halaman yang sudah punya jalur darurat sendiri di dalam konten.
-// Menampilkan FAB di sini hanya menduplikasi aksi dan — pada layar
-// kecil — menimpa tombol utama halaman.
 const SEMBUNYIKAN_DI = ["/login"];
 
 export function EmergencyButton() {
   const [open, setOpen] = useState(false);
   const [terkirim, setTerkirim] = useState(false);
   const [pilih, setPilih] = useState(0);
-  const { tambahNotif, tambahPoin } = useApp();
+  const { user, tambahNotif, tambahPoin } = useApp();
   const pathname = usePathname();
 
   const panelRef = useRef<HTMLDivElement>(null);
@@ -32,7 +29,6 @@ export function EmergencyButton() {
     setTerkirim(false);
   }, []);
 
-  /* Escape untuk menutup + kunci scroll latar selama dialog terbuka. */
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -49,8 +45,6 @@ export function EmergencyButton() {
     };
   }, [open, tutup]);
 
-  /* Fokus masuk ke dialog saat dibuka, dan kembali ke pemicu saat ditutup.
-     Tanpa ini pengguna keyboard "terjebak" di belakang overlay. */
   useEffect(() => {
     if (open) {
       pemicuRef.current = document.activeElement as HTMLElement;
@@ -60,8 +54,6 @@ export function EmergencyButton() {
     }
   }, [open]);
 
-  /* Jerat Tab di dalam dialog (WCAG 2.1.2 No Keyboard Trap terbalik:
-     fokus tidak boleh bocor ke konten yang tersembunyi di belakang). */
   function jeratTab(e: React.KeyboardEvent) {
     if (e.key !== "Tab" || !panelRef.current) return;
     const f = panelRef.current.querySelectorAll<HTMLElement>(
@@ -73,7 +65,6 @@ export function EmergencyButton() {
     else if (!e.shiftKey && document.activeElement === terakhir) { e.preventDefault(); pertama.focus(); }
   }
 
-  /* Bersihkan timer bila komponen dilepas sebelum hitungan selesai. */
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
   function kirim() {
@@ -88,11 +79,18 @@ export function EmergencyButton() {
     timerRef.current = setTimeout(tutup, 2600);
   }
 
-  if (SEMBUNYIKAN_DI.includes(pathname)) return null;
+  // Sinyal darurat HANYA untuk warga dan petugas saja
+  if (user && user.role !== "warga" && user.role !== "petugas") {
+    return null;
+  }
+
+  // Sembunyikan juga di halaman admin & dinas
+  if (SEMBUNYIKAN_DI.includes(pathname) || pathname.startsWith("/dashboard") || pathname.startsWith("/dinas")) {
+    return null;
+  }
 
   return (
     <>
-      {/* FAB — diberi jarak aman iOS (home indicator) lewat env(safe-area-inset). */}
       <button
         onClick={() => setOpen(true)}
         aria-label="Kirim sinyal darurat"
@@ -140,7 +138,6 @@ export function EmergencyButton() {
                   </button>
                 </div>
 
-                {/* Pilihan jenis: radiogroup sungguhan, bukan tombol berwarna saja. */}
                 <div role="radiogroup" aria-label="Jenis keadaan darurat" className="space-y-2">
                   {JENIS.map((j, i) => {
                     const Ic = j.icon;
@@ -159,7 +156,6 @@ export function EmergencyButton() {
                         }`}
                       >
                         <Ic size={18} aria-hidden="true" /> {j.label}
-                        {/* Penanda non-warna agar tetap jelas bagi buta warna */}
                         {dipilih && <span aria-hidden="true" className="ml-auto text-xs">✓</span>}
                       </button>
                     );
@@ -177,7 +173,6 @@ export function EmergencyButton() {
                 </p>
               </>
             ) : (
-              /* role=status agar pembaca layar mengumumkan hasil tanpa memindah fokus */
               <div role="status" className="py-6 text-center">
                 <span className="anim-pop mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full bg-success-bg text-success">
                   <PhoneCall size={30} aria-hidden="true" />

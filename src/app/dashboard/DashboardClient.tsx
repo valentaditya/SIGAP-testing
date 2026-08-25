@@ -1,34 +1,41 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import dynamic from "next/dynamic";
 import { Sidebar, type DashboardView } from "@/components/Sidebar";
 import { Chip } from "@/components/Chip";
-import { ChartBox } from "@/components/ChartBox";
-import { Counter } from "@/components/Counter";
 import { Reveal } from "@/components/Reveal";
 import {
-  LAPORAN, KATEGORI, STATUS_ORDER, STATUS_LABEL, statusTone,
-  priorityColor, priorityLabel, getKategori,
-  KEGIATAN, KEGIATAN_HARI, KEGIATAN_LABEL, HARI_LAPORAN, formatHari,
+  WILAYAH,
+  KEGIATAN,
+  KEGIATAN_LABEL,
+  type Kegiatan,
   type KegiatanTipe,
+  type WilayahId,
 } from "@/lib/data";
 import {
-  FileText, Clock, CheckCircle2, TrendingUp, Flame, ThumbsUp, Camera, ArrowUpDown,
-  Search, X, RotateCcw, Filter, MapPin,
-  Wrench, BadgeCheck, UserCheck, FilePlus2,
+  Users,
+  Building2,
+  HardHat,
+  UserRound,
+  Search,
+  Filter,
+  Plus,
+  Trash2,
+  ToggleLeft,
+  ToggleRight,
+  Activity,
+  CheckCircle2,
+  BadgeCheck,
+  UserCheck,
+  Wrench,
+  FilePlus2,
+  MapPin,
+  Shield,
+  X,
+  UserPlus,
 } from "lucide-react";
-import { useApp } from "@/lib/store";
+import { useApp, type Role, type UserRecord } from "@/lib/store";
 
-const AdminMap = dynamic(() => import("@/components/AdminMap").then((m) => m.AdminMap), {
-  ssr: false,
-  loading: () => <div className="grid h-full place-items-center text-sm text-ink-500">Memuat peta…</div>,
-});
-
-type SortKey = "id" | "judul" | "kategori" | "dukungan" | "priority" | "status";
-type FilterPrioritas = "all" | "darurat" | "tinggi" | "sedang" | "rendah";
-
-/* Ikon + warna per tipe kegiatan harian */
 const TIPE_META: Record<KegiatanTipe, { icon: any; cls: string }> = {
   baru: { icon: FilePlus2, cls: "bg-info-bg text-info" },
   verifikasi: { icon: BadgeCheck, cls: "bg-brand-100 text-brand-600" },
@@ -38,537 +45,535 @@ const TIPE_META: Record<KegiatanTipe, { icon: any; cls: string }> = {
 };
 
 export default function DashboardClient() {
-  const [view, setView] = useState<DashboardView>("overview");
+  const [view, setView] = useState<DashboardView>("pengguna");
+  const { daftarUser, tambahUser, hapusUser, ubahStatusUser, laporanWarga } = useApp();
+
+  // State untuk Tab Manajemen User
+  const [roleTab, setRoleTab] = useState<Role | "semua">("dinas");
+  const [userSearch, setUserSearch] = useState("");
+  const [userStatusFilter, setUserStatusFilter] = useState<"semua" | "aktif" | "nonaktif">("semua");
+  const [userWilayahFilter, setUserWilayahFilter] = useState<"semua" | WilayahId>("semua");
+
+  // State Modal Tambah User
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [newNama, setNewNama] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [newRole, setNewRole] = useState<Role>("dinas");
+  const [newWilayah, setNewWilayah] = useState<WilayahId>("sleman");
+
+  // State untuk Tab Log Keseluruhan Data
+  const [logSearch, setLogSearch] = useState("");
+  const [logWilayahFilter, setLogWilayahFilter] = useState<"semua" | WilayahId>("semua");
+  const [logTipeFilter, setLogTipeFilter] = useState<"semua" | KegiatanTipe>("semua");
+  const [logHariFilter, setLogHariFilter] = useState<string>("2026-01-15");
 
   useEffect(() => {
     window.scrollTo({ top: 0 });
   }, [view]);
 
+  // Combined User Records Filtered
+  const filteredUsers = useMemo(() => {
+    return daftarUser.filter((u) => {
+      const matchRole = roleTab === "semua" || u.role === roleTab;
+      const matchSearch =
+        u.nama.toLowerCase().includes(userSearch.toLowerCase()) ||
+        u.email.toLowerCase().includes(userSearch.toLowerCase());
+      const matchStatus =
+        userStatusFilter === "semua"
+          ? true
+          : userStatusFilter === "aktif"
+          ? u.aktif
+          : !u.aktif;
+      const matchWilayah =
+        userWilayahFilter === "semua" || u.wilayah === userWilayahFilter;
+
+      return matchRole && matchSearch && matchStatus && matchWilayah;
+    });
+  }, [daftarUser, roleTab, userSearch, userStatusFilter, userWilayahFilter]);
+
+  // Combined Logs Filtered
+  const allLogsWithMeta = useMemo(() => {
+    const rawList = KEGIATAN[logHariFilter] ?? [];
+    return rawList.map((k) => {
+      const lap = laporanWarga.find((l) => l.id === k.laporanId);
+      return {
+        ...k,
+        wilayah: lap?.wilayah ?? "sleman",
+        judulLaporan: lap?.judul ?? "Laporan Infrastruktur",
+      };
+    });
+  }, [logHariFilter, laporanWarga]);
+
+  const filteredLogs = useMemo(() => {
+    return allLogsWithMeta.filter((log) => {
+      const matchSearch =
+        log.laporanId.toLowerCase().includes(logSearch.toLowerCase()) ||
+        log.aktor.toLowerCase().includes(logSearch.toLowerCase()) ||
+        (log.catatan ?? "").toLowerCase().includes(logSearch.toLowerCase());
+      const matchWilayah = logWilayahFilter === "semua" || log.wilayah === logWilayahFilter;
+      const matchTipe = logTipeFilter === "semua" || log.tipe === logTipeFilter;
+      return matchSearch && matchWilayah && matchTipe;
+    });
+  }, [allLogsWithMeta, logSearch, logWilayahFilter, logTipeFilter]);
+
+  const countDinas = daftarUser.filter((u) => u.role === "dinas").length;
+  const countPetugas = daftarUser.filter((u) => u.role === "petugas").length;
+  const countWarga = daftarUser.filter((u) => u.role === "warga").length;
+  const countAktif = daftarUser.filter((u) => u.aktif).length;
+
+  const handleCreateUser = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newNama || !newEmail) return;
+    tambahUser({
+      nama: newNama,
+      email: newEmail,
+      role: newRole,
+      wilayah: newRole === "dinas" ? newWilayah : undefined,
+      aktif: true,
+    });
+    setNewNama("");
+    setNewEmail("");
+    setShowAddUserModal(false);
+  };
+
   return (
     <div className="grid min-h-[calc(100vh-var(--nav-h))] w-full grid-cols-1 lg:grid-cols-[240px_1fr]">
       <Sidebar view={view} onChange={setView} />
-      <main className="w-full max-w-none p-5 md:p-8">
-        {view === "overview" ? <Overview onGoLaporan={() => setView("laporan")} /> : <LaporanView />}
-      </main>
-    </div>
-  );
-}
 
-/* ============================================================
-   OVERVIEW — peta di highlight duluan → KPI → kegiatan 1 hari → analitik
-   ============================================================ */
-function Overview({ onGoLaporan }: { onGoLaporan: () => void }) {
-  const { user } = useApp();
-  const [day, setDay] = useState(KEGIATAN_HARI[0].key);
-  const [expanded, setExpanded] = useState(false);
-  const kegiatan = KEGIATAN[day] ?? [];
-  const dayInfo = KEGIATAN_HARI.find((h) => h.key === day);
-  const nama = user?.nama?.trim() || "Admin";
-  const sapaan = /^(pak|bu)\s/i.test(nama) ? nama : `Pak ${nama}`;
-  const tampil = expanded ? kegiatan : kegiatan.slice(0, 6);
-
-  const aktif = LAPORAN.filter((x) => x.status !== "resolved");
-  const avg = Math.round((LAPORAN.reduce((a, b) => a + b.ai.priorityScore, 0) / LAPORAN.length) * 10) / 10;
-  const kritis = LAPORAN.filter((x) => x.ai.priorityScore >= 9).length;
-  const menunggu = LAPORAN.filter((x) => x.status === "reported").length;
-  const diproses = LAPORAN.filter((x) => ["verified", "assigned", "in_progress"].includes(x.status)).length;
-  const selesai = LAPORAN.filter((x) => x.status === "resolved").length;
-
-  const kpis = [
-    { lbl: "Total Laporan", val: LAPORAN.length, sub: "12 laporan aktif & selesai", tone: "neutral" as const, icon: FileText },
-    { lbl: "Menunggu Verifikasi", val: menunggu, sub: "Perlu tindakan admin", tone: "danger" as const, icon: Clock },
-    { lbl: "Sedang Diproses", val: diproses, sub: "Sudah ditugaskan", tone: "warning" as const, icon: TrendingUp },
-    { lbl: "Selesai", val: selesai, sub: "Bulan berjalan", tone: "success" as const, icon: CheckCircle2 },
-    { lbl: "Skor Darurat ≥9", val: kritis, sub: "Prioritas tertinggi", tone: "danger" as const, icon: Flame },
-  ];
-
-  return (
-    <>
-      {/* ===== Header ===== */}
-      <Reveal className="mb-7 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-extrabold md:text-3xl">
-            Selamat pagi, <span className="text-brand-600">{sapaan}</span>{" "}
-            <span role="img" aria-label="lambaian tangan">👋</span>
-          </h1>
-          <p className="mt-1 text-sm text-ink-500">
-            Ringkasan laporan wilayah Kota Yogyakarta · diperbarui 15 Jan 2026, 08.30 WIB
-          </p>
-          <p className="micro-label mt-2 text-sage">01 · ringkasan hari ini</p>
-        </div>
-        <button
-          onClick={onGoLaporan}
-          className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-3 text-sm font-semibold text-white shadow-[var(--shadow-card)] transition-colors hover:bg-brand-700"
-        >
-          <FileText size={16} /> Tinjau Antrean Verifikasi
-        </button>
-      </Reveal>
-
-      {/* ===== KPI — di atas peta ===== */}
-      <div className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
-        {kpis.map((k, i) => {
-          const Ic = k.icon;
-          return (
-            <Reveal key={k.lbl} delay={i * 80} className="rounded-2xl bg-surface p-5 shadow-[var(--shadow-card)]">
-              <div className="mb-1.5 flex items-center justify-between">
-                <p className="text-xs font-semibold uppercase tracking-[.06em] text-ink-500">{k.lbl}</p>
-                <Ic size={16} className="text-ink-300" />
-              </div>
-              <p className="font-display text-3xl font-extrabold leading-tight">
-                <Counter to={k.val} dur={850} delay={i * 80} />
-              </p>
-              <div className="mt-2">
-                <Chip tone={k.tone === "neutral" ? "neutral" : k.tone}>{k.sub}</Chip>
-              </div>
-            </Reveal>
-          );
-        })}
-      </div>
-
-      {/* ===== 01 · PETA (kecil) + LOG KEGIATAN (ringkas) berdampingan ===== */}
-      <section id="peta" className="mb-8">
-        <Reveal className="mb-5 flex items-baseline justify-between border-t-2 border-cream pt-4">
-          <div>
-            <h2 className="font-display text-xl font-bold md:text-2xl">Peta &amp; Log Kegiatan</h2>
-            <p className="mt-1 text-sm text-ink-500">
-              Sebaran laporan di peta — di sebelahnya, kegiatan proses yang terjadi hari ini
-            </p>
-          </div>
-          <p className="micro-label text-sage">01 · fokus utama</p>
-        </Reveal>
-
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.15fr_.85fr]">
-          {/* Peta — mengisi tinggi agar bawahnya sejajar dengan log kegiatan */}
-          <Reveal delay={80}>
-            <div className="relative flex h-full flex-col overflow-hidden rounded-3xl border-2 border-tan/50 bg-surface shadow-[var(--shadow-pop)]">
-              <div className="pointer-events-none absolute left-4 top-4 z-[900] flex items-center gap-2 rounded-full bg-bg/90 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[.14em] text-tan ring-1 ring-tan/40 backdrop-blur">
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-tan opacity-60" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-tan" />
-                </span>
-                Fokus Utama
-              </div>
-              <div className="pointer-events-none absolute right-4 top-4 z-[900] hidden items-center gap-4 rounded-2xl bg-bg/90 px-3.5 py-2 ring-1 ring-white/10 backdrop-blur sm:flex">
-                <div className="text-center">
-                  <p className="font-display text-base font-extrabold leading-none text-cream">{aktif.length}</p>
-                  <p className="mt-0.5 text-[9px] uppercase tracking-[.12em] text-sage">Aktif</p>
+      <main className="w-full max-w-none p-5 md:p-8 bg-ground">
+        {/* VIEW 1: MANAJEMEN USER (Dinas, Petugas, Warga) */}
+        {view === "pengguna" && (
+          <Reveal>
+            <div className="space-y-6">
+              {/* Header section */}
+              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-ink-300/40 pb-5">
+                <div>
+                  <h1 className="font-display text-2xl font-extrabold text-cream-hi md:text-3xl flex items-center gap-2.5">
+                    <Users className="text-brand-600" /> Kelola Manajemen User System
+                  </h1>
+                  <p className="mt-1 text-sm text-ink-500">
+                    Pemisahan dan pengelolaan akun instansi Dinas, Petugas Lapangan, dan Warga pelapor.
+                  </p>
                 </div>
-                <div className="h-7 w-px bg-ink-300" />
-                <div className="text-center">
-                  <p className="font-display text-base font-extrabold leading-none text-tan">{kritis}</p>
-                  <p className="mt-0.5 text-[9px] uppercase tracking-[.12em] text-sage">Darurat</p>
+                <button
+                  onClick={() => setShowAddUserModal(true)}
+                  className="btn-anim inline-flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-xs font-bold text-white shadow-md hover:bg-brand-700"
+                >
+                  <UserPlus size={16} /> Tambah User Baru
+                </button>
+              </div>
+
+              {/* Summary Cards */}
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                <div
+                  onClick={() => setRoleTab("dinas")}
+                  className={`card-hover cursor-pointer rounded-2xl border p-4 transition-all ${
+                    roleTab === "dinas" ? "border-brand-600 bg-brand-50/20" : "border-ink-300/40 bg-surface"
+                  }`}
+                >
+                  <p className="text-xs font-bold text-ink-500 flex items-center gap-1.5">
+                    <Building2 size={14} className="text-brand-600" /> Akun Dinas
+                  </p>
+                  <p className="font-display text-2xl font-extrabold text-cream mt-1">{countDinas}</p>
+                </div>
+                <div
+                  onClick={() => setRoleTab("petugas")}
+                  className={`card-hover cursor-pointer rounded-2xl border p-4 transition-all ${
+                    roleTab === "petugas" ? "border-brand-600 bg-brand-50/20" : "border-ink-300/40 bg-surface"
+                  }`}
+                >
+                  <p className="text-xs font-bold text-ink-500 flex items-center gap-1.5">
+                    <HardHat size={14} className="text-warning" /> Petugas Lapangan
+                  </p>
+                  <p className="font-display text-2xl font-extrabold text-cream mt-1">{countPetugas}</p>
+                </div>
+                <div
+                  onClick={() => setRoleTab("warga")}
+                  className={`card-hover cursor-pointer rounded-2xl border p-4 transition-all ${
+                    roleTab === "warga" ? "border-brand-600 bg-brand-50/20" : "border-ink-300/40 bg-surface"
+                  }`}
+                >
+                  <p className="text-xs font-bold text-ink-500 flex items-center gap-1.5">
+                    <UserRound size={14} className="text-success" /> Warga Pelapor
+                  </p>
+                  <p className="font-display text-2xl font-extrabold text-cream mt-1">{countWarga}</p>
+                </div>
+                <div className="rounded-2xl border border-ink-300/40 bg-surface p-4">
+                  <p className="text-xs font-bold text-success flex items-center gap-1.5">
+                    <CheckCircle2 size={14} /> Total User Aktif
+                  </p>
+                  <p className="font-display text-2xl font-extrabold text-success mt-1">{countAktif}</p>
                 </div>
               </div>
 
-              <div className="min-h-[260px] flex-1 max-h-[560px]">
-                <AdminMap fill />
-              </div>
+              {/* Controls & Filter */}
+              <div className="rounded-3xl border border-ink-300/40 bg-surface p-6 shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+                  {/* Role Tabs */}
+                  <div className="flex flex-wrap gap-1.5 rounded-xl bg-ground p-1 border border-ink-300/40">
+                    <button
+                      onClick={() => setRoleTab("dinas")}
+                      className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-extrabold transition-all ${
+                        roleTab === "dinas" ? "bg-brand-600 text-white shadow" : "text-ink-500 hover:text-cream"
+                      }`}
+                    >
+                      <Building2 size={13} /> Dinas ({countDinas})
+                    </button>
+                    <button
+                      onClick={() => setRoleTab("petugas")}
+                      className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-extrabold transition-all ${
+                        roleTab === "petugas" ? "bg-brand-600 text-white shadow" : "text-ink-500 hover:text-cream"
+                      }`}
+                    >
+                      <HardHat size={13} /> Petugas ({countPetugas})
+                    </button>
+                    <button
+                      onClick={() => setRoleTab("warga")}
+                      className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-extrabold transition-all ${
+                        roleTab === "warga" ? "bg-brand-600 text-white shadow" : "text-ink-500 hover:text-cream"
+                      }`}
+                    >
+                      <UserRound size={13} /> Warga ({countWarga})
+                    </button>
+                    <button
+                      onClick={() => setRoleTab("semua")}
+                      className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-extrabold transition-all ${
+                        roleTab === "semua" ? "bg-brand-600 text-white shadow" : "text-ink-500 hover:text-cream"
+                      }`}
+                    >
+                      Semua User ({daftarUser.length})
+                    </button>
+                  </div>
 
-              <div className="flex flex-wrap items-center gap-2 border-t border-ink-300 bg-ground px-4 py-3">
-                <span className="mr-1 inline-flex items-center gap-1.5 text-xs font-semibold text-sage-pale">
-                  <MapPin size={13} className="text-tan" /> Legenda
-                </span>
-                <Chip tone="danger">Darurat (≥9)</Chip>
-                <Chip tone="warning">Tinggi (7–8.9)</Chip>
-                <Chip tone="success">Sedang / Rendah</Chip>
-              </div>
-            </div>
-          </Reveal>
-
-          {/* Log kegiatan — ringkas, tidak terlalu panjang */}
-          <Reveal delay={120} className="flex h-full flex-col rounded-2xl bg-surface p-5 shadow-[var(--shadow-card)]">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <h3 className="font-display text-base font-bold">Log Kegiatan</h3>
-                <p className="text-xs text-ink-500">{dayInfo?.tanggal} · {kegiatan.length} kegiatan</p>
-              </div>
-              <div className="flex gap-1">
-                {KEGIATAN_HARI.map((h) => (
-                  <button
-                    key={h.key}
-                    onClick={() => { setDay(h.key); setExpanded(false); }}
-                    className={`rounded-full border px-3 py-1.5 text-[11px] font-bold transition-all ${
-                      day === h.key
-                        ? "border-tan bg-tan text-white"
-                        : "border-ink-300 text-sage-pale hover:border-tan hover:text-tan"
-                    }`}
-                  >
-                    {h.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <ul id="kegiatan" className="space-y-0.5">
-              {tampil.map((k, i) => {
-                const meta = TIPE_META[k.tipe];
-                const Ic = meta.icon;
-                const l = LAPORAN.find((x) => x.id === k.laporanId);
-                const kat = l ? getKategori(l.kategori) : null;
-                const isLast = i === tampil.length - 1;
-                return (
-                  <li key={k.id} className="flex gap-3">
-                    <div className="w-[2.75rem] shrink-0 pt-1.5 text-right">
-                      <span className="font-mono text-[11px] font-semibold text-tan">{k.jam}</span>
+                  {/* Filters */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="relative">
+                      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-500" />
+                      <input
+                        value={userSearch}
+                        onChange={(e) => setUserSearch(e.target.value)}
+                        placeholder="Cari nama / email…"
+                        className="h-9 rounded-xl border border-ink-300/60 bg-ground pl-8 pr-3 text-xs text-cream placeholder-ink-500 focus:border-brand-600 focus:outline-none"
+                      />
                     </div>
-                    <div className="flex flex-col items-center">
-                      <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full ${meta.cls}`}>
-                        <Ic size={12} />
-                      </span>
-                      {!isLast && <span className="w-px flex-1 bg-ink-300" />}
-                    </div>
-                    <div className="min-w-0 pb-3">
-                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                        <span className="text-[13px] font-bold">{KEGIATAN_LABEL[k.tipe]}</span>
-                        {kat && (
-                          <span
-                            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
-                            style={{ background: `${kat.warna}1a`, color: kat.warna }}
-                          >
-                            <span className="h-1.5 w-1.5 rounded-full" style={{ background: kat.warna }} />
-                            {kat.nama}
-                          </span>
-                        )}
-                        <span className="text-[11px] text-ink-500">{k.aktor}</span>
-                      </div>
-                      <p className="mt-0.5 truncate text-[13px] font-medium text-ink-700">{l?.judul ?? k.laporanId}</p>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
 
-            {kegiatan.length > 6 && (
-              <button
-                onClick={() => setExpanded((e) => !e)}
-                className="mt-auto inline-flex items-center justify-center gap-1.5 rounded-xl border border-ink-300 px-4 py-2 text-xs font-bold text-sage-pale transition-colors hover:border-tan hover:text-tan"
-              >
-                {expanded ? "Sembunyikan" : `Lihat ${kegiatan.length - 6} kegiatan lainnya`}
-              </button>
-            )}
-          </Reveal>
-        </div>
-      </section>
+                    <select
+                      value={userStatusFilter}
+                      onChange={(e) => setUserStatusFilter(e.target.value as any)}
+                      className="h-9 rounded-xl border border-ink-300/60 bg-ground px-2.5 text-xs text-cream focus:border-brand-600 focus:outline-none"
+                    >
+                      <option value="semua">Semua Status</option>
+                      <option value="aktif">Status: Aktif</option>
+                      <option value="nonaktif">Status: Nonaktif</option>
+                    </select>
 
-      {/* ===== 03 · ANALITIK — hanya di bagian bawah ===== */}
-      <section id="analitik" className="mb-7">
-        <Reveal delay={110} className="mb-5 flex items-baseline justify-between border-t-2 border-cream pt-4">
-          <div>
-            <h2 className="font-display text-xl font-bold">Analitik</h2>
-            <p className="mt-1 text-sm text-ink-500">Performa penanganan dan pembentukan skor prioritas</p>
-          </div>
-          <p className="micro-label text-sage">02 · performa penanganan</p>
-        </Reveal>
-        <div className="mb-5 grid grid-cols-1 gap-5 xl:grid-cols-[1.2fr_.8fr]">
-          <Reveal delay={150} className="rounded-2xl bg-surface p-6 shadow-[var(--shadow-card)]">
-            <h3 className="font-display text-lg font-bold">Antrean per Kategori & Prioritas</h3>
-            <p className="mb-4 text-sm text-ink-500">Laporan aktif (belum selesai) — batang merah menandai banyak kasus darurat</p>
-            <ChartBox def={{ kind: "barKatPrio" }} height={300} />
-          </Reveal>
-          <Reveal delay={190} className="rounded-2xl bg-surface p-6 shadow-[var(--shadow-card)]">
-            <h3 className="font-display text-lg font-bold">Rata-rata Priority Score</h3>
-            <p className="mb-4 text-sm text-ink-500">Seluruh laporan aktif saat ini</p>
-            <div className="relative">
-              <ChartBox def={{ kind: "gauge", value: avg }} height={220} />
-              <div className="pointer-events-none absolute inset-x-0 bottom-2 text-center">
-                <div className="font-display text-4xl font-extrabold" style={{ color: priorityColor(avg) }}>
-                  <Counter to={avg} decimals={1} dur={950} delay={340} />
+                    <select
+                      value={userWilayahFilter}
+                      onChange={(e) => setUserWilayahFilter(e.target.value as any)}
+                      className="h-9 rounded-xl border border-ink-300/60 bg-ground px-2.5 text-xs text-cream focus:border-brand-600 focus:outline-none"
+                    >
+                      <option value="semua">Semua Wilayah</option>
+                      {WILAYAH.map((w) => (
+                        <option key={w.id} value={w.id}>{w.nama}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-                <div className="text-sm text-ink-500">{priorityLabel(avg)}</div>
+
+                {/* Users Table */}
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[650px] text-sm">
+                    <thead>
+                      <tr className="border-b border-ink-300/40 text-left text-xs font-bold uppercase tracking-wider text-ink-500">
+                        <th className="pb-3 pr-3">User &amp; Contact</th>
+                        <th className="pb-3 pr-3">Peran / Role</th>
+                        <th className="pb-3 pr-3">Wilayah / Instansi</th>
+                        <th className="pb-3 pr-3">Status</th>
+                        <th className="pb-3 text-right">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-ink-300/20">
+                      {filteredUsers.length === 0 && (
+                        <tr>
+                          <td colSpan={5} className="py-8 text-center text-ink-500">
+                            Tidak ada data user yang sesuai kriteria filter.
+                          </td>
+                        </tr>
+                      )}
+                      {filteredUsers.map((u) => {
+                        const wData = u.wilayah ? WILAYAH.find((w) => w.id === u.wilayah) : null;
+                        return (
+                          <tr key={u.id} className="transition-colors hover:bg-ground/40">
+                            <td className="py-3.5 pr-3">
+                              <p className="font-bold text-cream">{u.nama}</p>
+                              <p className="font-mono text-xs text-ink-500">{u.email}</p>
+                            </td>
+                            <td className="py-3.5 pr-3">
+                              <span className="inline-flex items-center gap-1.5 rounded-full bg-ground border border-ink-300/40 px-2.5 py-1 text-xs font-bold capitalize text-cream">
+                                {u.role === "dinas" && <Building2 size={12} className="text-brand-600" />}
+                                {u.role === "petugas" && <HardHat size={12} className="text-warning" />}
+                                {u.role === "warga" && <UserRound size={12} className="text-success" />}
+                                {u.role === "admin" && <Shield size={12} className="text-danger" />}
+                                {u.role}
+                              </span>
+                            </td>
+                            <td className="py-3.5 pr-3">
+                              {wData ? (
+                                <span className="text-xs font-medium text-success flex items-center gap-1">
+                                  <MapPin size={11} /> {wData.nama}
+                                </span>
+                              ) : (
+                                <span className="text-xs text-ink-500">—</span>
+                              )}
+                            </td>
+                            <td className="py-3.5 pr-3">
+                              <button
+                                onClick={() => ubahStatusUser(u.id, !u.aktif)}
+                                className="inline-flex items-center gap-1.5 text-xs font-bold cursor-pointer"
+                              >
+                                {u.aktif ? (
+                                  <span className="flex items-center gap-1 text-success">
+                                    <ToggleRight size={18} /> Aktif
+                                  </span>
+                                ) : (
+                                  <span className="flex items-center gap-1 text-ink-500">
+                                    <ToggleLeft size={18} /> Nonaktif
+                                  </span>
+                                )}
+                              </button>
+                            </td>
+                            <td className="py-3.5 text-right">
+                              <button
+                                onClick={() => hapusUser(u.id)}
+                                className="text-xs font-bold text-danger hover:underline inline-flex items-center gap-1"
+                              >
+                                <Trash2 size={13} /> Hapus
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </Reveal>
-        </div>
+        )}
 
-        <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.2fr_.8fr]">
-          <Reveal delay={230} className="rounded-2xl bg-surface p-6 shadow-[var(--shadow-card)]">
-            <h3 className="font-display text-lg font-bold">Tren 6 Bulan Terakhir</h3>
-            <p className="mb-4 text-sm text-ink-500">Laporan masuk vs diselesaikan</p>
-            <ChartBox def={{ kind: "tren" }} height={260} />
-          </Reveal>
-          <Reveal delay={270} className="rounded-2xl bg-surface p-6 shadow-[var(--shadow-card)]">
-            <h3 className="font-display text-lg font-bold">Faktor Pembentuk Skor</h3>
-            <p className="mb-4 text-sm text-ink-500">Kontribusi rata-rata tiap faktor analisis AI</p>
-            <ChartBox def={{ kind: "radar" }} height={260} />
-          </Reveal>
-        </div>
-      </section>
-    </>
-  );
-}
+        {/* VIEW 2: LOG KESELURUHAN DATA DINAS */}
+        {view === "log" && (
+          <Reveal>
+            <div className="space-y-6">
+              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-ink-300/40 pb-5">
+                <div>
+                  <h1 className="font-display text-2xl font-extrabold text-cream-hi md:text-3xl flex items-center gap-2.5">
+                    <Activity className="text-brand-600" /> Log Keseluruhan Aktivitas Data Dinas
+                  </h1>
+                  <p className="mt-1 text-sm text-ink-500">
+                    Jejak rekam aktivitas verifikasi, penugasan, dan penanganan di seluruh wilayah instansi dinas.
+                  </p>
+                </div>
+              </div>
 
-/* ============================================================
-   LAPORAN — menu tersendiri dengan filter lengkap
-   (pencarian, hari, kategori, status, prioritas)
-   ============================================================ */
-function LaporanView() {
-  const [q, setQ] = useState("");
-  const [hari, setHari] = useState("all");
-  const [kategori, setKategori] = useState<string>("all");
-  const [status, setStatus] = useState<string>("all");
-  const [prioritas, setPrioritas] = useState<FilterPrioritas>("all");
-  const [sortKey, setSortKey] = useState<SortKey>("priority");
-  const [sortDir, setSortDir] = useState<1 | -1>(-1);
+              {/* Log Controls */}
+              <div className="rounded-3xl border border-ink-300/40 bg-surface p-6 shadow-sm space-y-6">
+                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-ink-300/30 pb-4">
+                  {/* Date selector */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-ink-500">Tanggal:</span>
+                    <select
+                      value={logHariFilter}
+                      onChange={(e) => setLogHariFilter(e.target.value)}
+                      className="h-9 rounded-xl border border-ink-300/60 bg-ground px-3 text-xs font-bold text-cream focus:border-brand-600 focus:outline-none"
+                    >
+                      <option value="2026-01-15">Hari Ini (15 Jan 2026)</option>
+                      <option value="2026-01-14">Kemarin (14 Jan 2026)</option>
+                    </select>
+                  </div>
 
-  const rows = useMemo(() => {
-    return LAPORAN.filter((l) => {
-      if (hari !== "all" && l.waktu.slice(0, 10) !== hari) return false;
-      if (kategori !== "all" && l.kategori !== kategori) return false;
-      if (status !== "all" && l.status !== status) return false;
-      if (prioritas !== "all" && priorityLabel(l.ai.priorityScore).toLowerCase() !== prioritas) return false;
-      if (q.trim()) {
-        const t = q.trim().toLowerCase();
-        const hay = `${l.id} ${l.judul} ${l.pelapor} ${l.lokasi.alamat} ${l.ai.kategori}`.toLowerCase();
-        if (!hay.includes(t)) return false;
-      }
-      return true;
-    }).sort((a, b) => {
-      let x: any, y: any;
-      switch (sortKey) {
-        case "judul": x = a.judul; y = b.judul; break;
-        case "kategori": x = getKategori(a.kategori).nama; y = getKategori(b.kategori).nama; break;
-        case "dukungan": x = a.dukungan; y = b.dukungan; break;
-        case "status": x = STATUS_ORDER.indexOf(a.status); y = STATUS_ORDER.indexOf(b.status); break;
-        case "id": x = a.id; y = b.id; break;
-        default: x = a.ai.priorityScore; y = b.ai.priorityScore;
-      }
-      return (x < y ? -1 : x > y ? 1 : 0) * sortDir;
-    });
-  }, [q, hari, kategori, status, prioritas, sortKey, sortDir]);
+                  {/* Filters */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="relative">
+                      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-500" />
+                      <input
+                        value={logSearch}
+                        onChange={(e) => setLogSearch(e.target.value)}
+                        placeholder="Cari ID laporan / aktor / catatan…"
+                        className="h-9 rounded-xl border border-ink-300/60 bg-ground pl-8 pr-3 text-xs text-cream placeholder-ink-500 focus:border-brand-600 focus:outline-none"
+                      />
+                    </div>
 
-  const jumlahFilterAktif = [q.trim(), hari !== "all", kategori !== "all", status !== "all", prioritas !== "all"].filter(Boolean).length;
+                    <select
+                      value={logWilayahFilter}
+                      onChange={(e) => setLogWilayahFilter(e.target.value as any)}
+                      className="h-9 rounded-xl border border-ink-300/60 bg-ground px-2.5 text-xs text-cream focus:border-brand-600 focus:outline-none"
+                    >
+                      <option value="semua">Semua Wilayah Dinas</option>
+                      {WILAYAH.map((w) => (
+                        <option key={w.id} value={w.id}>{w.nama}</option>
+                      ))}
+                    </select>
 
-  function reset() {
-    setQ(""); setHari("all"); setKategori("all"); setStatus("all"); setPrioritas("all");
-  }
+                    <select
+                      value={logTipeFilter}
+                      onChange={(e) => setLogTipeFilter(e.target.value as any)}
+                      className="h-9 rounded-xl border border-ink-300/60 bg-ground px-2.5 text-xs text-cream focus:border-brand-600 focus:outline-none"
+                    >
+                      <option value="semua">Semua Tipe Aktivitas</option>
+                      <option value="baru">Laporan Baru</option>
+                      <option value="verifikasi">Verifikasi</option>
+                      <option value="penugasan">Penugasan</option>
+                      <option value="penanganan">Penanganan</option>
+                      <option value="selesai">Selesai</option>
+                    </select>
+                  </div>
+                </div>
 
-  function toggleSort(k: SortKey) {
-    if (sortKey === k) setSortDir((d) => (d === 1 ? -1 : 1));
-    else { setSortKey(k); setSortDir(k === "priority" || k === "dukungan" ? -1 : 1); }
-  }
-
-  const TH = ({ k, children }: { k: SortKey; children: React.ReactNode }) => (
-    <th
-      onClick={() => toggleSort(k)}
-      className="cursor-pointer select-none whitespace-nowrap border-b-2 border-[#EEF1F0] px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-[.06em] text-ink-500 hover:text-brand-600"
-    >
-      <span className="inline-flex items-center gap-1">
-        {children}
-        <ArrowUpDown size={12} className={sortKey === k ? "opacity-100 text-brand-600" : "opacity-40"} />
-      </span>
-    </th>
-  );
-
-  const selectCls =
-    "rounded-xl border border-ink-300 bg-surface px-3.5 py-2.5 text-sm font-medium text-ink-700 outline-none transition-colors focus:border-brand-600";
-
-  return (
-    <>
-      {/* ===== Header ===== */}
-      <Reveal className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-extrabold md:text-3xl">Daftar Laporan</h1>
-          <p className="mt-1 text-sm text-ink-500">
-            Seluruh laporan warga — cari, saring, dan urutkan sesuai kebutuhan
-          </p>
-          <p className="micro-label mt-2 text-sage">02 · menu laporan</p>
-        </div>
-        <p className="text-sm text-ink-500">
-          Menampilkan <span className="font-display font-extrabold text-cream">{rows.length}</span> dari {LAPORAN.length} laporan
-        </p>
-      </Reveal>
-
-      {/* ===== Panel filter ===== */}
-      <Reveal delay={60} className="mb-5 rounded-2xl bg-surface p-6 shadow-[var(--shadow-card)]">
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Pencarian */}
-          <div className="relative min-w-[220px] flex-1">
-            <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-500" />
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Cari tiket, judul, pelapor, alamat…"
-              className="w-full rounded-xl border border-ink-300 bg-bg py-2.5 pl-10 pr-9 text-sm text-ink-700 outline-none transition-colors placeholder:text-ink-500 focus:border-brand-600"
-            />
-            {q && (
-              <button
-                onClick={() => setQ("")}
-                aria-label="Bersihkan pencarian"
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-500 hover:text-tan"
-              >
-                <X size={15} />
-              </button>
-            )}
-          </div>
-
-          {/* Hari */}
-          <select value={hari} onChange={(e) => setHari(e.target.value)} className={selectCls} aria-label="Filter hari">
-            <option value="all">Semua hari</option>
-            {HARI_LAPORAN.map((d) => (
-              <option key={d} value={d}>{formatHari(d)}</option>
-            ))}
-          </select>
-
-          {/* Prioritas */}
-          <select value={prioritas} onChange={(e) => setPrioritas(e.target.value as FilterPrioritas)} className={selectCls} aria-label="Filter prioritas">
-            <option value="all">Semua prioritas</option>
-            <option value="darurat">Darurat (≥9)</option>
-            <option value="tinggi">Tinggi (7–8.9)</option>
-            <option value="sedang">Sedang (5–6.9)</option>
-            <option value="rendah">Rendah (&lt;5)</option>
-          </select>
-
-          {/* Reset */}
-          <button
-            onClick={reset}
-            disabled={jumlahFilterAktif === 0}
-            className={`inline-flex items-center gap-1.5 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-all ${
-              jumlahFilterAktif > 0
-                ? "border-tan text-tan hover:bg-brand-50"
-                : "cursor-not-allowed border-ink-300 text-ink-500 opacity-50"
-            }`}
-          >
-            <RotateCcw size={14} /> Reset
-          </button>
-        </div>
-
-        {/* Kategori */}
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <span className="mr-1 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[.08em] text-sage">
-            <Filter size={12} /> Kategori
-          </span>
-          <button
-            onClick={() => setKategori("all")}
-            className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all ${
-              kategori === "all"
-                ? "border-tan bg-tan text-white"
-                : "border-ink-300 text-sage-pale hover:border-tan hover:text-tan"
-            }`}
-          >
-            Semua
-          </button>
-          {KATEGORI.map((k) => (
-            <button
-              key={k.id}
-              onClick={() => setKategori(kategori === k.id ? "all" : k.id)}
-              className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all ${
-                kategori === k.id
-                  ? "border-tan text-tan"
-                  : "border-ink-300 text-sage-pale hover:border-tan hover:text-tan"
-              }`}
-            >
-              <span className="h-2 w-2 rounded-full" style={{ background: k.warna }} />
-              {k.nama}
-            </button>
-          ))}
-        </div>
-
-        {/* Status */}
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <span className="mr-1 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[.08em] text-sage">
-            <Clock size={12} /> Status
-          </span>
-          {["all", ...STATUS_ORDER].map((s) => (
-            <button
-              key={s}
-              onClick={() => setStatus(s)}
-              className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all ${
-                status === s
-                  ? "border-tan bg-tan text-white"
-                  : "border-ink-300 text-sage-pale hover:border-tan hover:text-tan"
-              }`}
-            >
-              {s === "all" ? "Semua" : STATUS_LABEL[s as keyof typeof STATUS_LABEL]}
-            </button>
-          ))}
-          {jumlahFilterAktif > 0 && (
-            <span className="ml-auto inline-flex items-center gap-1.5 text-xs font-semibold text-brand-600">
-              <Filter size={12} /> {jumlahFilterAktif} filter aktif
-            </span>
-          )}
-        </div>
-      </Reveal>
-
-      {/* ===== Tabel ===== */}
-      <Reveal delay={100} className="anim-fade-in rounded-2xl bg-surface p-6 shadow-[var(--shadow-card)]">
-        <h3 className="font-display text-lg font-bold">Daftar Laporan</h3>
-        <p className="mb-4 text-sm text-ink-500">Klik judul kolom untuk mengurutkan · diurutkan berdasarkan Priority Score secara bawaan</p>
-
-        {rows.length === 0 ? (
-          <div className="grid place-items-center rounded-2xl border border-dashed border-ink-300 px-6 py-16 text-center">
-            <div>
-              <Search size={28} className="mx-auto mb-3 text-ink-500" />
-              <p className="font-display font-bold">Tidak ada laporan yang cocok</p>
-              <p className="mt-1 text-sm text-ink-500">Coba ubah kata kunci atau longgarkan filter.</p>
-              <button onClick={reset} className="mt-4 inline-flex items-center gap-1.5 rounded-xl border border-tan px-4 py-2 text-sm font-semibold text-tan hover:bg-brand-50">
-                <RotateCcw size={14} /> Reset semua filter
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="overflow-x-auto rounded-2xl">
-            <table className="w-full border-collapse bg-surface text-sm">
-              <thead>
-                <tr>
-                  <TH k="id">Tiket</TH>
-                  <TH k="judul">Laporan</TH>
-                  <TH k="kategori">Kategori</TH>
-                  <TH k="dukungan">Dukungan</TH>
-                  <TH k="priority">Priority</TH>
-                  <TH k="status">Status</TH>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((l, ri) => {
-                  const k = getKategori(l.kategori);
-                  return (
-                    <tr key={l.id} className="row-in transition-colors hover:bg-brand-50" style={{ animationDelay: `${ri * 45}ms` }}>
-                      <td className="border-b border-ink-300 px-4 py-3.5 align-middle font-mono text-[.8rem] font-semibold text-ink-700">{l.id}</td>
-                      <td className="border-b border-ink-300 px-4 py-3.5 align-middle">
-                        <div className="font-semibold">{l.judul}</div>
-                        <div className="mt-0.5 flex items-center gap-2 text-xs text-ink-500">
-                          {l.lokasi.alamat}
-                          <span className="inline-flex items-center gap-0.5"><Camera size={11} />{l.foto}</span>
-                        </div>
-                      </td>
-                      <td className="border-b border-ink-300 px-4 py-3.5 align-middle">
-                        <span
-                          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold"
-                          style={{ background: `${k.warna}1a`, color: k.warna }}
+                {/* Timeline Log List */}
+                {filteredLogs.length === 0 ? (
+                  <div className="py-12 text-center text-ink-500 text-sm">
+                    Tidak ada catatan log kegiatan yang memenuhi kriteria filter.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {filteredLogs.map((log) => {
+                      const Meta = TIPE_META[log.tipe];
+                      const Icon = Meta.icon;
+                      const wData = WILAYAH.find((w) => w.id === log.wilayah);
+                      return (
+                        <div
+                          key={log.id}
+                          className="card-hover flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-ink-300/40 bg-ground/50 p-4 transition-all hover:border-brand-600/40"
                         >
-                          <span className="h-[7px] w-[7px] rounded-full" style={{ background: k.warna }} />
-                          {k.nama}
-                        </span>
-                      </td>
-                      <td className="border-b border-ink-300 px-4 py-3.5 align-middle">
-                        <span className="inline-flex items-center gap-1 font-semibold">
-                          {l.dukungan} <ThumbsUp size={13} className="text-amber-500" />
-                        </span>
-                      </td>
-                      <td className="border-b border-ink-300 px-4 py-3.5 align-middle">
-                        <div className="flex items-center gap-2">
-                          <span className="font-display font-extrabold" style={{ color: priorityColor(l.ai.priorityScore) }}>
-                            {l.ai.priorityScore}
-                          </span>
-                          <span className="h-1.5 w-16 overflow-hidden rounded-full bg-[#EEF1F0]">
-                            <span
-                              className="block h-full rounded-full"
-                              style={{ width: `${l.ai.priorityScore * 10}%`, background: priorityColor(l.ai.priorityScore) }}
-                            />
-                          </span>
+                          <div className="flex items-center gap-3.5">
+                            <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl font-bold ${Meta.cls}`}>
+                              <Icon size={18} />
+                            </span>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-cream text-sm">{log.aktor}</span>
+                                <span className="rounded-full bg-surface border border-ink-300/40 px-2 py-0.5 text-[10px] font-bold text-brand-600">
+                                  {KEGIATAN_LABEL[log.tipe]}
+                                </span>
+                              </div>
+                              <p className="mt-0.5 text-xs text-ink-700">{log.catatan}</p>
+                              <p className="mt-1 text-[11px] text-ink-500 flex items-center gap-2">
+                                <span className="font-mono font-bold text-cream-hi">ID: {log.laporanId}</span>
+                                <span>·</span>
+                                <span className="flex items-center gap-1 text-success">
+                                  <MapPin size={10} /> {wData?.nama}
+                                </span>
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="text-right shrink-0">
+                            <span className="font-mono text-xs font-bold text-ink-500 block">{log.jam}</span>
+                            <span className="text-[10px] text-ink-500">Waktu Aktivitas</span>
+                          </div>
                         </div>
-                      </td>
-                      <td className="border-b border-ink-300 px-4 py-3.5 align-middle">
-                        <Chip tone={statusTone(l.status)}>{STATUS_LABEL[l.status]}</Chip>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </Reveal>
+        )}
+
+        {/* MODAL TAMBAH USER BARU */}
+        {showAddUserModal && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-black/65 backdrop-blur-sm transition-opacity"
+              onClick={() => setShowAddUserModal(false)}
+            />
+            <div className="anim-fade-up relative w-full max-w-md rounded-3xl border border-white/15 bg-surface p-6 shadow-2xl md:p-8">
+              <div className="flex items-center justify-between border-b border-ink-300/30 pb-4">
+                <h3 className="font-display text-lg font-extrabold text-cream flex items-center gap-2">
+                  <UserPlus size={18} className="text-brand-600" /> Tambah User Akun Baru
+                </h3>
+                <button
+                  onClick={() => setShowAddUserModal(false)}
+                  className="grid h-8 w-8 place-items-center rounded-lg border border-ink-300/50 text-ink-500 hover:text-cream"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateUser} className="mt-5 space-y-4 text-xs">
+                <div>
+                  <label className="mb-1 block font-bold text-ink-500">Nama Lengkap</label>
+                  <input
+                    required
+                    value={newNama}
+                    onChange={(e) => setNewNama(e.target.value)}
+                    placeholder="cth: Pak Budi Rahardjo"
+                    className="w-full rounded-xl border border-ink-300/60 bg-ground p-3 text-cream outline-none focus:border-brand-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block font-bold text-ink-500">Alamat Email</label>
+                  <input
+                    required
+                    type="email"
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    placeholder="cth: budi@dinas.go.id"
+                    className="w-full rounded-xl border border-ink-300/60 bg-ground p-3 text-cream outline-none focus:border-brand-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block font-bold text-ink-500">Peran / Role User</label>
+                  <select
+                    value={newRole}
+                    onChange={(e) => setNewRole(e.target.value as Role)}
+                    className="w-full rounded-xl border border-ink-300/60 bg-ground p-3 text-cream outline-none focus:border-brand-600"
+                  >
+                    <option value="dinas">Instansi Dinas</option>
+                    <option value="petugas">Petugas Lapangan</option>
+                    <option value="warga">Warga Pelapor</option>
+                  </select>
+                </div>
+
+                {newRole === "dinas" && (
+                  <div>
+                    <label className="mb-1 block font-bold text-ink-500">Wilayah Kerja Dinas</label>
+                    <select
+                      value={newWilayah}
+                      onChange={(e) => setNewWilayah(e.target.value as WilayahId)}
+                      className="w-full rounded-xl border border-ink-300/60 bg-ground p-3 text-cream outline-none focus:border-brand-600"
+                    >
+                      {WILAYAH.map((w) => (
+                        <option key={w.id} value={w.id}>{w.nama}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                <div className="pt-4 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddUserModal(false)}
+                    className="rounded-xl border border-ink-300/60 px-4 py-2.5 font-semibold text-ink-700 hover:text-cream"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    className="rounded-xl bg-brand-600 px-5 py-2.5 font-bold text-white hover:bg-brand-700"
+                  >
+                    Simpan User
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         )}
-      </Reveal>
-    </>
+      </main>
+    </div>
   );
 }

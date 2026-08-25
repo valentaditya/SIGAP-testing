@@ -18,10 +18,12 @@ export type Kemampuan =
   | "upvote"            // mendukung laporan warga lain
   | "gamifikasi"        // poin, lencana, papan peringkat
   | "lihat_semua_laporan"
+  | "lihat_laporan_wilayah"  // hanya laporan di wilayah dinas sendiri
   | "verifikasi"        // menyetujui / menolak laporan masuk
   | "tugaskan"          // menunjuk petugas untuk laporan
   | "ubah_status"       // menandai proses / selesai di lapangan
   | "analitik"          // grafik, tren, ekspor
+  | "kelola_pengguna"   // tambah / hapus / ubah user (admin only)
   | "sinyal_darurat";
 
 export interface DefinisiPeran {
@@ -48,11 +50,7 @@ export const PERAN: Record<Role, DefinisiPeran> = {
       "gamifikasi",
       "sinyal_darurat",
     ],
-    navigasi: [
-      { href: "/warga", label: "Laporan Saya" },
-      { href: "/lapor", label: "Buat Laporan" },
-      { href: "/dampak", label: "Dampak Kota" },
-    ],
+    navigasi: [],
   },
   admin: {
     id: "admin",
@@ -65,22 +63,25 @@ export const PERAN: Record<Role, DefinisiPeran> = {
       "tugaskan",
       "analitik",
       "ubah_status",
+      "kelola_pengguna",
     ],
-    navigasi: [
-      { href: "/dashboard", label: "Dashboard" },
-      { href: "/dampak", label: "Dampak Kota" },
-    ],
+    navigasi: [],
   },
   petugas: {
     id: "petugas",
     label: "Petugas Lapangan",
     singkat: "Petugas",
     beranda: "/petugas",
-    kemampuan: ["ubah_status", "lihat_semua_laporan"],
-    navigasi: [
-      { href: "/petugas", label: "Tugas Saya" },
-      { href: "/dampak", label: "Dampak Kota" },
-    ],
+    kemampuan: ["ubah_status", "lihat_semua_laporan", "sinyal_darurat"],
+    navigasi: [],
+  },
+  dinas: {
+    id: "dinas",
+    label: "Dinas / Instansi",
+    singkat: "Dinas",
+    beranda: "/dinas",
+    kemampuan: ["lihat_laporan_wilayah"],
+    navigasi: [],
   },
 };
 
@@ -106,6 +107,7 @@ export const AKSES_RUTE: Record<string, readonly Role[]> = {
   "/dashboard": ["admin"],
   "/petugas": ["petugas"],
   "/warga": ["warga"],
+  "/dinas": ["dinas"],
 };
 
 export function bolehMasukRute(path: string, role: Role | undefined): boolean {

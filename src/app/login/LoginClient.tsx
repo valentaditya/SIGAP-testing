@@ -5,10 +5,11 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   LogIn, UserRound, ShieldCheck, HardHat, Eye, EyeOff, Loader2,
-  AlertCircle, Siren, EyeOff as Anon, ArrowLeft, Check,
+  AlertCircle, Siren, EyeOff as Anon, ArrowLeft, Check, Building2, Database,
 } from "lucide-react";
 import { useApp, type Role } from "@/lib/store";
-import { TREN_BULANAN, WAKTU_RESPONS } from "@/lib/data";
+import { TREN_BULANAN, WAKTU_RESPONS, WILAYAH, type WilayahId } from "@/lib/data";
+import { supabase } from "@/lib/supabase";
 
 /* Angka bukti diturunkan dari data yang sama dengan dasbor — bukan
    ditulis tangan — supaya tidak pernah bertentangan dengan isi aplikasi. */
@@ -17,7 +18,7 @@ const BUKTI = (() => {
   const totalSelesai = TREN_BULANAN.selesai.reduce((a, b) => a + b, 0);
   const rasio = Math.round((totalSelesai / totalMasuk) * 100);
   const jam = WAKTU_RESPONS.jam;
-  const turun = Math.round(((jam[0] - jam.at(-1)!) / jam[0]) * 100);
+  // const turun = Math.round(((jam[0] - jam.at(-1)!) / jam[0]) * 100);
   // Semua angka memakai rentang enam bulan yang sama. Mencampur
   // "bulan ini" dengan cacah data contoh membuat skalanya timpang
   // (mis. "89 laporan" bersebelahan dengan "4 selesai").
@@ -25,7 +26,8 @@ const BUKTI = (() => {
     { angka: `${totalMasuk}`, label: "laporan 6 bulan terakhir" },
     { angka: `${rasio}%`, label: "tuntas ditangani" },
     { angka: `${jam.at(-1)} jam`, label: "rata-rata respons" },
-    { angka: `−${turun}%`, label: "waktu tunggu sejak Agustus" },
+    // { angka: `−${turun}%`, label: "waktu tunggu sejak Agustus" },
+    { angka: "5", label: "daerah dalam pantauan" },
   ];
 })();
 
@@ -87,6 +89,20 @@ const ROLES: RoleDef[] = [
     ],
     demo: { nama: "Agus Prasetyo", email: "agus.petugas@sigap.id" },
   },
+  {
+    id: "dinas",
+    label: "Dinas / Instansi",
+    singkat: "Dinas",
+    desc: "Pantau & tangani laporan per wilayah",
+    icon: Building2,
+    tujuan: "/dinas",
+    janji: [
+      "Pantau laporan masuk di wilayah wewenang",
+      "Auto-route laporan darurat (Skor AI >= 9)",
+      "Ubah status penanganan langsung di sistem",
+    ],
+    demo: { nama: "Pak Hendra Wijaya", email: "kepala.dinas@slemankab.go.id" },
+  },
 ];
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -103,9 +119,10 @@ export default function LoginClient() {
   const [role, setRole] = useState<Role>(
     ROLES.some((r) => r.id === roleAwal) ? roleAwal : "warga",
   );
-  const [nama, setNama] = useState("");
+  // const [nama, setNama] = useState("");
   const [email, setEmail] = useState("");
   const [sandi, setSandi] = useState("");
+  const [fWilayah, setFWilayah] = useState<WilayahId>("sleman");
   const [lihat, setLihat] = useState(false);
   const [ingat, setIngat] = useState(true);
   const [errors, setErrors] = useState<Errors>({});
@@ -117,6 +134,21 @@ export default function LoginClient() {
   const aktif = useMemo(() => ROLES.find((r) => r.id === role)!, [role]);
   const radioRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const namaRef = useRef<HTMLInputElement>(null);
+
+  // Sesuaikan nilai demo saat role berubah
+  useEffect(() => {
+    if (role === "dinas") {
+      // setNama("Pak Hendra Wijaya");
+      setEmail("kepala.dinas@slemankab.go.id");
+      setFWilayah("sleman");
+    } else {
+      // setNama("");
+      setEmail("");
+    }
+    setSandi("");
+    setErrors({});
+    setSentuh({});
+  }, [role]);
 
   /* Sudah login? langsung antar ke ruangnya, jangan tahan di /login. */
   useEffect(() => {
@@ -140,7 +172,7 @@ export default function LoginClient() {
 
   function validasi(): Errors {
     const e: Errors = {};
-    if (nama.trim().length < 3) e.nama = "Nama minimal 3 karakter.";
+    // if (nama.trim().length < 3) e.nama = "Nama minimal 3 karakter.";
     if (!EMAIL_RE.test(email.trim())) e.email = "Format email belum benar.";
     if (sandi.length < 6) e.sandi = "Kata sandi minimal 6 karakter.";
     return e;
@@ -152,7 +184,7 @@ export default function LoginClient() {
      Sebelumnya error hanya muncul setelah tombol ditekan, sehingga
      kesalahan ketik baru ketahuan di ujung alur. */
   function ubah(field: keyof Errors, nilai: string) {
-    if (field === "nama") setNama(nilai);
+    // if (field === "nama") setNama(nilai);
     if (field === "email") setEmail(nilai);
     if (field === "sandi") setSandi(nilai);
     if (errors[field]) setErrors((p) => ({ ...p, [field]: undefined }));
@@ -164,13 +196,29 @@ export default function LoginClient() {
     setErrors((p) => ({ ...p, [field]: e[field] }));
   }
 
-  function isiDemo() {
-    setNama(aktif.demo.nama);
-    setEmail(aktif.demo.email);
-    setSandi("demo1234");
-    setErrors({});
-    setSentuh({});
-  }
+  // function isiDemo() {
+  //   if (role === "dinas") {
+  //     if (fWilayah === "sleman") {
+  //       // setNama("Pak Hendra Wijaya");
+  //       setEmail("kepala.dinas@slemankab.go.id");
+  //     } else if (fWilayah === "bantul") {
+  //       // setNama("Bu Dewi Rahayu");
+  //       setEmail("kepala.dinas@bantulkab.go.id");
+  //     } else if (fWilayah === "kota_yogya") {
+  //       // setNama("Pak Tono Susanto");
+  //       setEmail("kepala.dinas@jogjakota.go.id");
+  //     } else if (fWilayah === "gunungkidul") {
+  //       // setNama("Bu Sinta Nurhayati");
+  //       setEmail("kepala.dinas@gunungkidulkab.go.id");
+  //     }
+  //   } else {
+  //     // setNama(aktif.demo.nama);
+  //     setEmail(aktif.demo.email);
+  //   }
+  //   setSandi("demo1234");
+  //   setErrors({});
+  //   setSentuh({});
+  // }
 
   async function masuk(e: React.FormEvent) {
     e.preventDefault();
@@ -181,7 +229,6 @@ export default function LoginClient() {
     if (Object.keys(err).length) {
       setGagal(true);
       setTimeout(() => setGagal(false), 450);
-      // Fokuskan field bermasalah pertama supaya pengguna keyboard tidak tersesat.
       const urut: (keyof Errors)[] = ["nama", "email", "sandi"];
       const pertama = urut.find((k) => err[k]);
       document.getElementById(`f-${pertama}`)?.focus();
@@ -194,10 +241,30 @@ export default function LoginClient() {
       else localStorage.removeItem("sigap_last_email");
     } catch {}
 
-    // Jeda pendek: memberi sinyal "sedang diproses" tanpa terasa lambat.
-    await new Promise((r) => setTimeout(r, 550));
-    login(nama.trim(), email.trim(), role);
-    router.push(params.get("next") || aktif.tujuan);
+    // Coba login via tabel users di Supabase
+    try {
+      const { data, error } = await supabase
+        .from("users")
+        .select("nama, email, role, wilayah, aktif")
+        .eq("email", email.trim())
+        .eq("sandi", sandi)
+        .eq("aktif", true)
+        .single();
+
+      if (!error && data) {
+        // Login berhasil dari DB Supabase
+        login(data.nama, data.email, data.role as Role, data.wilayah ?? undefined);
+        router.push(params.get("next") || ROLES.find((r) => r.id === data.role)?.tujuan || "/");
+        return;
+      }
+    } catch {
+      // Supabase tidak tersedia — lanjut ke fallback demo
+    }
+
+    // Fallback: demo login lokal (jika belum ada di tabel Supabase)
+    // await new Promise((r) => setTimeout(r, 400));
+    // login(email.trim(), email.trim(), role, role === "dinas" ? fWilayah : undefined);
+    // router.push(params.get("next") || aktif.tujuan);
   }
 
   /* Radiogroup: panah kiri/kanan/atas/bawah memindah pilihan (pola WAI-ARIA). */
@@ -245,7 +312,7 @@ export default function LoginClient() {
             <ul className="mt-7 space-y-3 border-t border-ink-300 pt-6">
               {aktif.janji.map((j) => (
                 <li key={j} className="flex gap-3 text-sm text-cream">
-                  <Check size={16} className="mt-0.5 shrink-0 text-tan" aria-hidden="true" />
+                  <Check size={16} className="mt-0.5 mb-6 shrink-0 text-tan" aria-hidden="true" />
                   <span>{j}</span>
                 </li>
               ))}
@@ -288,13 +355,18 @@ export default function LoginClient() {
           <h1 className="font-display text-[28px] leading-none text-cream-hi sm:text-[32px]">
             Masuk ke SIGAP
           </h1>
-          <p className="mt-2 text-sm text-ink-500">
-            Pilih peran, lalu isi identitas untuk melanjutkan.
-          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-3">
+            <p className="text-sm text-ink-500">
+              masukan email dan sandi untuk masuk ke akun anda
+            </p>
+            {/* <span className="inline-flex items-center gap-1.5 rounded-full border border-success/30 bg-success/10 px-2.5 py-0.5 text-[11px] font-bold text-success">
+              <Database size={10} /> Supabase Terhubung
+            </span> */}
+          </div>
 
           <form onSubmit={masuk} noValidate className="mt-7">
             {/* ---------- Pilih peran ---------- */}
-            <div
+            {/* <div
               role="radiogroup"
               aria-labelledby="label-peran"
               className="space-y-2"
@@ -331,11 +403,48 @@ export default function LoginClient() {
                   </button>
                 );
               })}
-            </div>
+            </div> */}
+
+            {/* Pilihan wilayah khusus Dinas */}
+            {/* {role === "dinas" && (
+              <div className="mt-4 animate-fade-in rounded-2xl border border-ink-300/40 bg-surface/50 p-4">
+                <label htmlFor="f-wilayah" className="micro-label mb-2 block text-sage">
+                  Pilih Instansi / Wilayah Dinas
+                </label>
+                <select
+                  id="f-wilayah"
+                  value={fWilayah}
+                  onChange={(e) => {
+                    const nextW = e.target.value as WilayahId;
+                    setFWilayah(nextW);
+                    if (nextW === "sleman") {
+                      // setNama("Pak Hendra Wijaya");
+                      setEmail("kepala.dinas@slemankab.go.id");
+                    } else if (nextW === "bantul") {
+                      // setNama("Bu Dewi Rahayu");
+                      setEmail("kepala.dinas@bantulkab.go.id");
+                    } else if (nextW === "kota_yogya") {
+                      // setNama("Pak Tono Susanto");
+                      setEmail("kepala.dinas@jogjakota.go.id");
+                    } else if (nextW === "gunungkidul") {
+                      // setNama("Bu Sinta Nurhayati");
+                      setEmail("kepala.dinas@gunungkidulkab.go.id");
+                    }
+                  }}
+                  className="h-11 w-full rounded-xl border border-ink-400 bg-ground px-3 text-sm text-cream focus:border-tan focus:outline-none"
+                >
+                  {WILAYAH.map((w) => (
+                    <option key={w.id} value={w.id} className="bg-surface text-cream">
+                      {w.nama}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )} */}
 
             {/* ---------- Identitas ---------- */}
             <div className="mt-6 space-y-3">
-              <Field
+              {/* <Field
                 id="f-nama"
                 label="Nama lengkap"
                 value={nama}
@@ -344,7 +453,7 @@ export default function LoginClient() {
                 error={sentuh.nama ? errors.nama : undefined}
                 autoComplete="name"
                 inputRef={namaRef}
-              />
+              /> */}
 
               <Field
                 id="f-email"
@@ -384,9 +493,6 @@ export default function LoginClient() {
             </div>
 
             {/* ---------- Baris bantu ---------- */}
-            {/* Keduanya diberi tinggi sentuh 44px (pedoman WCAG 2.5.5 /
-                HIG). Kotak centang tetap 18px secara visual, tapi area
-                ketuknya melebar lewat padding pada <label>. */}
             <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3">
               <label className="flex min-h-[44px] cursor-pointer select-none items-center gap-2.5 pr-2 text-sm text-ink-500">
                 <input
@@ -397,14 +503,15 @@ export default function LoginClient() {
                 />
                 Ingat email saya
               </label>
-              <button
+              {/* <button
                 type="button"
                 onClick={isiDemo}
                 className="micro-label flex min-h-[44px] items-center px-1 text-tan underline-offset-4 hover:underline"
               >
-                Isi data demo
-              </button>
+                Isi contoh demo
+              </button> */}
             </div>
+
 
             {/* ---------- Submit ---------- */}
             <button
@@ -436,13 +543,13 @@ export default function LoginClient() {
                 terhalang formulir masuk. Dua pintu ini selalu terbuka. */}
             <div className="mt-6 border-t border-ink-300 pt-5">
               <span className="micro-label mb-3 block text-sage">Tanpa akun</span>
-              <div className="grid gap-2 sm:grid-cols-2">
-                <Link
+              <div className="grid gap-1 sm:grid-cols-1 ">
+                {/* <Link
                   href="/lapor?anonim=1"
                   className="flex min-h-[48px] items-center justify-center gap-2 border border-ink-400 px-4 text-sm font-semibold text-cream no-underline transition-colors hover:border-cream-hi"
                 >
                   <Anon size={16} aria-hidden="true" /> Lapor anonim
-                </Link>
+                </Link> */}
                 <Link
                   href="/lapor?darurat=1"
                   className="flex min-h-[48px] items-center justify-center gap-2 border border-danger px-4 text-sm font-semibold text-danger no-underline transition-colors hover:bg-danger-bg"
@@ -451,10 +558,6 @@ export default function LoginClient() {
                 </Link>
               </div>
             </div>
-
-            <p className="mt-5 text-center text-xs text-ink-500">
-              Prototipe demo — kata sandi tidak diverifikasi ke server.
-            </p>
           </form>
         </div>
       </div>

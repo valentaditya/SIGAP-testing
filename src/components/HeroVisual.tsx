@@ -36,7 +36,8 @@ export function HeroVisual() {
       doubleClickZoom: false,
     }).setView([-7.7956, 110.3695], 12);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(map);
-    LAPORAN.forEach((l) => {
+    const aktifLaporan = LAPORAN.filter((l) => l.status !== "resolved");
+    aktifLaporan.forEach((l) => {
       L.marker([l.lokasi.lat, l.lokasi.lng], { icon: markerIcon(l.ai.priorityScore), interactive: false }).addTo(map);
     });
     mapRef.current = map;
@@ -44,12 +45,14 @@ export function HeroVisual() {
     return () => { clearTimeout(t); map.remove(); mapRef.current = null; };
   }, []);
 
+  const totalAktif = LAPORAN.filter((l) => l.status !== "resolved").length;
+
   return (
     <div className="card-hover anim-float relative overflow-hidden rounded-3xl ring-1 ring-white/10">
       <div ref={ref} className="aspect-[4/3] w-full" aria-label="Peta sebaran laporan real-time" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink-900/70 to-transparent p-5">
         <p className="font-display text-lg font-bold text-white">Peta Sebaran Laporan Real-time</p>
-        <p className="text-sm text-white/80">12 laporan aktif di Kota Yogyakarta</p>
+        <p className="text-sm text-white/80">{totalAktif} laporan aktif di Kota Yogyakarta &amp; DIY</p>
       </div>
     </div>
   );

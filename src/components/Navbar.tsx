@@ -94,12 +94,20 @@ export function Navbar() {
               pasti. Merender tombol lebih dulu membuatnya berkedip
               "Masuk" lalu berubah jadi nama pengguna. */}
           {hydrated && (user ? (
-            <button
-              onClick={logout}
-              className="hidden min-h-[44px] items-center gap-2 border border-ink-300 px-4 font-mono text-[11px] uppercase tracking-[0.2em] text-sage-pale transition-colors hover:border-danger hover:text-danger md:inline-flex"
-            >
-              <LogOut size={15} aria-hidden="true" /> Keluar
-            </button>
+            <>
+              <div className="hidden items-center gap-2 md:flex">
+                <div className="text-right">
+                  <p className="text-[12px] font-semibold leading-tight text-cream">{user.nama}</p>
+                  <p className="text-[10px] leading-tight text-sage">{user.email}</p>
+                </div>
+              </div>
+              <button
+                onClick={logout}
+                className="hidden min-h-[44px] items-center gap-2 border border-ink-300 px-4 font-mono text-[11px] uppercase tracking-[0.2em] text-sage-pale transition-colors hover:border-danger hover:text-danger md:inline-flex"
+              >
+                <LogOut size={15} aria-hidden="true" /> Keluar
+              </button>
+            </>
           ) : (
             <Link
               href="/login"

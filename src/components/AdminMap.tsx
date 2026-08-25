@@ -3,9 +3,10 @@
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { LAPORAN, priorityColor, priorityLabel, getKategori, STATUS_LABEL } from "@/lib/data";
+import { LAPORAN, priorityColor, priorityLabel, getKategori, STATUS_LABEL, type WilayahId, type Laporan } from "@/lib/data";
 import { renderToStaticMarkup } from "react-dom/server";
 import { AlertTriangle, Flame, Leaf } from "lucide-react";
+import { useApp } from "@/lib/store";
 
 function markerIcon(score: number) {
   const color = priorityColor(score);
@@ -23,12 +24,36 @@ function markerIcon(score: number) {
   });
 }
 
-export function AdminMap({ height = 420, fill = false }: { height?: number; fill?: boolean }) {
+export function AdminMap({
+  height = 420,
+  fill = false,
+  wilayahFilter = "semua",
+  customLaporan,
+}: {
+  height?: number;
+  fill?: boolean;
+  wilayahFilter?: WilayahId | "semua";
+  customLaporan?: Laporan[];
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
+  const layerGroupRef = useRef<L.FeatureGroup | null>(null);
 
+  // Ambil laporanWarga jika ada di AppContext (bisa fallback ke LAPORAN data static)
+  let storeLaporan: Laporan[] = [];
+  try {
+    const ctx = useApp();
+    if (ctx && ctx.laporanWarga) {
+      storeLaporan = ctx.laporanWarga;
+    }
+  } catch {}
+
+  const sourceLaporan = customLaporan ?? (storeLaporan.length > 0 ? storeLaporan : LAPORAN);
+
+  // Inisialisasi peta Leaflet sekali
   useEffect(() => {
     if (!ref.current || mapRef.current) return;
+
     const map = L.map(ref.current, { scrollWheelZoom: true, zoomControl: false }).setView([-7.7956, 110.3695], 12);
     L.control.zoom({ position: "bottomright" }).addTo(map);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -36,10 +61,41 @@ export function AdminMap({ height = 420, fill = false }: { height?: number; fill
       maxZoom: 19,
     }).addTo(map);
 
-    LAPORAN.forEach((l) => {
+    const fg = L.featureGroup().addTo(map);
+    layerGroupRef.current = fg;
+    mapRef.current = map;
+
+    const t = setTimeout(() => map.invalidateSize(), 300);
+    const ro = new ResizeObserver(() => map.invalidateSize());
+    if (ref.current) ro.observe(ref.current);
+
+    return () => {
+      clearTimeout(t);
+      ro.disconnect();
+      map.remove();
+      mapRef.current = null;
+      layerGroupRef.current = null;
+    };
+  }, []);
+
+  // Update penanda (markers) & bounds saat wilayahFilter atau sourceLaporan berubah
+  useEffect(() => {
+    if (!mapRef.current || !layerGroupRef.current) return;
+
+    const fg = layerGroupRef.current;
+    fg.clearLayers();
+
+    const filtered = sourceLaporan.filter(
+      (l) =>
+        (wilayahFilter === "semua" ? true : l.wilayah === wilayahFilter) &&
+        l.status !== "resolved"
+    );
+
+    const markers: L.Marker[] = [];
+
+    filtered.forEach((l) => {
       const k = getKategori(l.kategori);
-      L.marker([l.lokasi.lat, l.lokasi.lng], { icon: markerIcon(l.ai.priorityScore) })
-        .addTo(map)
+      const m = L.marker([l.lokasi.lat, l.lokasi.lng], { icon: markerIcon(l.ai.priorityScore) })
         .bindPopup(
           `<div style="font-family:Inter;min-width:200px">
             <div style="font-weight:700;font-size:.9rem;margin-bottom:4px">${l.judul}</div>
@@ -51,15 +107,19 @@ export function AdminMap({ height = 420, fill = false }: { height?: number; fill
             </div>
           </div>`
         );
+      fg.addLayer(m);
+      markers.push(m);
     });
 
-    mapRef.current = map;
-    const t = setTimeout(() => map.invalidateSize(), 300);
-    // Pantau perubahan ukuran container (flex/kolom) agar tile selalu pas
-    const ro = new ResizeObserver(() => map.invalidateSize());
-    if (ref.current) ro.observe(ref.current);
-    return () => { clearTimeout(t); ro.disconnect(); map.remove(); mapRef.current = null; };
-  }, []);
+    if (markers.length > 0) {
+      try {
+        const bounds = fg.getBounds();
+        mapRef.current.fitBounds(bounds.pad(0.2));
+      } catch {}
+    } else {
+      mapRef.current.setView([-7.7956, 110.3695], 12);
+    }
+  }, [wilayahFilter, sourceLaporan]);
 
   return (
     <div
