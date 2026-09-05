@@ -1,23 +1,23 @@
 import type { Metadata, Viewport } from "next";
-import { Anton, Archivo, JetBrains_Mono } from "next/font/google";
+import { Outfit, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { AppProvider } from "@/lib/store";
 import { Navbar } from "@/components/Navbar";
 import { EmergencyButton } from "@/components/EmergencyButton";
 
-const display = Anton({
+const display = Outfit({
   subsets: ["latin"],
-  weight: "400",
+  weight: ["500", "600", "700", "800", "900"],
   variable: "--font-display",
 });
-const body = Archivo({
+const body = Plus_Jakarta_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   variable: "--font-body",
 });
 const mono = JetBrains_Mono({
   subsets: ["latin"],
-  weight: ["400", "700"],
+  weight: ["400", "500", "700"],
   variable: "--font-grotesk",
 });
 

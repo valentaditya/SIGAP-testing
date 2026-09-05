@@ -1,104 +1,66 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
-import { registerStage } from "@/lib/scroll-choreo";
+import { Sparkles, Clock, CheckCircle2 } from "lucide-react";
+import { Rise } from "@/components/Words";
 
-/* Baris timeline: timestamp mono, judul Anton, catatan mono */
+/* Baris timeline: 5 tahap resolusi laporan */
 const ROWS = [
-  { t: "T+00:04", label: "Laporan diterima", note: "foto + lokasi tervalidasi" },
-  { t: "T+00:12", label: "AI Multi-Agent menilai", note: "kategori · dampak · prioritas" },
-  { t: "T+00:24", label: "Diverifikasi admin", note: "antrean prioritas terbentuk" },
-  { t: "T+02:10", label: "Tim lapangan ditugaskan", note: "unit terdekat dikirim" },
-  { t: "T+23:40", label: "Selesai & terpublikasi", note: "warga menerima kabar · maks 24 jam" },
+  { n: "01", label: "Laporan Diterima", desc: "Foto bukti dan titik koordinat GPS tervalidasi otomatis oleh sistem." },
+  { n: "02", label: "AI Menganalisis", desc: "Tiga agen AI mengukur kategori, bobot dampak, dan Skor Urgensi." },
+  { n: "03", label: "Diverifikasi Admin", desc: "Penetapan antrean prioritas dan penerbitan tiket penanganan resmi." },
+  { n: "04", label: "Tim Lapangan Bertindak", desc: "Unit petugas dinas terdekat diberangkatkan langsung menuju lokasi." },
+  { n: "05", label: "Selesai & Terpublikasi", desc: "Warga menerima kabar, foto hasil penanganan, dan tercatat di data kota." },
 ];
-/* Satu seri menit — jam, jarak, status, dan baris yang menyala
-   SEMUA diinterpolasi dari array ini sehingga tidak mungkin saling bertentangan.
-   Menit dibuat GENAP & total ≤ 24 jam (1440 menit). */
-const MINUTES = [0, 4, 12, 24, 130, 1420];
-const KM_PER_MIN = 0.012; // ~0,72 km/jam penanganan tersebar
-
-function fmt(mm: number) {
-  const m = Math.floor(mm);
-  const s = Math.floor((mm - m) * 60);
-  const hh = Math.floor(m / 60);
-  const rem = m % 60;
-  return hh > 0
-    ? `${String(hh).padStart(2, "0")}:${String(rem).padStart(2, "0")}:${String(s).padStart(2, "0")}`
-    : `${String(rem).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-}
 
 export function TimelineLive() {
-  const wrap = useRef<HTMLDivElement>(null);
-  const pin = useRef<HTMLDivElement>(null);
-  const [p, setP] = useState(0);
-
-  useEffect(() => {
-    const w = wrap.current;
-    const pEl = pin.current;
-    if (!w || !pEl) return;
-    let raf = 0;
-    const loop = () => {
-      const v = parseFloat(pEl.style.getPropertyValue("--p") || "0");
-      setP((prev) => (Math.abs(prev - v) > 0.002 ? v : prev));
-      raf = requestAnimationFrame(loop);
-    };
-    raf = requestAnimationFrame(loop);
-    const unregister = registerStage(w, pEl);
-    return () => {
-      cancelAnimationFrame(raf);
-      unregister();
-    };
-  }, []);
-
-  /* Interpolasi piecewise dari seri menit */
-  const seg = Math.min(ROWS.length - 1, Math.floor(p * ROWS.length));
-  const segP = Math.min(1, Math.max(0, p * ROWS.length - seg));
-  const mm = MINUTES[seg] + (MINUTES[seg + 1] - MINUTES[seg]) * segP;
-  const km = (mm * KM_PER_MIN).toFixed(1);
-  const lit = Math.min(ROWS.length - 1, Math.floor(p * ROWS.length + 0.0001));
-
   return (
-    <div ref={wrap} className="relative border-y-2 border-cream bg-ground" style={{ height: "400svh" }}>
-      <div ref={pin} className="sticky top-0 flex h-[100svh] items-center overflow-hidden">
-        <div className="mx-auto grid w-full max-w-[1180px] gap-12 px-6 lg:grid-cols-2">
-          {/* Kiri: headline + lima baris ber-rule */}
+    <section className="border-b border-ink-300 bg-ground/40 py-28">
+      <div className="mx-auto max-w-[1240px] px-6">
+        <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
-            <p className="micro-label text-sage">Siklus satu laporan</p>
-            <h2 className="font-display mt-4 text-[clamp(2.2rem,5.4vw,4.4rem)] text-cream-hi">
+            <div className="flex items-center gap-2">
+              <Clock size={16} className="text-tan" />
+              <Rise className="micro-label text-sage">Siklus Resolusi Laporan</Rise>
+            </div>
+            <Rise as="h2" className="font-display mt-3 text-[clamp(2rem,4.5vw,3.5rem)] font-extrabold tracking-tight text-cream-hi">
               Dari lapor sampai <span className="text-tan">tuntas.</span>
-            </h2>
-            <div className="mt-8">
-              {ROWS.map((r, i) => (
-                <div
-                  key={r.t}
-                  className="flex items-baseline gap-5 border-t border-ink-300 py-4 transition-opacity duration-500 last:border-b"
-                  style={{ opacity: i <= lit ? 1 : 0.3 }}
-                >
-                  <span className="micro-label w-[9ch] shrink-0 text-tan">{r.t}</span>
-                  <span className="font-display text-lg text-cream md:text-xl">{r.label}</span>
-                  <span className="micro-label ml-auto hidden text-right text-sage md:block">{r.note}</span>
-                </div>
-              ))}
-            </div>
+            </Rise>
+            <p className="mt-3 max-w-[54ch] text-base text-sage-pale font-normal">
+              Transparansi setiap fase penanganan masalah warga dengan pelacakan status yang terukur.
+            </p>
           </div>
+          <Rise d={120} className="inline-flex items-center gap-2 rounded-full border border-ink-300 bg-surface px-4 py-2 text-xs font-semibold text-sage shadow-xs">
+            <CheckCircle2 size={14} className="text-success" />
+            <span>Target Penanganan Cepat &amp; Tuntas</span>
+          </Rise>
+        </div>
 
-          {/* Kanan: panel jam ber-border 2px */}
-          <div className="flex items-center">
-            <div className="relative aspect-square w-full max-w-[440px] border-2 border-cream p-7">
-              <div className="flex items-center justify-between">
-                <span className="micro-label text-sage">RUN / SGP-2026-0108</span>
-                <span className="micro-label text-tan">{ROWS[lit].label}</span>
+        <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
+          {ROWS.map((r, i) => (
+            <Rise
+              key={r.n}
+              d={i * 80}
+              className="card-hover group flex flex-col justify-between rounded-3xl border border-ink-300 bg-surface p-6 shadow-sm"
+            >
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-tan/10 font-display text-sm font-bold text-tan">
+                    {r.n}
+                  </span>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-sage">
+                    Tahap {r.n}
+                  </span>
+                </div>
+                <h3 className="font-display mt-5 text-lg font-bold tracking-tight text-cream transition-colors group-hover:text-tan">
+                  {r.label}
+                </h3>
+                <p className="mt-2 text-xs leading-relaxed text-sage-pale font-normal">
+                  {r.desc}
+                </p>
               </div>
-              <p className="micro-label mt-10 text-sage">Elapsed</p>
-              <p className="font-display mt-2 text-[clamp(3.2rem,8vw,6.4rem)] leading-none text-tan">{fmt(mm)}</p>
-              <p className="micro-label mt-6 text-sage">
-                Jarak penanganan <span className="text-cream">{km} km</span>
-              </p>
-              {/* Meter merah 6px di dasar panel */}
-              <div className="absolute bottom-0 left-0 h-[6px] bg-tan" style={{ width: `${p * 100}%` }} />
-            </div>
-          </div>
+            </Rise>
+          ))}
         </div>
       </div>
-    </div>
+    </section>
   );
 }

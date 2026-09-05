@@ -11,13 +11,16 @@ const JENIS = [
   { icon: HeartPulse, label: "Medis / Kecelakaan" },
 ];
 
+// Halaman yang sudah punya jalur darurat sendiri di dalam konten.
+// Menampilkan FAB di sini hanya menduplikasi aksi dan — pada layar
+// kecil — menimpa tombol utama halaman.
 const SEMBUNYIKAN_DI = ["/login"];
 
 export function EmergencyButton() {
   const [open, setOpen] = useState(false);
   const [terkirim, setTerkirim] = useState(false);
   const [pilih, setPilih] = useState(0);
-  const { user, tambahNotif, tambahPoin } = useApp();
+  const { tambahNotif, tambahPoin } = useApp();
   const pathname = usePathname();
 
   const panelRef = useRef<HTMLDivElement>(null);
@@ -29,6 +32,7 @@ export function EmergencyButton() {
     setTerkirim(false);
   }, []);
 
+  /* Escape untuk menutup + kunci scroll latar selama dialog terbuka. */
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -45,6 +49,8 @@ export function EmergencyButton() {
     };
   }, [open, tutup]);
 
+  /* Fokus masuk ke dialog saat dibuka, dan kembali ke pemicu saat ditutup.
+     Tanpa ini pengguna keyboard "terjebak" di belakang overlay. */
   useEffect(() => {
     if (open) {
       pemicuRef.current = document.activeElement as HTMLElement;
@@ -54,6 +60,8 @@ export function EmergencyButton() {
     }
   }, [open]);
 
+  /* Jerat Tab di dalam dialog (WCAG 2.1.2 No Keyboard Trap terbalik:
+     fokus tidak boleh bocor ke konten yang tersembunyi di belakang). */
   function jeratTab(e: React.KeyboardEvent) {
     if (e.key !== "Tab" || !panelRef.current) return;
     const f = panelRef.current.querySelectorAll<HTMLElement>(
@@ -65,6 +73,7 @@ export function EmergencyButton() {
     else if (!e.shiftKey && document.activeElement === terakhir) { e.preventDefault(); pertama.focus(); }
   }
 
+  /* Bersihkan timer bila komponen dilepas sebelum hitungan selesai. */
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
   function kirim() {
@@ -79,18 +88,11 @@ export function EmergencyButton() {
     timerRef.current = setTimeout(tutup, 2600);
   }
 
-  // Sinyal darurat HANYA untuk warga dan petugas saja
-  if (user && user.role !== "warga" && user.role !== "petugas") {
-    return null;
-  }
-
-  // Sembunyikan juga di halaman admin & dinas
-  if (SEMBUNYIKAN_DI.includes(pathname) || pathname.startsWith("/dashboard") || pathname.startsWith("/dinas")) {
-    return null;
-  }
+  if (SEMBUNYIKAN_DI.includes(pathname)) return null;
 
   return (
     <>
+      {/* FAB — diberi jarak aman iOS (home indicator) lewat env(safe-area-inset). */}
       <button
         onClick={() => setOpen(true)}
         aria-label="Kirim sinyal darurat"
@@ -112,33 +114,34 @@ export function EmergencyButton() {
             aria-modal="true"
             aria-labelledby="sos-judul"
             onKeyDown={jeratTab}
-            className="anim-pop w-full max-w-[420px] border border-ink-300 bg-surface p-6 shadow-[var(--shadow-pop)]"
+            className="anim-pop w-full max-w-[420px] rounded-3xl border border-ink-300 bg-surface p-7 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             {!terkirim ? (
               <>
-                <div className="mb-4 flex items-start justify-between gap-3">
+                <div className="mb-5 flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <span className="grid h-12 w-12 shrink-0 place-items-center bg-danger-bg text-danger">
+                    <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-danger-bg text-danger">
                       <Siren size={24} aria-hidden="true" />
                     </span>
                     <div>
-                      <h2 id="sos-judul" className="font-display text-lg font-extrabold text-cream-hi">
+                      <h2 id="sos-judul" className="font-display text-xl font-bold text-cream-hi">
                         Sinyal Darurat
                       </h2>
-                      <p className="text-xs text-ink-500">Untuk situasi yang butuh respons segera</p>
+                      <p className="text-xs text-sage">Untuk situasi yang butuh respons segera</p>
                     </div>
                   </div>
                   <button
                     onClick={tutup}
                     aria-label="Tutup dialog darurat"
-                    className="grid h-11 w-11 shrink-0 place-items-center text-ink-500 transition-colors hover:bg-ground"
+                    className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-sage transition-colors hover:bg-ground"
                   >
                     <X size={18} aria-hidden="true" />
                   </button>
                 </div>
 
-                <div role="radiogroup" aria-label="Jenis keadaan darurat" className="space-y-2">
+                {/* Pilihan jenis: radiogroup sungguhan, bukan tombol berwarna saja. */}
+                <div role="radiogroup" aria-label="Jenis keadaan darurat" className="space-y-2.5">
                   {JENIS.map((j, i) => {
                     const Ic = j.icon;
                     const dipilih = pilih === i;
@@ -149,14 +152,15 @@ export function EmergencyButton() {
                         role="radio"
                         aria-checked={dipilih}
                         onClick={() => setPilih(i)}
-                        className={`flex min-h-[52px] w-full items-center gap-3 border p-3.5 text-left text-sm font-semibold transition-colors ${
+                        className={`flex min-h-[52px] w-full items-center gap-3 rounded-2xl border p-4 text-left text-sm font-semibold transition-all ${
                           dipilih
-                            ? "border-danger bg-danger-bg text-danger"
-                            : "border-ink-300 text-ink-700 hover:border-danger"
+                            ? "border-danger bg-danger-bg text-danger ring-1 ring-danger/30"
+                            : "border-ink-300 text-cream hover:border-danger/50"
                         }`}
                       >
                         <Ic size={18} aria-hidden="true" /> {j.label}
-                        {dipilih && <span aria-hidden="true" className="ml-auto text-xs">✓</span>}
+                        {/* Penanda non-warna agar tetap jelas bagi buta warna */}
+                        {dipilih && <span aria-hidden="true" className="ml-auto text-xs font-bold">✓</span>}
                       </button>
                     );
                   })}
@@ -164,21 +168,22 @@ export function EmergencyButton() {
 
                 <button
                   onClick={kirim}
-                  className="btn-anim mt-5 flex min-h-[52px] w-full items-center justify-center gap-2 bg-tan-solid px-6 font-bold text-white transition-colors hover:bg-brand-700"
+                  className="btn-anim mt-6 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-tan-solid px-6 font-bold text-white shadow-lg shadow-tan/25 transition-colors hover:bg-brand-700"
                 >
                   <PhoneCall size={18} aria-hidden="true" /> Kirim Sinyal Darurat
                 </button>
-                <p className="mt-3 text-center text-[11px] text-ink-500">
+                <p className="mt-3 text-center text-xs text-sage">
                   Lokasi GPS Anda akan dilampirkan otomatis.
                 </p>
               </>
             ) : (
+              /* role=status agar pembaca layar mengumumkan hasil tanpa memindah fokus */
               <div role="status" className="py-6 text-center">
                 <span className="anim-pop mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full bg-success-bg text-success">
                   <PhoneCall size={30} aria-hidden="true" />
                 </span>
-                <h2 className="font-display text-xl font-extrabold text-success">Sinyal Terkirim!</h2>
-                <p className="mt-2 text-sm text-ink-500">
+                <h2 className="font-display text-2xl font-bold text-success">Sinyal Terkirim!</h2>
+                <p className="mt-2 text-sm text-sage">
                   Tim darurat terdekat telah diberitahu dan menuju lokasi Anda.
                 </p>
               </div>

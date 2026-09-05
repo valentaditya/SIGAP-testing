@@ -1,92 +1,93 @@
 @import "tailwindcss";
 
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px;
+}
+
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  /* ===== SIGAP — Swiss Poster Register (light default) =====
-     Kertas hangat + tinta + satu merah panas.
-     Nama token dipertahankan agar fitur tidak berubah.
-     Mapping: cream/cream-hi = teks utama (TINTA di light),
-     tan = MERAH, ground/surface/brand-* = permukaan kertas,
-     ink-900/ink-700 = teks TINTA (dipakai di band terang). */
-  --color-ground: #f1ebe1;        /* panel / stage alternatif */
-  --color-ground-2: #ece5d8;      /* blok sedikit lebih dalam */
-  --color-cream: #111010;         /* teks utama = TINTA */
-  --color-cream-hi: #111010;      /* headline = TINTA */
-  --color-tan: #dc201e;           /* MERAH panas, satu-satunya aksen */
-  /* Merah isian tombol. Dipisah dari --color-tan karena keduanya punya
-     beban berbeda: tan harus TERANG agar terbaca sebagai teks di latar
-     gelap, solid harus GELAP agar teks putih di atasnya lulus AA. */
-  --color-tan-solid: #d21c1a;     /* teks putih di atasnya = 5.36:1 */
-  --color-sage: #6b6760;          /* muted — dinaikkan agar lulus AA 4.5:1 */
-  --color-sage-pale: #5a564f;     /* copy sekunder, tetap terbaca */
-  --color-brand-900: #f1ebe1;
-  --color-brand-700: #b01a18;
-  --color-brand-600: #dc201e;
-  --color-brand-500: #dc201e;
-  --color-brand-100: rgba(220, 32, 30, 0.14);
-  --color-brand-50: rgba(220, 32, 30, 0.07);
-  --color-ink-900: #111010;
-  --color-ink-700: #111010;
-  --color-ink-500: #6b6760;                  /* teks bantu — AA di atas kertas */
-  --color-ink-300: rgba(17, 16, 16, 0.16);   /* hairline */
-  --color-ink-400: rgba(17, 16, 16, 0.32);   /* hairline tegas: border input */
-  --color-surface: #f8f3ec;       /* kertas */
-  --color-bg: #f8f3ec;
-  --color-danger: #dc201e;
-  --color-danger-bg: rgba(220, 32, 30, 0.08);
-  --color-warning: #a06a00;
-  --color-warning-bg: rgba(220, 32, 30, 0.06);
-  --color-success: #1c7a4d;
-  --color-success-bg: rgba(28, 122, 77, 0.10);
-  --color-info: #5a564f;
-  --color-info-bg: rgba(17, 16, 16, 0.05);
+  /* ===== SIGAP — Warm Cream & Modern Aesthetic =====
+     Krim hangat organik + Ivory Surface + Warm Espresso Ink + Terracotta Accent.
+     Mapping: cream/cream-hi = teks utama (warm espresso),
+     tan = Warm Terracotta, ground/surface/bg = variasi krem hangat,
+     ink-900/ink-700 = teks gelap. */
+  --color-ground: #f3ece0;        /* panel / stage alternatif (warm biscuit/latte) */
+  --color-ground-2: #eae0d0;      /* blok sedikit lebih dalam */
+  --color-cream: #221b16;         /* teks utama = Warm Espresso Ink */
+  --color-cream-hi: #14100c;      /* headline = Warm Obsidian */
+  --color-tan: #d94e28;           /* Warm Terracotta / Sunset Ember */
+  --color-tan-solid: #c63d18;     /* isian tombol terracotta */
+  --color-sage: #75685b;          /* muted warm stone — AA 4.5+:1 di atas krem */
+  --color-sage-pale: #54483c;     /* copy sekunder warm charcoal */
+  --color-brand-900: #f3ece0;
+  --color-brand-700: #a83315;
+  --color-brand-600: #d94e28;
+  --color-brand-500: #e65a34;
+  --color-brand-100: rgba(217, 78, 40, 0.12);
+  --color-brand-50: rgba(217, 78, 40, 0.05);
+  --color-ink-900: #14100c;
+  --color-ink-700: #221b16;
+  --color-ink-500: #75685b;
+  --color-ink-300: rgba(140, 110, 75, 0.16);   /* warm subtle border */
+  --color-ink-400: rgba(140, 110, 75, 0.32);   /* warm input border */
+  --color-surface: #fffdf9;       /* soft ivory card */
+  --color-bg: #faf6ee;            /* background utama warm cream */
+  --color-danger: #d93829;
+  --color-danger-bg: rgba(217, 56, 41, 0.08);
+  --color-warning: #b46a08;
+  --color-warning-bg: rgba(180, 106, 8, 0.08);
+  --color-success: #1e824c;
+  --color-success-bg: rgba(30, 130, 76, 0.09);
+  --color-info: #54483c;
+  --color-info-bg: rgba(34, 27, 22, 0.05);
 
-  /* Tipografi: Anton (display) + Archivo (body) + JetBrains Mono (label) */
-  --font-display: "Anton", "Archivo", ui-sans-serif, sans-serif;
-  --font-body: "Archivo", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
-  --font-grotesk: "JetBrains Mono", ui-monospace, monospace;
+  /* Tipografi Modern: Outfit (display) + Plus Jakarta Sans (body) + JetBrains Mono (data) */
+  --font-display: var(--font-display), "Outfit", ui-sans-serif, sans-serif;
+  --font-body: var(--font-body), "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-grotesk), "JetBrains Mono", ui-monospace, monospace;
+  --font-grotesk: var(--font-grotesk), "JetBrains Mono", ui-monospace, monospace;
 
-  /* Swiss: tanpa radius, tanpa shadow */
-  --radius-card: 0px;
-  --radius-chip: 0px;
-  --shadow-card: none;
-  --shadow-pop: none;
-  --nav-h: 64px;
+  /* Modern Smooth Curves & Warm Ambient Shadows */
+  --radius-card: 20px;
+  --radius-chip: 9999px;
+  --shadow-card: 0 10px 30px -8px rgba(90, 65, 35, 0.07), 0 2px 6px rgba(90, 65, 35, 0.03);
+  --shadow-pop: 0 20px 40px -12px rgba(90, 65, 35, 0.14);
+  --nav-h: 68px;
 }
 
-/* ===== DARK MODE: kertas gelap, tinta jadi kertas, merah tetap ===== */
+/* ===== DARK MODE: Espresso hangat, teks krem lembut, aksen terracotta bercahaya ===== */
 .dark {
-  --color-ground: #0e0d0c;
-  --color-ground-2: #131211;
-  --color-cream: #f2ede3;
-  --color-cream-hi: #f8f3ec;
-  --color-tan: #ff4438;           /* aksen terang: 5.33:1 di atas surface gelap */
-  --color-tan-solid: #d21c1a;     /* isian tombol tetap gelap demi teks putih */
-  --color-sage: #96908a;
-  --color-sage-pale: #b8b1a5;
-  --color-brand-900: #131211;
-  --color-brand-700: #e03428;
-  --color-brand-600: #ff4438;
-  --color-brand-500: #ff4438;
-  --color-brand-100: rgba(255, 68, 56, 0.18);
-  --color-brand-50: rgba(255, 68, 56, 0.09);
-  --color-ink-900: #f2ede3;
-  --color-ink-700: #d8d2c6;
-  --color-ink-500: #a49d92;                  /* teks bantu — AA di atas kertas gelap */
-  --color-ink-300: rgba(242, 237, 227, 0.16);
-  --color-ink-400: rgba(242, 237, 227, 0.34);
-  --color-surface: #161514;
-  --color-bg: #0a0908;
-  --color-danger: #ff4438;
-  --color-danger-bg: rgba(255, 68, 56, 0.12);
-  --color-warning: #e0a63c;
-  --color-warning-bg: rgba(224, 166, 60, 0.10);
-  --color-success: #3fae7c;
-  --color-success-bg: rgba(63, 174, 124, 0.12);
-  --color-info: #a39d92;
-  --color-info-bg: rgba(242, 237, 227, 0.06);
+  --color-ground: #1a1612;
+  --color-ground-2: #221d17;
+  --color-cream: #faf4eb;
+  --color-cream-hi: #fffdf9;
+  --color-tan: #ff6642;           /* aksen hangat terang */
+  --color-tan-solid: #d94e28;     /* isian tombol */
+  --color-sage: #a89b8e;
+  --color-sage-pale: #d1c5b7;
+  --color-brand-900: #1a1612;
+  --color-brand-700: #e04a28;
+  --color-brand-600: #ff6642;
+  --color-brand-500: #ff6642;
+  --color-brand-100: rgba(255, 102, 66, 0.16);
+  --color-brand-50: rgba(255, 102, 66, 0.08);
+  --color-ink-900: #faf4eb;
+  --color-ink-700: #e5ded2;
+  --color-ink-500: #b5a99c;
+  --color-ink-300: rgba(250, 244, 235, 0.12);
+  --color-ink-400: rgba(250, 244, 235, 0.26);
+  --color-surface: #201a15;
+  --color-bg: #120f0c;
+  --color-danger: #ff5442;
+  --color-danger-bg: rgba(255, 84, 66, 0.12);
+  --color-warning: #e5a83b;
+  --color-warning-bg: rgba(229, 168, 59, 0.10);
+  --color-success: #3ab87e;
+  --color-success-bg: rgba(58, 184, 126, 0.12);
+  --color-info: #b5a99c;
+  --color-info-bg: rgba(250, 244, 235, 0.06);
 }
 
 html {
@@ -96,8 +97,8 @@ html {
 
 body {
   font-family: var(--font-body);
-  font-size: 15px;
-  line-height: 1.6;
+  font-size: 15.5px;
+  line-height: 1.65;
   background: var(--color-bg);
   color: var(--color-cream);
   -webkit-font-smoothing: antialiased;
@@ -108,37 +109,30 @@ body {
   font-family: var(--font-display);
 }
 
-/* Anton: uppercase, tracking ketat, leading rapat */
+/* Outfit: modern, rounded, dynamic weight */
 .font-display:where(h1, h2, h3, p, span) {
-  letter-spacing: -0.012em;
-  line-height: 0.94;
-  text-transform: uppercase;
-  font-weight: 400;
+  letter-spacing: -0.025em;
+  font-weight: 700;
 }
 
-/* Label mikro: JetBrains Mono 11px + tracking lebar uppercase */
+/* Label mikro: modern badge style dengan tracking elegan */
 .micro-label {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 400;
-  letter-spacing: 0.26em;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
 /* Garis struktural */
-.rule-2 { border-color: var(--color-cream); border-width: 2px; }
+.rule-2 { border-color: var(--color-ink-300); border-width: 1px; }
 
-/* Permukaan mendapat hairline, BUKAN shadow/radius */
-:is(.bg-surface, .bg-brand-50, .bg-brand-100, .bg-success-bg, .bg-danger-bg, .bg-warning-bg, .bg-info-bg):not(.bg-cream-hi) {
-  border: 1px solid var(--color-ink-300);
-}
-
-/* Grid modular 44px dari dua linear-gradient menyilang */
+/* Grid modular halus */
 .grid-overlay {
   background-image:
-    linear-gradient(to right, color-mix(in srgb, var(--color-cream) 8%, transparent) 1px, transparent 1px),
-    linear-gradient(to bottom, color-mix(in srgb, var(--color-cream) 8%, transparent) 1px, transparent 1px);
-  background-size: 44px 44px;
+    linear-gradient(to right, color-mix(in srgb, var(--color-cream) 4%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--color-cream) 4%, transparent) 1px, transparent 1px);
+  background-size: 40px 40px;
 }
 
 /* ============================================================
@@ -197,8 +191,8 @@ body {
   opacity: 1;
 }
 
-/* Seleksi teks merah */
-::selection { background: #dc201e; color: #f8f3ec; }
+/* Seleksi teks warm terracotta & cream */
+::selection { background: #d94e28; color: #fffdf9; }
 
 /* ============================================================
    REVEAL DASAR — satu transisi per blok, bukan per huruf.
@@ -286,12 +280,25 @@ body {
 .anim-pop { animation: pop 0.28s cubic-bezier(0.22, 1, 0.36, 1) both; }
 .anim-float { animation: none; }
 
-/* Interaksi: tanpa shadow, yang berubah warna & posisi saja */
-.card-hover { transition: background-color 0.25s ease, border-color 0.25s ease; }
-.card-hover:hover { border-color: var(--color-cream) !important; }
-.btn-anim { transition: background-color 0.2s ease, color 0.2s ease, transform 0.12s ease; }
-.btn-anim:hover { transform: translateY(-1px); }
-.btn-anim:active { transform: translateY(1px); }
+/* Interaksi modern: subtle lift, warm glow & smooth shadows */
+.card-hover {
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.28s ease, border-color 0.28s ease, background-color 0.28s ease;
+}
+.card-hover:hover {
+  transform: translateY(-3px);
+  border-color: rgba(217, 78, 40, 0.45) !important;
+  box-shadow: 0 14px 30px -10px rgba(90, 65, 35, 0.08), 0 4px 10px rgba(90, 65, 35, 0.03);
+}
+.btn-anim {
+  transition: all 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.btn-anim:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px -5px rgba(217, 78, 40, 0.32);
+}
+.btn-anim:active {
+  transform: translateY(0px);
+}
 
 /* FAQ accordion: plus CSS-only + transisi tinggi */
 details.faq > summary { list-style: none; }

@@ -55,8 +55,8 @@ export function RouteMap() {
       ctx.clearRect(0, 0, W, H);
 
       const dark = document.documentElement.classList.contains("dark");
-      const ink = dark ? "242,237,227" : "17,16,16";
-      const red = dark ? "#ff4438" : "#dc201e";
+      const ink = dark ? "250,244,235" : "34,27,22";
+      const red = dark ? "#ff6642" : "#d94e28";
       const cx = W / 2;
       const cy = H / 2;
       const R = Math.min(W, H) * 0.42;
@@ -132,16 +132,16 @@ export function RouteMap() {
   }, []);
 
   return (
-    <div ref={wrap} className="relative border-b-2 border-cream" style={{ height: "300svh" }}>
+    <div ref={wrap} className="relative border-b border-ink-300 bg-bg" style={{ height: "300svh" }}>
       <div ref={pin} className="sticky top-0 flex h-[100svh] items-end overflow-hidden">
         <canvas
           ref={canvas}
-          className="absolute inset-0 h-full w-full mix-blend-multiply dark:mix-blend-screen"
+          className="absolute inset-0 h-full w-full mix-blend-multiply dark:mix-blend-screen opacity-85"
           aria-hidden
         />
-        <div className="relative mx-auto w-full max-w-[1180px] px-6 pb-16">
-          <p className="micro-label text-sage">Satu rute, satu laporan</p>
-          <h2 className="font-display mt-4 max-w-[16ch] text-[clamp(2.4rem,6vw,5rem)] text-cream-hi">
+        <div className="relative mx-auto w-full max-w-[1240px] px-6 pb-16">
+          <span className="micro-label text-sage">Jalur Respons Kota</span>
+          <h2 className="font-display mt-3 max-w-[18ch] text-[clamp(2.4rem,5.5vw,4.5rem)] font-extrabold tracking-tight text-cream-hi">
             Setiap laporan <span className="text-tan">menemukan jalannya.</span>
           </h2>
         </div>

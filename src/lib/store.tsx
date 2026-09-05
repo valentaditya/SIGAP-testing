@@ -13,6 +13,8 @@ export interface User {
   level: number;
   lencana: string[];
   wilayah?: WilayahId; // hanya relevan untuk role "dinas"
+  telepon?: string;
+  alamat?: string;
 }
 
 export interface UserRecord {
@@ -38,6 +40,7 @@ interface AppState {
   user: User | null;
   hydrated: boolean;
   login: (nama: string, email: string, role: Role, wilayah?: WilayahId) => void;
+  updateUser: (u: Partial<User>) => void;
   logout: () => void;
   notifs: Notif[];
   tandaiBaca: (id: number) => void;
@@ -154,6 +157,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setUser({ nama, email, role, poin: 40, level: 1, lencana: ["Pelapor Pertama"], wilayah });
   };
 
+  const updateUser = (data: Partial<User>) => {
+    setUser((u) => (u ? { ...u, ...data } : null));
+  };
+
   const logout = () => setUser(null);
 
   const tandaiBaca = (id: number) =>
@@ -216,7 +223,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const value: AppState = {
-    user, hydrated, login, logout,
+    user, hydrated, login, updateUser, logout,
     notifs, tandaiBaca, tandaiSemuaBaca, tambahNotif,
     laporanWarga, tambahLaporan, upvoted, upvote, tambahPoin,
     theme, toggleTheme,

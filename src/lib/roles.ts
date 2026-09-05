@@ -2,14 +2,6 @@ import type { Role } from "@/lib/store";
 
 /* ============================================================
    SATU SUMBER KEBENARAN UNTUK HAK AKSES PER PERAN.
-
-   Sebelum berkas ini ada, aturan peran tersebar di banyak tempat
-   dan saling bertentangan. Contoh nyata yang ditemukan:
-   navbar mengirim petugas ke /warga, sementara /warga sendiri
-   hanya untuk peran warga, sehingga petugas terlempar keluar.
-
-   Semua keputusan "boleh atau tidak" sekarang dibaca dari sini:
-   navigasi, penjaga rute, dan tombol aksi.
    ============================================================ */
 
 export type Kemampuan =
@@ -32,8 +24,6 @@ export interface DefinisiPeran {
   singkat: string;
   beranda: string;
   kemampuan: readonly Kemampuan[];
-  /* Menu yang tampil setelah masuk. Sengaja berbeda tiap peran:
-     menu yang tidak bisa dipakai hanya menambah beban pilihan. */
   navigasi: readonly { href: string; label: string }[];
 }
 
@@ -50,7 +40,11 @@ export const PERAN: Record<Role, DefinisiPeran> = {
       "gamifikasi",
       "sinyal_darurat",
     ],
-    navigasi: [],
+    navigasi: [
+      { href: "/warga", label: "Laporan Saya" },
+      { href: "/lapor", label: "Buat Laporan" },
+      { href: "/dampak", label: "Dampak Kota" },
+    ],
   },
   admin: {
     id: "admin",
@@ -65,7 +59,10 @@ export const PERAN: Record<Role, DefinisiPeran> = {
       "ubah_status",
       "kelola_pengguna",
     ],
-    navigasi: [],
+    navigasi: [
+      { href: "/dashboard", label: "Dashboard" },
+      { href: "/dampak", label: "Dampak Kota" },
+    ],
   },
   petugas: {
     id: "petugas",
@@ -73,7 +70,10 @@ export const PERAN: Record<Role, DefinisiPeran> = {
     singkat: "Petugas",
     beranda: "/petugas",
     kemampuan: ["ubah_status", "lihat_semua_laporan", "sinyal_darurat"],
-    navigasi: [],
+    navigasi: [
+      { href: "/petugas", label: "Tugas Saya" },
+      { href: "/dampak", label: "Dampak Kota" },
+    ],
   },
   dinas: {
     id: "dinas",
@@ -81,15 +81,21 @@ export const PERAN: Record<Role, DefinisiPeran> = {
     singkat: "Dinas",
     beranda: "/dinas",
     kemampuan: ["lihat_laporan_wilayah"],
-    navigasi: [],
+    navigasi: [
+      { href: "/dinas", label: "Portal Dinas" },
+      { href: "/dampak", label: "Dampak Kota" },
+    ],
   },
 };
 
-/* Navigasi untuk pengunjung yang belum masuk. */
+/* Navigasi untuk pengunjung yang belum masuk (khusus section landing page + peta). */
 export const NAV_TAMU = [
   { href: "/", label: "Beranda" },
-  { href: "/lapor", label: "Form Pelaporan" },
-  { href: "/dampak", label: "Dampak Kota" },
+  { href: "/#fitur", label: "Fitur" },
+  { href: "/#ai", label: "Kecerdasan AI" },
+  { href: "/#sla", label: "Standar SLA" },
+  { href: "/#faq", label: "FAQ" },
+  { href: "/peta", label: "Peta Laporan" },
 ] as const;
 
 export function bisa(role: Role | undefined, k: Kemampuan): boolean {

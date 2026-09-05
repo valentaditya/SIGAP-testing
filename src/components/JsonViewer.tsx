@@ -81,33 +81,33 @@ export function JsonViewer() {
   };
 
   return (
-    <div className="overflow-hidden border-2 border-cream bg-bg">
+    <div className="overflow-hidden rounded-3xl border border-ink-300 bg-surface shadow-sm">
       {/* Header bar */}
-      <div className="flex items-center gap-3 border-b-2 border-cream px-4 py-2.5">
-        <span className="flex gap-1.5" aria-hidden>
-          <i className="h-3 w-3 rounded-full border border-cream bg-tan" />
-          <i className="h-3 w-3 rounded-full border border-cream" />
-          <i className="h-3 w-3 rounded-full border border-cream" />
+      <div className="flex items-center gap-3 border-b border-ink-300 bg-ground/50 px-5 py-3">
+        <span className="flex gap-2" aria-hidden>
+          <i className="h-3 w-3 rounded-full bg-tan/80" />
+          <i className="h-3 w-3 rounded-full bg-warning/80" />
+          <i className="h-3 w-3 rounded-full bg-success/80" />
         </span>
-        <span className="micro-label text-sage">output.json</span>
-        <span className="micro-label ml-auto hidden text-sage md:block">AI Multi-Agent · 0.8s</span>
+        <span className="font-mono text-xs font-semibold text-sage">output.json</span>
+        <span className="font-mono text-xs font-medium ml-auto hidden text-sage md:block">AI Multi-Agent · 0.8s</span>
         <button
           type="button"
           onClick={copy}
-          className="micro-label inline-flex items-center gap-1.5 border border-cream px-2 py-1 text-cream transition-colors hover:bg-cream hover:text-bg"
+          className="inline-flex items-center gap-1.5 rounded-full border border-ink-300 bg-surface px-3 py-1 font-mono text-xs font-semibold text-cream transition-colors hover:border-tan hover:text-tan shadow-xs"
           aria-label="Salin JSON"
         >
-          {copied ? <Check size={12} /> : <Copy size={12} />}
-          {copied ? "tersalin" : "salin"}
+          {copied ? <Check size={12} className="text-success" /> : <Copy size={12} />}
+          {copied ? "Tersalin" : "Salin"}
         </button>
       </div>
       {/* Body JSON */}
-      <pre className="overflow-x-auto p-5 font-mono text-[.8rem] leading-[1.7]">{renderJson(JSON_TEXT)}</pre>
+      <pre className="overflow-x-auto p-6 font-mono text-[0.84rem] leading-[1.8]">{renderJson(JSON_TEXT)}</pre>
       {/* Status footer */}
-      <div className="flex items-center justify-between border-t-2 border-cream px-4 py-2">
-        <span className="micro-label text-sage">SGP-2026-0108 · skor_urgensi 9.2 ≥ 9</span>
-        <span className="micro-label flex items-center gap-1.5 text-tan">
-          <i className="h-1.5 w-1.5 rounded-full bg-tan" /> darurat
+      <div className="flex items-center justify-between border-t border-ink-300 bg-ground/30 px-5 py-2.5">
+        <span className="font-mono text-xs font-medium text-sage">SGP-2026-0108 · skor_urgensi 9.2</span>
+        <span className="flex items-center gap-1.5 rounded-full bg-danger/10 px-3 py-0.5 font-mono text-xs font-bold uppercase text-danger">
+          <i className="h-1.5 w-1.5 rounded-full bg-danger" /> Darurat
         </span>
       </div>
     </div>

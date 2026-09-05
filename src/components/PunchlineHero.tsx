@@ -67,23 +67,27 @@ export function PunchlineHero({ onDone }: { onDone: () => void }) {
       <div aria-hidden="true" className="grid-overlay pointer-events-none absolute inset-0 opacity-50" />
 
       <div className="relative z-10 w-full max-w-[1100px] text-center">
-        <p className="micro-label mb-8 text-sage">Sistem Informasi &amp; Gerak Aktif Pelaporan</p>
+        <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-ink-300 bg-surface/80 px-4 py-1.5 shadow-sm">
+          <span className="h-2 w-2 rounded-full bg-tan animate-pulse" />
+          <span className="font-mono text-xs font-semibold uppercase tracking-wider text-sage">
+            Sistem Informasi &amp; Gerak Aktif Pelaporan
+          </span>
+        </div>
 
         {/* Headline utama: diketik per karakter dengan jeda 50ms. */}
         <h1
-          className="font-display leading-[0.95] text-cream-hi"
-          style={{ fontSize: "clamp(38px,8.5vw,104px)" }}
+          className="font-display font-extrabold tracking-tight text-cream-hi"
+          style={{ fontSize: "clamp(36px,7.5vw,96px)", lineHeight: 1.05 }}
         >
           <Typewriter text={HEADLINE} speed={50} startDelay={250} onDone={() => setSelesaiKetik(true)} />
         </h1>
 
-        {/* Kata masalah berganti setelah headline selesai, memberi
-            konteks konkret tanpa menambah waktu tunggu. */}
-        <div className="mt-9 flex h-7 items-center justify-center gap-3" aria-hidden="true">
+        {/* Kata masalah berganti setelah headline selesai */}
+        <div className="mt-8 flex h-9 items-center justify-center gap-3" aria-hidden="true">
           <span
-            className={`h-px bg-ink-300 transition-all duration-500 ${selesaiKetik ? "w-10 opacity-100" : "w-0 opacity-0"}`}
+            className={`h-px bg-ink-300 transition-all duration-500 ${selesaiKetik ? "w-12 opacity-100" : "w-0 opacity-0"}`}
           />
-          <span className="micro-label overflow-hidden text-tan">
+          <span className="inline-flex items-center rounded-full bg-tan/10 px-4 py-1 font-mono text-xs font-bold uppercase tracking-wider text-tan border border-tan/20">
             {selesaiKetik && (
               <span key={mi} className="punch-swap inline-block">
                 {MASALAH[mi % MASALAH.length]}
@@ -91,17 +95,17 @@ export function PunchlineHero({ onDone }: { onDone: () => void }) {
             )}
           </span>
           <span
-            className={`h-px bg-ink-300 transition-all duration-500 ${selesaiKetik ? "w-10 opacity-100" : "w-0 opacity-0"}`}
+            className={`h-px bg-ink-300 transition-all duration-500 ${selesaiKetik ? "w-12 opacity-100" : "w-0 opacity-0"}`}
           />
         </div>
       </div>
 
       <p
-        className={`micro-label absolute bottom-8 text-sage transition-opacity duration-500 ${
+        className={`font-mono text-xs font-semibold uppercase tracking-wider absolute bottom-8 text-sage transition-opacity duration-500 ${
           selesaiKetik ? "opacity-100" : "opacity-0"
         }`}
       >
-        Ketuk untuk lanjut
+        Ketuk layar untuk lanjut
       </p>
     </div>
   );
