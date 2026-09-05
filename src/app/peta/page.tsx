@@ -1,8 +1,4 @@
-import dynamic from "next/dynamic";
-
-const PetaClient = dynamic(() => import("./PetaClient"), {
-  ssr: false,
-});
+import PetaWrapper from "./PetaWrapper";
 
 export const metadata = {
   title: "Peta Sebaran Laporan — SIGAP Yogyakarta",
@@ -10,5 +6,5 @@ export const metadata = {
 };
 
 export default function PetaPage() {
-  return <PetaClient />;
+  return <PetaWrapper />;
 }
