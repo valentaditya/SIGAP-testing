@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { LAPORAN, priorityColor, priorityLabel, getKategori, STATUS_LABEL, type WilayahId } from "@/lib/data";
+import { useApp } from "@/lib/store";
 import { renderToStaticMarkup } from "react-dom/server";
 import { AlertTriangle, Flame, Leaf } from "lucide-react";
 
@@ -24,19 +25,34 @@ function markerIcon(score: number) {
 }
 
 export function AdminMap({ height = 420, fill = false, wilayahFilter = "semua" }: { height?: number; fill?: boolean; wilayahFilter?: WilayahId | "semua" }) {
+  const { laporanWarga } = useApp();
   const ref = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
 
   useEffect(() => {
-    if (!ref.current || mapRef.current) return;
-    const map = L.map(ref.current, { scrollWheelZoom: true, zoomControl: false }).setView([-7.7956, 110.3695], 12);
-    L.control.zoom({ position: "bottomright" }).addTo(map);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      maxZoom: 19,
-    }).addTo(map);
+    if (!ref.current) return;
+    
+    if (!mapRef.current) {
+      const map = L.map(ref.current, { scrollWheelZoom: true, zoomControl: false }).setView([-7.7956, 110.3695], 12);
+      L.control.zoom({ position: "bottomright" }).addTo(map);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 19,
+      }).addTo(map);
+      mapRef.current = map;
+    }
 
-    const filtered = wilayahFilter === "semua" ? LAPORAN : LAPORAN.filter((l) => l.wilayah === wilayahFilter);
+    const map = mapRef.current;
+    
+    // Clear existing markers
+    map.eachLayer((layer) => {
+      if (layer instanceof L.Marker) {
+        map.removeLayer(layer);
+      }
+    });
+
+    const dataList = laporanWarga && laporanWarga.length > 0 ? laporanWarga : LAPORAN;
+    const filtered = wilayahFilter === "semua" ? dataList : dataList.filter((l) => l.wilayah === wilayahFilter);
 
     filtered.forEach((l) => {
       const k = getKategori(l.kategori);
@@ -55,13 +71,9 @@ export function AdminMap({ height = 420, fill = false, wilayahFilter = "semua" }
         );
     });
 
-    mapRef.current = map;
     const t = setTimeout(() => map.invalidateSize(), 300);
-    // Pantau perubahan ukuran container (flex/kolom) agar tile selalu pas
-    const ro = new ResizeObserver(() => map.invalidateSize());
-    if (ref.current) ro.observe(ref.current);
-    return () => { clearTimeout(t); ro.disconnect(); map.remove(); mapRef.current = null; };
-  }, [wilayahFilter]);
+    return () => clearTimeout(t);
+  }, [wilayahFilter, laporanWarga]);
 
   return (
     <div

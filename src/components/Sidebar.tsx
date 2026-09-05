@@ -1,12 +1,13 @@
 "use client";
-import { Users, Activity } from "lucide-react";
+import { Users, Activity, UserRound } from "lucide-react";
 
-export type DashboardView = "pengguna" | "log";
+export type DashboardView = "pengguna" | "log" | "profil";
 
-/* Menu dashboard Admin — Fokus Manajemen User & Log Keseluruhan Data */
+/* Menu dashboard Admin — Fokus Manajemen User, Log Keseluruhan Data & Profil */
 const MENU: { id: DashboardView; label: string; icon: any; no: string; desc: string }[] = [
   { id: "pengguna", label: "Manajemen User", icon: Users, no: "01", desc: "Kelola akun Dinas, Petugas & Warga" },
   { id: "log", label: "Log Keseluruhan Data", icon: Activity, no: "02", desc: "Riwayat & aktivitas seluruh dinas" },
+  { id: "profil", label: "Profil Admin", icon: UserRound, no: "03", desc: "Lihat & ubah informasi akun" },
 ];
 
 export function Sidebar({

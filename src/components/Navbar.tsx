@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, useLayoutEffect } from "react";
-import { Menu, X, LogOut, LogIn, Sun, Moon } from "lucide-react";
+import { Menu, X, LogOut, LogIn, Sun, Moon, UserRound } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { NotifBell } from "@/components/NotifBell";
 import { PERAN, NAV_TAMU, berandaPeran } from "@/lib/roles";
@@ -207,12 +207,26 @@ export function Navbar() {
           {user && <NotifBell />}
 
           {hydrated && (user ? (
-            <button
-              onClick={logout}
-              className="btn-anim hidden items-center gap-2 rounded-full border border-ink-300 bg-surface px-4 py-2 font-mono text-xs font-semibold uppercase tracking-wider text-sage-pale transition-colors hover:border-danger hover:text-danger shadow-sm md:inline-flex"
-            >
-              <LogOut size={14} aria-hidden="true" /> Keluar
-            </button>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/profil"
+                className="btn-anim flex items-center gap-1.5 rounded-full border border-ink-300 bg-surface/90 px-3.5 py-1.5 text-xs font-bold text-cream-hi transition-colors hover:border-tan hover:text-tan shadow-sm"
+              >
+                {user.foto ? (
+                  <img src={user.foto} alt={user.nama} className="h-5 w-5 rounded-full object-cover border border-tan/40" />
+                ) : (
+                  <UserRound size={15} className="text-tan" />
+                )}
+                <span className="max-w-[100px] truncate">{user.nama.split(" ")[0]}</span>
+              </Link>
+
+              <button
+                onClick={logout}
+                className="btn-anim hidden items-center gap-2 rounded-full border border-ink-300 bg-surface px-4 py-2 font-mono text-xs font-semibold uppercase tracking-wider text-sage-pale transition-colors hover:border-danger hover:text-danger shadow-sm md:inline-flex"
+              >
+                <LogOut size={14} aria-hidden="true" /> Keluar
+              </button>
+            </div>
           ) : (
             <Link
               href="/login"
@@ -265,14 +279,23 @@ export function Navbar() {
                 </li>
               );
             })}
-            <li className="mt-3 border-t border-ink-300 pt-3">
+            <li className="mt-3 border-t border-ink-300 pt-3 space-y-1">
               {user ? (
-                <button
-                  onClick={() => { logout(); setOpen(false); }}
-                  className="flex min-h-[44px] w-full items-center gap-2 rounded-xl px-4 text-sm font-semibold text-danger hover:bg-danger/10"
-                >
-                  <LogOut size={16} aria-hidden="true" /> Keluar ({user.nama.split(" ")[0]})
-                </button>
+                <>
+                  <Link
+                    href="/profil"
+                    onClick={() => setOpen(false)}
+                    className="flex min-h-[44px] items-center gap-2 rounded-xl px-4 text-sm font-semibold text-tan hover:bg-tan/10"
+                  >
+                    <UserRound size={16} aria-hidden="true" /> Profil Akun ({user.nama.split(" ")[0]})
+                  </Link>
+                  <button
+                    onClick={() => { logout(); setOpen(false); }}
+                    className="flex min-h-[44px] w-full items-center gap-2 rounded-xl px-4 text-sm font-semibold text-danger hover:bg-danger/10"
+                  >
+                    <LogOut size={16} aria-hidden="true" /> Keluar
+                  </button>
+                </>
               ) : (
                 <Link
                   href="/login"

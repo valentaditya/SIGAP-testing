@@ -131,6 +131,7 @@ export default function LoginClient() {
   const [loading, setLoading] = useState(false);
   const [capsOn, setCapsOn] = useState(false);
   const [gagal, setGagal] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   // Modal State setelah register
   const [modalNotifLengkap, setModalNotifLengkap] = useState(false);
@@ -197,6 +198,8 @@ export default function LoginClient() {
     if (field === "telepon") setTelepon(nilai);
     if (field === "alamat") setAlamat(nilai);
     if (errors[field]) setErrors((p) => ({ ...p, [field]: undefined }));
+    // Hapus error login saat user mulai mengetik ulang
+    if (field === "email" || field === "sandi") setLoginError(null);
   }
 
   function blur(field: keyof Errors) {
@@ -228,51 +231,75 @@ export default function LoginClient() {
       try {
         const { data, error } = await supabase
           .from("users")
-          .select("nama, email, role, wilayah, aktif")
+          .select("nama, email, role, wilayah, telepon, alamat, foto, aktif")
           .eq("email", email.trim())
           .eq("sandi", sandi)
           .eq("aktif", true)
           .single();
 
         if (!error && data) {
-          login(data.nama, data.email, data.role as Role, data.wilayah ?? undefined);
+          setLoginError(null);
+          login(
+            data.nama,
+            data.email,
+            data.role as Role,
+            data.wilayah ?? undefined,
+            data.telepon ?? undefined,
+            data.alamat ?? undefined,
+            data.foto ?? undefined
+          );
           router.push(params.get("next") || ROLES.find((r) => r.id === data.role)?.tujuan || "/");
           return;
         }
       } catch {}
 
-      // Fallback login
-      login(nama || email.split("@")[0] || "Pengguna", email.trim(), role, role === "dinas" ? fWilayah : undefined);
+      // Email/password tidak cocok — tolak login
+      setLoginError("Email atau kata sandi salah. Silakan periksa kembali.");
+      setGagal(true);
+      setTimeout(() => setGagal(false), 450);
       setLoading(false);
-      router.push(params.get("next") || aktif.tujuan);
     } else {
-      // PROSES REGISTER
+      // PROSES REGISTER — Otomatis Warga
       try {
-        await supabase.from("users").insert([
+        const { data: insertedData, error: insertError } = await supabase.from("users").insert([
           {
             nama: nama.trim(),
             email: email.trim(),
             sandi: sandi,
             role: "warga",
+            telepon: telepon.trim() || null,
+            alamat: alamat.trim() || null,
             aktif: true,
           },
-        ]);
-      } catch {}
+        ]).select();
+        if (insertError) {
+          console.error("[SIGAP Register] Supabase insert error:", insertError.code, insertError.message, insertError.details, insertError.hint);
+        } else {
+          console.log("[SIGAP Register] Insert berhasil:", insertedData);
+        }
+      } catch (e) {
+        console.error("[SIGAP Register] Exception:", e);
+      }
 
       // Simpan ke store lokal
       tambahUser({
         nama: nama.trim(),
         email: email.trim(),
         role: "warga",
+        telepon: telepon.trim() || undefined,
+        alamat: alamat.trim() || undefined,
         aktif: true,
       });
 
       // Panggil login otomatis
-      login(nama.trim(), email.trim(), "warga");
+      login(nama.trim(), email.trim(), "warga", undefined, telepon.trim() || undefined, alamat.trim() || undefined);
       setLoading(false);
 
-      // Tampilkan Modal Notifikasi "Whoops bentar lagi data kamu lengkap"
-      setModalNotifLengkap(true);
+      // Tandai bahwa user baru saja daftar agar dashboard warga tampilkan modal kelengkapan
+      try { sessionStorage.setItem("sigap_baru_daftar", "1"); } catch {}
+
+      // Redirect langsung ke dashboard warga
+      router.push(params.get("next") || "/warga");
     }
   }
 
@@ -286,8 +313,18 @@ export default function LoginClient() {
     router.push(params.get("next") || "/warga");
   }
 
-  function handleSimpanKelengkapan(e: React.FormEvent) {
+  async function handleSimpanKelengkapan(e: React.FormEvent) {
     e.preventDefault();
+    try {
+      await supabase
+        .from("users")
+        .update({
+          telepon: telepon.trim(),
+          alamat: alamat.trim(),
+        })
+        .eq("email", email.trim());
+    } catch {}
+
     updateUser({
       telepon: telepon.trim(),
       alamat: alamat.trim(),
@@ -381,7 +418,7 @@ export default function LoginClient() {
           <div className="mb-6 flex rounded-xl border border-ink-300 bg-ground p-1">
             <button
               type="button"
-              onClick={() => setMode("masuk")}
+              onClick={() => { setMode("masuk"); setLoginError(null); }}
               className={`flex-1 rounded-lg py-2.5 text-center text-sm font-bold transition-all ${
                 mode === "masuk"
                   ? "bg-tan-solid text-white shadow-md"
@@ -393,7 +430,7 @@ export default function LoginClient() {
             </button>
             <button
               type="button"
-              onClick={() => setMode("daftar")}
+              onClick={() => { setMode("daftar"); setLoginError(null); }}
               className={`flex-1 rounded-lg py-2.5 text-center text-sm font-bold transition-all ${
                 mode === "daftar"
                   ? "bg-tan-solid text-white shadow-md"
@@ -413,6 +450,16 @@ export default function LoginClient() {
               ? "Masukkan email dan kata sandi untuk mengakses akun Anda"
               : "Lengkapi nama, email, dan kata sandi untuk pendaftaran cepat"}
           </p>
+
+          {loginError && (
+            <div className="mt-4 flex items-center gap-3 rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-xs font-bold text-red-400 backdrop-blur-sm animate-fade-in">
+              <ShieldAlert size={20} className="shrink-0 text-red-500" />
+              <div className="flex-1">
+                <p className="font-extrabold text-red-300">Login Gagal!</p>
+                <p className="mt-0.5 text-red-400 font-normal">{loginError}</p>
+              </div>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} noValidate className="mt-6">
             <div className="space-y-3.5">

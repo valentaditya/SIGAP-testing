@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useApp } from "@/lib/store";
 import { Chip } from "@/components/Chip";
 import { Reveal } from "@/components/Reveal";
+import ProfileClient from "../profil/ProfileClient";
 import {
   KATEGORI,
   WILAYAH,
@@ -56,7 +57,7 @@ const ChartBox = dynamic(() => import("@/components/ChartBox").then((m) => m.Cha
   loading: () => <div className="grid h-[260px] place-items-center text-xs text-ink-500">Memuat grafik…</div>,
 });
 
-type TabDinas = "home" | "analitik" | "laporan";
+type TabDinas = "home" | "analitik" | "laporan" | "profil";
 type SubTabLaporan = "semua" | "riwayat";
 type TimeRange = "hari_ini" | "minggu_ini" | "bulan_ini" | "tahun_ini" | "all";
 
@@ -222,6 +223,16 @@ export default function DinasClient() {
               }`}
             >
               <FileText size={15} /> Laporan &amp; Riwayat ({total})
+            </button>
+            <button
+              onClick={() => setActiveTab("profil")}
+              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-extrabold transition-all ${
+                activeTab === "profil"
+                  ? "bg-brand-600 text-white shadow-md"
+                  : "text-ink-500 hover:text-cream hover:bg-ground/50"
+              }`}
+            >
+              <User size={15} /> Profil Akun
             </button>
           </div>
         </div>
@@ -804,6 +815,13 @@ export default function DinasClient() {
                 </div>
               </div>
             </div>
+          </Reveal>
+        )}
+
+        {/* TAB 4: PROFIL DINAS */}
+        {activeTab === "profil" && (
+          <Reveal>
+            <ProfileClient />
           </Reveal>
         )}
 

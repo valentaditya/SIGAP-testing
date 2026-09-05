@@ -13,6 +13,7 @@ import {
   LAPORAN, KATEGORI, WILAYAH, priorityColor, priorityLabel, getKategori,
   STATUS_LABEL, type Laporan, type KategoriId, type WilayahId
 } from "@/lib/data";
+import { useApp } from "@/lib/store";
 
 function markerIcon(score: number) {
   const color = priorityColor(score);
@@ -32,6 +33,7 @@ function markerIcon(score: number) {
 }
 
 export default function PetaClient() {
+  const { laporanWarga } = useApp();
   const ref = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<{ [id: string]: L.Marker }>({});
@@ -43,7 +45,8 @@ export default function PetaClient() {
 
   // Filtered laporan
   const laporanFiltered = useMemo(() => {
-    return LAPORAN.filter((l) => {
+    const listData = laporanWarga && laporanWarga.length > 0 ? laporanWarga : LAPORAN;
+    return listData.filter((l) => {
       if (fKategori !== "semua" && l.kategori !== fKategori) return false;
       if (fWilayah !== "semua" && l.wilayah !== fWilayah) return false;
       if (cari.trim()) {
@@ -54,7 +57,7 @@ export default function PetaClient() {
       }
       return true;
     });
-  }, [fKategori, fWilayah, cari]);
+  }, [laporanWarga, fKategori, fWilayah, cari]);
 
   // Total stat
   const totalAktif = laporanFiltered.filter((l) => l.status !== "resolved").length;

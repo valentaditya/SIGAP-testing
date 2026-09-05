@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Sidebar, type DashboardView } from "@/components/Sidebar";
 import { Chip } from "@/components/Chip";
 import { Reveal } from "@/components/Reveal";
+import ProfileClient from "../profil/ProfileClient";
 import {
   WILAYAH,
   KEGIATAN,
@@ -479,6 +480,13 @@ export default function DashboardClient() {
                 )}
               </div>
             </div>
+          </Reveal>
+        )}
+
+        {/* VIEW 3: PROFIL ADMIN */}
+        {view === "profil" && (
+          <Reveal>
+            <ProfileClient />
           </Reveal>
         )}
 

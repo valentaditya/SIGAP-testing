@@ -6,6 +6,7 @@ import "leaflet/dist/leaflet.css";
 import { renderToStaticMarkup } from "react-dom/server";
 import { Flame, AlertTriangle, Leaf } from "lucide-react";
 import { LAPORAN, priorityColor } from "@/lib/data";
+import { useApp } from "@/lib/store";
 
 function markerIcon(score: number) {
   const color = priorityColor(score);
@@ -23,26 +24,40 @@ function markerIcon(score: number) {
 
 // Visual hero: peta live mini dengan marker nyata (bukan placeholder)
 export function HeroVisual() {
+  const { laporanWarga } = useApp();
   const ref = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
 
   useEffect(() => {
-    if (!ref.current || mapRef.current) return;
-    const map = L.map(ref.current, {
-      zoomControl: false,
-      attributionControl: false,
-      dragging: false,
-      scrollWheelZoom: false,
-      doubleClickZoom: false,
-    }).setView([-7.7956, 110.3695], 12);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(map);
-    LAPORAN.forEach((l) => {
+    if (!ref.current) return;
+    
+    if (!mapRef.current) {
+      const map = L.map(ref.current, {
+        zoomControl: false,
+        attributionControl: false,
+        dragging: false,
+        scrollWheelZoom: false,
+        doubleClickZoom: false,
+      }).setView([-7.7956, 110.3695], 12);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(map);
+      mapRef.current = map;
+    }
+
+    const map = mapRef.current;
+    map.eachLayer((layer) => {
+      if (layer instanceof L.Marker) {
+        map.removeLayer(layer);
+      }
+    });
+
+    const dataList = laporanWarga && laporanWarga.length > 0 ? laporanWarga : LAPORAN;
+    dataList.forEach((l) => {
       L.marker([l.lokasi.lat, l.lokasi.lng], { icon: markerIcon(l.ai.priorityScore), interactive: false }).addTo(map);
     });
-    mapRef.current = map;
+    
     const t = setTimeout(() => map.invalidateSize(), 250);
-    return () => { clearTimeout(t); map.remove(); mapRef.current = null; };
-  }, []);
+    return () => clearTimeout(t);
+  }, [laporanWarga]);
 
   return (
     <div className="card-hover anim-float relative overflow-hidden rounded-3xl ring-1 ring-white/10">

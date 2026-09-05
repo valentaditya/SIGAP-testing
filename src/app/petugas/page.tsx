@@ -29,7 +29,9 @@ import {
   X,
   Map as MapIcon,
   Sparkles,
+  User,
 } from "lucide-react";
+import ProfileClient from "../profil/ProfileClient";
 
 const AdminMap = dynamic(() => import("@/components/AdminMap").then((m) => m.AdminMap), {
   ssr: false,
@@ -44,6 +46,8 @@ const PAGE_SIZE = 4;
 
 export default function PetugasDashboard() {
   const { laporanWarga, tambahNotif } = useApp();
+
+  const [view, setView] = useState<"tugas" | "profil">("tugas");
 
   // Local states
   const [statusMap, setStatusMap] = useState<Record<string, StatusId>>({});
@@ -150,13 +154,44 @@ export default function PetugasDashboard() {
               Kelola tugas penanganan di lapangan, navigasi lokasi, dan kirim bukti penyelesaian.
             </p>
           </div>
-          <button
-            onClick={() => setShowMap((v) => !v)}
-            className="btn-anim inline-flex items-center gap-2 rounded-xl border border-ink-300 bg-surface px-4 py-2.5 text-sm font-semibold text-ink-700 shadow-sm transition-colors hover:border-brand-600 hover:text-cream"
-          >
-            <MapIcon size={16} /> {showMap ? "Sembunyikan Peta" : "Tampilkan Peta"}
-          </button>
+          
+          <div className="flex items-center gap-2 rounded-2xl border border-ink-300 bg-surface p-1.5 shadow-sm">
+            <button
+              onClick={() => setView("tugas")}
+              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-extrabold transition-all ${
+                view === "tugas"
+                  ? "bg-brand-600 text-white shadow-md"
+                  : "text-ink-500 hover:text-cream hover:bg-ground/50"
+              }`}
+            >
+              <ClipboardList size={15} /> Tugas Lapangan
+            </button>
+            <button
+              onClick={() => setView("profil")}
+              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-extrabold transition-all ${
+                view === "profil"
+                  ? "bg-brand-600 text-white shadow-md"
+                  : "text-ink-500 hover:text-cream hover:bg-ground/50"
+              }`}
+            >
+              <User size={15} /> Profil Akun
+            </button>
+          </div>
         </div>
+
+        {view === "profil" ? (
+          <ProfileClient />
+        ) : (
+          <>
+            {/* Toggle Show Map Button */}
+            <div className="mb-4 text-right">
+              <button
+                onClick={() => setShowMap((v) => !v)}
+                className="btn-anim inline-flex items-center gap-2 rounded-xl border border-ink-300 bg-surface px-4 py-2 text-xs font-semibold text-ink-700 shadow-sm transition-colors hover:border-brand-600 hover:text-cream"
+              >
+                <MapIcon size={14} /> {showMap ? "Sembunyikan Peta" : "Tampilkan Peta"}
+              </button>
+            </div>
 
         {/* Ringkasan Statistik */}
         <div className="anim-fade-up mb-6 grid grid-cols-2 gap-4 md:grid-cols-3">
@@ -463,6 +498,8 @@ export default function PetugasDashboard() {
               </div>
             </div>
           </div>
+        )}
+        </>
         )}
       </main>
     </RequireAuth>

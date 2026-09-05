@@ -71,6 +71,7 @@ export interface AiResult {
   severity: number;
   dampak: string;
   priorityScore: number;
+  modelUsed?: string;  // AI model yang digunakan (Gemini/OpenAI/Local)
 }
 
 export interface Laporan {
@@ -82,6 +83,7 @@ export interface Laporan {
   waktu: string;
   status: StatusId;
   foto: number;
+  fotoUrls?: string[];
   dukungan: number;
   ai: AiResult;
   sla: string;

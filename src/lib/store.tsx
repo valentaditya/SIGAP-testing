@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { LAPORAN, WILAYAH, type Laporan, type WilayahId } from "@/lib/data";
+import { supabase } from "@/lib/supabase";
 
 export type Role = "warga" | "admin" | "petugas" | "dinas";
 
@@ -15,6 +16,7 @@ export interface User {
   wilayah?: WilayahId; // hanya relevan untuk role "dinas"
   telepon?: string;
   alamat?: string;
+  foto?: string;
 }
 
 export interface UserRecord {
@@ -23,6 +25,9 @@ export interface UserRecord {
   email: string;
   role: Role;
   wilayah?: WilayahId;
+  telepon?: string;
+  alamat?: string;
+  foto?: string;
   aktif: boolean;
   bergabung: string;
 }
@@ -39,7 +44,7 @@ export interface Notif {
 interface AppState {
   user: User | null;
   hydrated: boolean;
-  login: (nama: string, email: string, role: Role, wilayah?: WilayahId) => void;
+  login: (nama: string, email: string, role: Role, wilayah?: WilayahId, telepon?: string, alamat?: string, foto?: string) => void;
   updateUser: (u: Partial<User>) => void;
   logout: () => void;
   notifs: Notif[];
@@ -68,7 +73,6 @@ const SEED_NOTIFS: Notif[] = [
   { id: 3, judul: "Laporan Selesai", pesan: "SGP-2026-0101 telah diselesaikan. Terima kasih!", waktu: "3 jam lalu", baca: true, tone: "success" },
 ];
 
-// Data awal user management
 const SEED_USERS: UserRecord[] = [
   { id: "u001", nama: "Budi Santoso", email: "budi.admin@jogjakota.go.id", role: "admin", aktif: true, bergabung: "2025-06-01" },
   { id: "u002", nama: "Agus Prasetyo", email: "agus.petugas@sigap.id", role: "petugas", aktif: true, bergabung: "2025-07-15" },
@@ -90,10 +94,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [daftarUser, setDaftarUser] = useState<UserRecord[]>(SEED_USERS);
 
-  // Hydrate dari localStorage.
-  // Semua pembacaan digabung jadi SATU commit batch supaya tidak memicu
-  // render berantai. localStorage mustahil dibaca saat render server,
-  // jadi efek sekali-jalan ini memang satu-satunya tempat yang benar.
+  // Hydrate dari localStorage & Supabase DB
   useEffect(() => {
     let u: User | null = null;
     let up: Set<string> = new Set();
@@ -107,15 +108,60 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (rawTh === "dark" || rawTh === "light") th = rawTh;
       else if (window.matchMedia("(prefers-color-scheme: dark)").matches) th = "dark";
     } catch {}
-    // React membatch keempatnya menjadi satu commit, jadi hanya ada
-    // satu render tambahan setelah hidrasi.
-    /* eslint-disable react-hooks/set-state-in-effect */
+
     if (u) setUser(u);
     if (up.size) setUpvoted(up);
     setTheme(th);
     setHydrated(true);
-    /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
+
+  // Sync laporan table from Supabase DB on load
+  useEffect(() => {
+    if (!hydrated) return;
+    async function fetchSupabaseLaporan() {
+      try {
+        let fotoCache: Record<string, string[]> = {};
+        try {
+          const raw = localStorage.getItem("sigap_foto_cache");
+          if (raw) fotoCache = JSON.parse(raw);
+        } catch {}
+
+        const { data, error } = await supabase
+          .from("laporan")
+          .select("*")
+          .order("waktu", { ascending: false });
+
+        if (!error && data && data.length > 0) {
+          const mapped: Laporan[] = data.map((row: any) => ({
+            id: row.id,
+            judul: row.judul,
+            kategori: row.kategori,
+            lokasi: { lat: row.lat, lng: row.lng, alamat: row.alamat },
+            pelapor: row.pelapor,
+            waktu: row.waktu,
+            status: row.status,
+            foto: row.foto || 1,
+            fotoUrls: (row.foto_urls && row.foto_urls.length > 0) ? row.foto_urls : (fotoCache[row.id] || []),
+            dukungan: row.dukungan || 0,
+            ai: {
+              kategori: row.ai_kategori || row.kategori,
+              confidence: row.ai_confidence || 0.9,
+              severity: row.ai_severity || 7.0,
+              dampak: row.ai_dampak || "Dianalisis AI",
+              priorityScore: row.ai_priority_score || 7.0,
+              modelUsed: row.ai_model_used || undefined,
+            },
+            sla: row.sla || "48 jam",
+            wilayah: row.wilayah,
+          }));
+          setLaporanWarga(mapped);
+        }
+      } catch (err) {
+        console.warn("Supabase fetch laporan error:", err);
+      }
+    }
+    fetchSupabaseLaporan();
+  }, [hydrated]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -153,8 +199,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return b;
   }
 
-  const login = (nama: string, email: string, role: Role, wilayah?: WilayahId) => {
-    setUser({ nama, email, role, poin: 40, level: 1, lencana: ["Pelapor Pertama"], wilayah });
+  const login = (nama: string, email: string, role: Role, wilayah?: WilayahId, telepon?: string, alamat?: string, foto?: string) => {
+    setUser({ nama, email, role, poin: 40, level: 1, lencana: ["Pelapor Pertama"], wilayah, telepon, alamat, foto });
   };
 
   const updateUser = (data: Partial<User>) => {
@@ -170,8 +216,79 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const tambahNotif = (n: Omit<Notif, "id" | "baca">) =>
     setNotifs((ns) => [{ ...n, id: Date.now(), baca: false }, ...ns]);
 
-  const tambahLaporan = (l: Laporan) => {
+  const tambahLaporan = async (l: Laporan) => {
+    // 1. Update React Local State & localStorage Cache
     setLaporanWarga((ls) => [l, ...ls]);
+    if (l.fotoUrls && l.fotoUrls.length > 0) {
+      try {
+        const raw = localStorage.getItem("sigap_foto_cache");
+        const cache = raw ? JSON.parse(raw) : {};
+        cache[l.id] = l.fotoUrls;
+        localStorage.setItem("sigap_foto_cache", JSON.stringify(cache));
+      } catch {}
+    }
+
+    // 2. Insert into Supabase DB Table 'laporan'
+    try {
+      let userId: string | null = null;
+      if (user?.email) {
+        const { data: userData } = await supabase
+          .from("users")
+          .select("id")
+          .eq("email", user.email)
+          .single();
+        if (userData?.id) userId = userData.id;
+      }
+
+      const insertPayload: Record<string, unknown> = {
+        id: l.id,
+        user_id: userId,
+        pelapor: l.pelapor,
+        judul: l.judul,
+        kategori: l.kategori,
+        status: l.status,
+        waktu: l.waktu,
+        lat: l.lokasi.lat,
+        lng: l.lokasi.lng,
+        alamat: l.lokasi.alamat,
+        wilayah: l.wilayah,
+        foto: l.foto,
+        dukungan: l.dukungan,
+        sla: l.sla,
+        ai_kategori: l.ai.kategori,
+        ai_confidence: l.ai.confidence,
+        ai_severity: l.ai.severity,
+        ai_dampak: l.ai.dampak,
+        ai_priority_score: l.ai.priorityScore,
+        ai_model_used: l.ai.modelUsed || "Local Intelligent Rules (Offline Fallback)",
+      };
+
+      // Tambahkan foto_urls hanya jika ada & kolom sudah exist di DB
+      if (l.fotoUrls && l.fotoUrls.length > 0) {
+        insertPayload.foto_urls = l.fotoUrls;
+      }
+
+      const { error: insertError } = await supabase.from("laporan").insert(insertPayload);
+      if (insertError) {
+        console.warn("Supabase insert laporan error:", insertError.message, insertError.details);
+        // Jika error karena foto_urls tidak exist, coba ulang tanpa foto_urls
+        if (insertError.message.includes("foto_urls") || insertError.code === "42703") {
+          const { foto_urls, ...withoutFoto } = insertPayload;
+          void foto_urls; // suppress unused warning
+          const { error: retryErr } = await supabase.from("laporan").insert(withoutFoto);
+          if (retryErr) {
+            console.warn("Supabase insert retry juga gagal:", retryErr.message);
+          } else {
+            console.log("✅ Laporan berhasil disimpan ke Supabase (tanpa foto_urls).");
+          }
+        }
+      } else {
+        console.log("✅ Laporan berhasil disimpan ke Supabase.");
+      }
+    } catch (err) {
+      console.warn("Could not insert laporan to Supabase DB:", err);
+    }
+
     // AUTO-ROUTING: jika priorityScore >= 9, kirim notif darurat ke dinas terkait
     if (l.ai.priorityScore >= 9) {
       const wilayahData = WILAYAH.find((w) => w.id === l.wilayah);
@@ -197,11 +314,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return { ...u, poin, level: levelDariPoin(poin), lencana: lencanaDari(poin, laporanWarga.length) };
     });
 
-  const upvote = (id: string) => {
+  const upvote = async (id: string) => {
     if (upvoted.has(id)) return;
     setUpvoted((s) => new Set(s).add(id));
     setLaporanWarga((ls) => ls.map((l) => (l.id === id ? { ...l, dukungan: l.dukungan + 1 } : l)));
     tambahPoin(5);
+
+    // Sync upvote increment to Supabase DB
+    try {
+      const target = laporanWarga.find((l) => l.id === id);
+      if (target) {
+        await supabase
+          .from("laporan")
+          .update({ dukungan: target.dukungan + 1 })
+          .eq("id", id);
+      }
+    } catch (e) {
+      console.warn("Supabase upvote sync failed:", e);
+    }
   };
 
   // User management functions

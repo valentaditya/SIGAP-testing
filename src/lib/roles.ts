@@ -114,6 +114,7 @@ export const AKSES_RUTE: Record<string, readonly Role[]> = {
   "/petugas": ["petugas"],
   "/warga": ["warga"],
   "/dinas": ["dinas"],
+  "/profil": ["warga", "admin", "petugas", "dinas"],
 };
 
 export function bolehMasukRute(path: string, role: Role | undefined): boolean {
