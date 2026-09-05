@@ -1,4 +1,8 @@
-import PetaClient from "./PetaClient";
+import dynamic from "next/dynamic";
+
+const PetaClient = dynamic(() => import("./PetaClient"), {
+  ssr: false,
+});
 
 export const metadata = {
   title: "Peta Sebaran Laporan — SIGAP Yogyakarta",
