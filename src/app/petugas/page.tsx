@@ -11,6 +11,7 @@ import {
   priorityColor,
   getKategori,
   KATEGORI,
+  getFotoUrls,
   type StatusId,
   type Laporan,
 } from "@/lib/data";
@@ -45,13 +46,13 @@ const AdminMap = dynamic(() => import("@/components/AdminMap").then((m) => m.Adm
 const PAGE_SIZE = 4;
 
 export default function PetugasDashboard() {
-  const { laporanWarga, tambahNotif } = useApp();
+  const { laporanWarga, updateLaporanStatus, tambahNotif } = useApp();
 
   const [view, setView] = useState<"tugas" | "profil">("tugas");
 
   // Local states
-  const [statusMap, setStatusMap] = useState<Record<string, StatusId>>({});
   const [buktiMap, setBuktiMap] = useState<Record<string, { foto: number; catatan: string }>>({});
+  const [lightboxFoto, setLightboxFoto] = useState<string | null>(null);
 
   // Navigation & Search/Filter states
   const [search, setSearch] = useState("");
@@ -65,8 +66,8 @@ export default function PetugasDashboard() {
   const [modalFoto, setModalFoto] = useState(1);
   const [modalCatatan, setModalCatatan] = useState("");
 
-  function updateStatus(id: string, s: StatusId, judul: string) {
-    setStatusMap((m) => ({ ...m, [id]: s }));
+  function updateStatus(id: string, s: StatusId, judul: string, proofUrl?: string) {
+    updateLaporanStatus(id, s, undefined, proofUrl ? [proofUrl] : undefined);
     tambahNotif({
       judul: s === "in_progress" ? "Penanganan Dimulai" : "Penanganan Selesai",
       pesan: `${id} — ${judul}`,
@@ -79,9 +80,9 @@ export default function PetugasDashboard() {
   const allPetugasTasks = useMemo(() => {
     return laporanWarga.map((l) => ({
       ...l,
-      effectiveStatus: statusMap[l.id] ?? l.status,
+      effectiveStatus: l.status,
     }));
-  }, [laporanWarga, statusMap]);
+  }, [laporanWarga]);
 
   const filteredTasks = useMemo(() => {
     return allPetugasTasks.filter((t) => {
@@ -301,6 +302,7 @@ export default function PetugasDashboard() {
                 const st = l.effectiveStatus;
                 const dataBukti = buktiMap[l.id];
                 const fotoBukti = dataBukti?.foto ?? 0;
+                const fotoUrls = getFotoUrls(l);
 
                 return (
                   <div
@@ -323,6 +325,35 @@ export default function PetugasDashboard() {
                         </p>
                       </div>
                       <Chip tone={statusTone(st)}>{STATUS_LABEL[st]}</Chip>
+                    </div>
+
+                    {/* Foto Bukti Pelapor (Warga) */}
+                    <div className="mt-3.5 rounded-xl border border-ink-300/30 bg-ground/40 p-3">
+                      <p className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-ink-500">
+                        <Camera size={13} className="text-brand-600" /> Foto Bukti Laporan Warga
+                        <span className="ml-auto font-normal normal-case text-ink-400">
+                          {fotoUrls.length} foto
+                        </span>
+                      </p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {fotoUrls.map((url, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => setLightboxFoto(url)}
+                            className="group relative h-20 w-24 shrink-0 overflow-hidden rounded-xl border border-ink-300/40 bg-surface transition-all hover:border-brand-600 hover:shadow-md focus:outline-none"
+                          >
+                            <img
+                              src={url}
+                              alt={`Foto Laporan ${idx + 1}`}
+                              className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/35">
+                              <Camera size={16} className="text-white opacity-0 transition-opacity group-hover:opacity-100" />
+                            </div>
+                          </button>
+                        ))}
+                      </div>
                     </div>
 
                     <div className="mt-4 grid gap-3 sm:grid-cols-3">
@@ -452,17 +483,35 @@ export default function PetugasDashboard() {
 
               {/* Form Body */}
               <div className="mt-5 space-y-5">
-                {/* Upload Foto Simulasi */}
+                {/* Foto Laporan Warga untuk Acuan Petugas */}
+                <div className="rounded-2xl border border-ink-300/40 bg-ground/50 p-3.5">
+                  <label className="mb-2 flex items-center gap-1.5 text-xs font-bold text-ink-500 uppercase tracking-wider">
+                    <Camera size={14} className="text-brand-600" /> Referensi Foto Kerusakan Warga
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {getFotoUrls(modalTask).map((url, i) => (
+                      <img
+                        key={i}
+                        src={url}
+                        onClick={() => setLightboxFoto(url)}
+                        alt={`Referensi foto ${i + 1}`}
+                        className="h-20 w-28 rounded-xl object-cover border border-ink-300/40 cursor-pointer transition-transform hover:scale-105"
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Upload Foto Hasil Penanganan */}
                 <div>
                   <label className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-cream">
-                    <Camera size={15} className="text-brand-600" /> Unggah Foto Bukti Lapangan
+                    <Camera size={15} className="text-brand-600" /> Unggah Foto Bukti Hasil Penanganan
                   </label>
                   <div
                     onClick={() => setModalFoto((f) => Math.min(f + 1, 5))}
                     className="grid cursor-pointer place-items-center rounded-xl border-2 border-dashed border-ink-300 bg-brand-50/40 p-6 text-center transition-colors hover:border-brand-600"
                   >
                     <Camera size={26} className="text-ink-400" />
-                    <p className="mt-2 text-xs font-semibold text-cream">Klik untuk simulasi upload foto bukti</p>
+                    <p className="mt-2 text-xs font-semibold text-cream">Klik untuk simulasi upload foto bukti hasil</p>
                     <p className="text-[11px] text-ink-500">{modalFoto} foto terlampir (maks 5)</p>
                   </div>
                 </div>
@@ -496,6 +545,28 @@ export default function PetugasDashboard() {
                   <Upload size={16} /> Simpan & Kirim ke Admin
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL LIGHTBOX OVERLAY PREVIEW FOTO */}
+        {lightboxFoto && (
+          <div
+            className="fixed inset-0 z-[300] flex items-center justify-center bg-black/85 p-4 backdrop-blur-md transition-opacity"
+            onClick={() => setLightboxFoto(null)}
+          >
+            <div className="relative max-h-[90vh] max-w-4xl overflow-hidden rounded-2xl border border-white/20 bg-surface p-2 shadow-2xl">
+              <img
+                src={lightboxFoto}
+                alt="Pratinjau foto bukti"
+                className="max-h-[82vh] w-auto rounded-xl object-contain"
+              />
+              <button
+                onClick={() => setLightboxFoto(null)}
+                className="absolute top-4 right-4 grid h-10 w-10 place-items-center rounded-full bg-black/70 text-white transition-colors hover:bg-black"
+              >
+                <X size={20} />
+              </button>
             </div>
           </div>
         )}

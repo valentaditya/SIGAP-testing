@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { LAPORAN, WILAYAH, type Laporan, type WilayahId } from "@/lib/data";
+import { LAPORAN, WILAYAH, type Laporan, type WilayahId, type StatusId } from "@/lib/data";
 import { supabase } from "@/lib/supabase";
 
 export type Role = "warga" | "admin" | "petugas" | "dinas";
@@ -41,6 +41,16 @@ export interface Notif {
   tone: "info" | "success" | "warning" | "danger";
 }
 
+export interface SinyalDarurat {
+  id: string;
+  jenisLabel: string; // "Keamanan / Kriminal" | "Kebakaran" | "Medis / Kecelakaan"
+  lat: number;
+  lng: number;
+  pelapor: string;
+  wilayah: WilayahId;
+  waktu: string; // ISO string
+}
+
 interface AppState {
   user: User | null;
   hydrated: boolean;
@@ -53,6 +63,7 @@ interface AppState {
   tambahNotif: (n: Omit<Notif, "id" | "baca">) => void;
   laporanWarga: Laporan[];
   tambahLaporan: (l: Laporan) => void;
+  updateLaporanStatus: (id: string, newStatus: StatusId, notes?: string, fotoUrls?: string[]) => Promise<void>;
   upvoted: Set<string>;
   upvote: (id: string) => void;
   tambahPoin: (n: number) => void;
@@ -63,6 +74,10 @@ interface AppState {
   tambahUser: (u: Omit<UserRecord, "id" | "bergabung">) => void;
   hapusUser: (id: string) => void;
   ubahStatusUser: (id: string, aktif: boolean) => void;
+  // Sinyal darurat dari tombol SOS warga
+  sinyalDarurat: SinyalDarurat[];
+  tambahSinyalDarurat: (s: SinyalDarurat) => void;
+  hapusSinyalDarurat: (id: string) => void;
 }
 
 const Ctx = createContext<AppState | null>(null);
@@ -73,15 +88,7 @@ const SEED_NOTIFS: Notif[] = [
   { id: 3, judul: "Laporan Selesai", pesan: "SGP-2026-0101 telah diselesaikan. Terima kasih!", waktu: "3 jam lalu", baca: true, tone: "success" },
 ];
 
-const SEED_USERS: UserRecord[] = [
-  { id: "u001", nama: "Budi Santoso", email: "budi.admin@jogjakota.go.id", role: "admin", aktif: true, bergabung: "2025-06-01" },
-  { id: "u002", nama: "Agus Prasetyo", email: "agus.petugas@sigap.id", role: "petugas", aktif: true, bergabung: "2025-07-15" },
-  { id: "u003", nama: "Rina Kusuma", email: "rina.warga@sigap.id", role: "warga", aktif: true, bergabung: "2025-08-20" },
-  { id: "u004", nama: "Pak Hendra Wijaya", email: "kepala.dinas@slemankab.go.id", role: "dinas", wilayah: "sleman", aktif: true, bergabung: "2025-09-01" },
-  { id: "u005", nama: "Bu Dewi Rahayu", email: "kepala.dinas@bantulkab.go.id", role: "dinas", wilayah: "bantul", aktif: true, bergabung: "2025-09-01" },
-  { id: "u006", nama: "Pak Tono Susanto", email: "kepala.dinas@jogjakota.go.id", role: "dinas", wilayah: "kota_yogya", aktif: true, bergabung: "2025-09-01" },
-  { id: "u007", nama: "Bu Sinta Nurhayati", email: "kepala.dinas@gunungkidulkab.go.id", role: "dinas", wilayah: "gunungkidul", aktif: false, bergabung: "2025-10-01" },
-];
+
 
 const LEVEL_THRESH = [0, 100, 250, 500, 900];
 
@@ -92,7 +99,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [upvoted, setUpvoted] = useState<Set<string>>(new Set());
   const [hydrated, setHydrated] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("light");
-  const [daftarUser, setDaftarUser] = useState<UserRecord[]>(SEED_USERS);
+  const [daftarUser, setDaftarUser] = useState<UserRecord[]>([]);
+  const [sinyalDarurat, setSinyalDarurat] = useState<SinyalDarurat[]>([]);
 
   // Hydrate dari localStorage & Supabase DB
   useEffect(() => {
@@ -163,6 +171,117 @@ export function AppProvider({ children }: { children: ReactNode }) {
     fetchSupabaseLaporan();
   }, [hydrated]);
 
+  // Sync users table from Supabase DB on load
+  useEffect(() => {
+    if (!hydrated) return;
+    async function fetchSupabaseUsers() {
+      try {
+        const { data, error } = await supabase.from("users").select("*").order("created_at", { ascending: false });
+        if (!error && data) {
+          const mapped: UserRecord[] = data.map((u: any) => ({
+            id: u.id,
+            nama: u.nama,
+            email: u.email,
+            role: u.role || "warga",
+            wilayah: u.wilayah || undefined,
+            telepon: u.telepon || undefined,
+            alamat: u.alamat || undefined,
+            foto: u.foto || undefined,
+            aktif: u.aktif !== undefined ? u.aktif : true,
+            bergabung: u.created_at ? u.created_at.slice(0, 10) : new Date().toISOString().slice(0, 10),
+          }));
+          setDaftarUser(mapped);
+
+          if (user?.email) {
+            const dbUser = data.find((row: any) => row.email === user.email);
+            if (dbUser) {
+              setUser((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      nama: dbUser.nama || prev.nama,
+                      role: dbUser.role || prev.role,
+                      wilayah: dbUser.wilayah || prev.wilayah,
+                      telepon: dbUser.telepon || prev.telepon,
+                      alamat: dbUser.alamat || prev.alamat,
+                      foto: dbUser.foto || prev.foto,
+                    }
+                  : null
+              );
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Supabase fetch users error:", err);
+      }
+    }
+    fetchSupabaseUsers();
+  }, [hydrated, user?.email]);
+
+  // Realtime Supabase Channel Listener for 'laporan' table
+  useEffect(() => {
+    if (!hydrated) return;
+    const channel = supabase
+      .channel("laporan-realtime-changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "laporan" },
+        (payload) => {
+          if (payload.eventType === "UPDATE" && payload.new) {
+            const row = payload.new;
+            setLaporanWarga((prev) =>
+              prev.map((l) => {
+                if (l.id !== row.id) return l;
+                const newFotoUrls = (row.foto_urls && row.foto_urls.length > 0) ? row.foto_urls : l.fotoUrls;
+                return {
+                  ...l,
+                  status: row.status || l.status,
+                  fotoUrls: newFotoUrls,
+                  foto: newFotoUrls ? newFotoUrls.length : l.foto,
+                  dukungan: row.dukungan !== undefined ? row.dukungan : l.dukungan,
+                };
+              })
+            );
+          } else if (payload.eventType === "INSERT" && payload.new) {
+            const row = payload.new;
+            setLaporanWarga((prev) => {
+              if (prev.some((l) => l.id === row.id)) return prev;
+              return [
+                {
+                  id: row.id,
+                  judul: row.judul,
+                  kategori: row.kategori,
+                  lokasi: { lat: row.lat, lng: row.lng, alamat: row.alamat },
+                  pelapor: row.pelapor,
+                  waktu: row.waktu,
+                  status: row.status,
+                  foto: row.foto || 1,
+                  fotoUrls: row.foto_urls || [],
+                  dukungan: row.dukungan || 0,
+                  ai: {
+                    kategori: row.ai_kategori || row.kategori,
+                    confidence: row.ai_confidence || 0.9,
+                    severity: row.ai_severity || 7.0,
+                    dampak: row.ai_dampak || "Dianalisis AI",
+                    priorityScore: row.ai_priority_score || 7.0,
+                    modelUsed: row.ai_model_used,
+                  },
+                  sla: row.sla || "48 jam",
+                  wilayah: row.wilayah,
+                },
+                ...prev,
+              ];
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [hydrated]);
+
   useEffect(() => {
     if (!hydrated) return;
     try {
@@ -216,6 +335,54 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const tambahNotif = (n: Omit<Notif, "id" | "baca">) =>
     setNotifs((ns) => [{ ...n, id: Date.now(), baca: false }, ...ns]);
 
+  const updateLaporanStatus = async (id: string, newStatus: StatusId, notes?: string, fotoUrls?: string[]) => {
+    // 1. Optimistic Update React Local State & Cache
+    setLaporanWarga((prev) =>
+      prev.map((l) => {
+        if (l.id !== id) return l;
+        const mergedFoto = fotoUrls && fotoUrls.length > 0 
+          ? Array.from(new Set([...(l.fotoUrls || []), ...fotoUrls])) 
+          : l.fotoUrls;
+        return {
+          ...l,
+          status: newStatus,
+          fotoUrls: mergedFoto,
+          foto: mergedFoto ? mergedFoto.length : l.foto,
+        };
+      })
+    );
+
+    if (fotoUrls && fotoUrls.length > 0) {
+      try {
+        const raw = localStorage.getItem("sigap_foto_cache");
+        const cache = raw ? JSON.parse(raw) : {};
+        cache[id] = Array.from(new Set([...(cache[id] || []), ...fotoUrls]));
+        localStorage.setItem("sigap_foto_cache", JSON.stringify(cache));
+      } catch {}
+    }
+
+    // 2. Persist to Supabase DB
+    try {
+      const updatePayload: Record<string, unknown> = { status: newStatus };
+      if (fotoUrls && fotoUrls.length > 0) {
+        updatePayload.foto_urls = fotoUrls;
+      }
+
+      const { error } = await supabase.from("laporan").update(updatePayload).eq("id", id);
+      if (error) {
+        console.warn("Supabase update status laporan error:", error.message);
+        // Fallback retry without foto_urls if column issue
+        if (error.message.includes("foto_urls") || error.code === "42703") {
+          await supabase.from("laporan").update({ status: newStatus }).eq("id", id);
+        }
+      } else {
+        console.log(`✅ Laporan ${id} berhasil diperbarui di Supabase (Status: ${newStatus})`);
+      }
+    } catch (err) {
+      console.warn("Could not update laporan in Supabase DB:", err);
+    }
+  };
+
   const tambahLaporan = async (l: Laporan) => {
     // 1. Update React Local State & localStorage Cache
     setLaporanWarga((ls) => [l, ...ls]);
@@ -263,7 +430,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         ai_model_used: l.ai.modelUsed || "Local Intelligent Rules (Offline Fallback)",
       };
 
-      // Tambahkan foto_urls hanya jika ada & kolom sudah exist di DB
       if (l.fotoUrls && l.fotoUrls.length > 0) {
         insertPayload.foto_urls = l.fotoUrls;
       }
@@ -271,10 +437,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const { error: insertError } = await supabase.from("laporan").insert(insertPayload);
       if (insertError) {
         console.warn("Supabase insert laporan error:", insertError.message, insertError.details);
-        // Jika error karena foto_urls tidak exist, coba ulang tanpa foto_urls
         if (insertError.message.includes("foto_urls") || insertError.code === "42703") {
           const { foto_urls, ...withoutFoto } = insertPayload;
-          void foto_urls; // suppress unused warning
+          void foto_urls;
           const { error: retryErr } = await supabase.from("laporan").insert(withoutFoto);
           if (retryErr) {
             console.warn("Supabase insert retry juga gagal:", retryErr.message);
@@ -289,7 +454,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       console.warn("Could not insert laporan to Supabase DB:", err);
     }
 
-    // AUTO-ROUTING: jika priorityScore >= 9, kirim notif darurat ke dinas terkait
     if (l.ai.priorityScore >= 9) {
       const wilayahData = WILAYAH.find((w) => w.id === l.wilayah);
       const namaWilayah = wilayahData?.nama ?? "wilayah terkait";
@@ -314,13 +478,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return { ...u, poin, level: levelDariPoin(poin), lencana: lencanaDari(poin, laporanWarga.length) };
     });
 
+  const tambahSinyalDarurat = (s: SinyalDarurat) => {
+    setSinyalDarurat((prev) => [s, ...prev]);
+  };
+
+  const hapusSinyalDarurat = (id: string) => {
+    setSinyalDarurat((prev) => prev.filter((s) => s.id !== id));
+  };
+
   const upvote = async (id: string) => {
     if (upvoted.has(id)) return;
     setUpvoted((s) => new Set(s).add(id));
     setLaporanWarga((ls) => ls.map((l) => (l.id === id ? { ...l, dukungan: l.dukungan + 1 } : l)));
     tambahPoin(5);
 
-    // Sync upvote increment to Supabase DB
     try {
       const target = laporanWarga.find((l) => l.id === id);
       if (target) {
@@ -334,30 +505,52 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // User management functions
-  const tambahUser = (u: Omit<UserRecord, "id" | "bergabung">) => {
+  // User management functions (Synced with Supabase DB 'users' table)
+  const tambahUser = async (u: Omit<UserRecord, "id" | "bergabung">) => {
     const newUser: UserRecord = {
       ...u,
       id: `u${Date.now()}`,
       bergabung: new Date().toISOString().slice(0, 10),
     };
     setDaftarUser((prev) => [...prev, newUser]);
+
+    try {
+      await supabase.from("users").insert({
+        nama: u.nama,
+        email: u.email,
+        role: u.role,
+        wilayah: u.wilayah || null,
+      });
+    } catch (e) {
+      console.warn("Supabase insert user failed:", e);
+    }
   };
 
-  const hapusUser = (id: string) => {
+  const hapusUser = async (id: string) => {
     setDaftarUser((prev) => prev.filter((u) => u.id !== id));
+    try {
+      await supabase.from("users").delete().eq("id", id);
+    } catch (e) {
+      console.warn("Supabase delete user failed:", e);
+    }
   };
 
-  const ubahStatusUser = (id: string, aktif: boolean) => {
+  const ubahStatusUser = async (id: string, aktif: boolean) => {
     setDaftarUser((prev) => prev.map((u) => (u.id === id ? { ...u, aktif } : u)));
+    try {
+      await supabase.from("users").update({ aktif }).eq("id", id);
+    } catch (e) {
+      console.warn("Supabase update user status failed:", e);
+    }
   };
 
   const value: AppState = {
     user, hydrated, login, updateUser, logout,
     notifs, tandaiBaca, tandaiSemuaBaca, tambahNotif,
-    laporanWarga, tambahLaporan, upvoted, upvote, tambahPoin,
+    laporanWarga, tambahLaporan, updateLaporanStatus, upvoted, upvote, tambahPoin,
     theme, toggleTheme,
     daftarUser, tambahUser, hapusUser, ubahStatusUser,
+    sinyalDarurat, tambahSinyalDarurat, hapusSinyalDarurat,
   };
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
@@ -368,3 +561,4 @@ export function useApp() {
   if (!ctx) throw new Error("useApp harus dipakai di dalam AppProvider");
   return ctx;
 }
+

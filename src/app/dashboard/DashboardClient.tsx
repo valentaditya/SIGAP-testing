@@ -9,6 +9,7 @@ import {
   WILAYAH,
   KEGIATAN,
   KEGIATAN_LABEL,
+  getFotoUrls,
   type Kegiatan,
   type KegiatanTipe,
   type WilayahId,
@@ -34,6 +35,7 @@ import {
   Shield,
   X,
   UserPlus,
+  Camera,
 } from "lucide-react";
 import { useApp, type Role, type UserRecord } from "@/lib/store";
 
@@ -48,6 +50,7 @@ const TIPE_META: Record<KegiatanTipe, { icon: any; cls: string }> = {
 export default function DashboardClient() {
   const [view, setView] = useState<DashboardView>("pengguna");
   const { daftarUser, tambahUser, hapusUser, ubahStatusUser, laporanWarga } = useApp();
+  const [lightboxFoto, setLightboxFoto] = useState<string | null>(null);
 
   // State untuk Tab Manajemen User
   const [roleTab, setRoleTab] = useState<Role | "semua">("dinas");
@@ -99,6 +102,7 @@ export default function DashboardClient() {
       const lap = laporanWarga.find((l) => l.id === k.laporanId);
       return {
         ...k,
+        laporanObj: lap,
         wilayah: lap?.wilayah ?? "sleman",
         judulLaporan: lap?.judul ?? "Laporan Infrastruktur",
       };

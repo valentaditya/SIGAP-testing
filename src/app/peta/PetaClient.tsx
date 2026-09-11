@@ -6,8 +6,8 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
-  Flame, AlertTriangle, Leaf, MapPin, Filter, Layers, ArrowLeft,
-  Search, ShieldAlert, CheckCircle2, Clock, Sparkles
+  Flame, AlertTriangle, Leaf, MapPin, ArrowLeft,
+  Search, ShieldAlert, Siren
 } from "lucide-react";
 import {
   LAPORAN, KATEGORI, WILAYAH, priorityColor, priorityLabel, getKategori,
@@ -32,8 +32,28 @@ function markerIcon(score: number) {
   });
 }
 
+/** Marker khusus sinyal darurat SOS — merah besar dengan animasi pulse */
+function sosMarkerIcon() {
+  const sirenHtml = renderToStaticMarkup(<Siren size={16} color="#fff" strokeWidth={2.5} />);
+  return L.divIcon({
+    className: "",
+    html: `
+      <div style="position:relative;width:44px;height:44px;display:flex;align-items:center;justify-content:center;">
+        <span style="position:absolute;inset:0;border-radius:50%;background:#E02424;opacity:0.35;animation:sos-ring 1.4s ease-out infinite;"></span>
+        <span style="position:absolute;inset:4px;border-radius:50%;background:#E02424;opacity:0.25;animation:sos-ring 1.4s ease-out 0.4s infinite;"></span>
+        <div style="position:relative;width:34px;height:34px;border-radius:50%;background:#E02424;display:flex;align-items:center;justify-content:center;box-shadow:0 0 14px #E02424bb;border:2px solid #fff;">
+          ${sirenHtml}
+        </div>
+      </div>
+    `,
+    iconSize: [44, 44],
+    iconAnchor: [22, 22],
+    popupAnchor: [0, -24],
+  });
+}
+
 export default function PetaClient() {
-  const { laporanWarga } = useApp();
+  const { laporanWarga, sinyalDarurat } = useApp();
   const ref = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<{ [id: string]: L.Marker }>({});
@@ -67,6 +87,20 @@ export default function PetaClient() {
     if (!ref.current) return;
 
     if (!mapRef.current) {
+      // Inject CSS animasi SOS pulse ke head (sekali saja)
+      if (!document.getElementById("sos-ring-style")) {
+        const style = document.createElement("style");
+        style.id = "sos-ring-style";
+        style.textContent = `
+          @keyframes sos-ring {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            70% { transform: scale(1.6); opacity: 0; }
+            100% { transform: scale(1.6); opacity: 0; }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+
       const map = L.map(ref.current, {
         scrollWheelZoom: true,
         zoomControl: false,
@@ -88,7 +122,7 @@ export default function PetaClient() {
     Object.values(markersRef.current).forEach((m) => map.removeLayer(m));
     markersRef.current = {};
 
-    // Tambah marker baru
+    // Tambah marker laporan biasa
     laporanFiltered.forEach((l) => {
       const k = getKategori(l.kategori);
       const m = L.marker([l.lokasi.lat, l.lokasi.lng], {
@@ -113,15 +147,47 @@ export default function PetaClient() {
       markersRef.current[l.id] = m;
     });
 
+    // Tambah marker SOS darurat (di atas laporan biasa)
+    sinyalDarurat.forEach((s) => {
+      const waktuStr = new Date(s.waktu).toLocaleString("id-ID", {
+        hour: "2-digit", minute: "2-digit", day: "numeric", month: "short",
+      });
+      const m = L.marker([s.lat, s.lng], {
+        icon: sosMarkerIcon(),
+        zIndexOffset: 1000,
+      })
+        .addTo(map)
+        .bindPopup(
+          `<div style="font-family:Inter,sans-serif;min-width:220px;padding:4px">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+              <span style="background:#E02424;color:#fff;font-size:.65rem;font-weight:800;padding:3px 8px;border-radius:999px">🚨 SINYAL DARURAT</span>
+            </div>
+            <div style="font-weight:800;font-size:.95rem;color:#E02424;margin-bottom:4px">${s.jenisLabel}</div>
+            <div style="font-size:.75rem;color:#6B7280;margin-bottom:4px">Pelapor: <strong style="color:#111">${s.pelapor}</strong></div>
+            <div style="font-size:.75rem;color:#6B7280;margin-bottom:4px">Waktu: ${waktuStr}</div>
+            <div style="font-family:monospace;font-size:.7rem;color:#9CA3AF">${s.lat.toFixed(5)}, ${s.lng.toFixed(5)}</div>
+          </div>`
+        );
+      markersRef.current[`SOS-${s.id}`] = m;
+    });
+
     const t = setTimeout(() => map.invalidateSize(), 300);
     return () => clearTimeout(t);
-  }, [laporanFiltered]);
+  }, [laporanFiltered, sinyalDarurat]);
 
   function fokusLaporan(l: Laporan) {
     setTerpilihId(l.id);
     if (mapRef.current) {
       mapRef.current.flyTo([l.lokasi.lat, l.lokasi.lng], 15, { duration: 1.2 });
       const m = markersRef.current[l.id];
+      if (m) setTimeout(() => m.openPopup(), 1200);
+    }
+  }
+
+  function fokusSOSMarker(lat: number, lng: number, sosId: string) {
+    if (mapRef.current) {
+      mapRef.current.flyTo([lat, lng], 16, { duration: 1.2 });
+      const m = markersRef.current[`SOS-${sosId}`];
       if (m) setTimeout(() => m.openPopup(), 1200);
     }
   }
@@ -158,6 +224,12 @@ export default function PetaClient() {
               <ShieldAlert size={14} />
               <span>{totalDarurat} Urgensi Tinggi</span>
             </div>
+            {sinyalDarurat.length > 0 && (
+              <div className="flex animate-pulse items-center gap-2 rounded-2xl border border-danger bg-danger px-3.5 py-1.5 text-xs font-bold text-white shadow-lg shadow-danger/30">
+                <Siren size={14} />
+                <span>{sinyalDarurat.length} SOS Aktif</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -219,6 +291,37 @@ export default function PetaClient() {
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {/* Sinyal SOS di atas */}
+            {sinyalDarurat.length > 0 && (
+              <div className="space-y-2">
+                <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-danger">
+                  <Siren size={11} /> Sinyal SOS Aktif
+                </p>
+                {sinyalDarurat.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => fokusSOSMarker(s.lat, s.lng, s.id)}
+                    className="group w-full animate-pulse rounded-2xl border border-danger bg-danger/10 p-4 text-left transition-all hover:animate-none hover:bg-danger/20"
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="rounded-full bg-danger px-2 py-0.5 text-[10px] font-extrabold text-white">
+                        🚨 DARURAT
+                      </span>
+                      <span className="text-[10px] font-semibold text-danger/80">
+                        {new Date(s.waktu).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    </div>
+                    <h3 className="font-display text-sm font-bold text-danger">{s.jenisLabel}</h3>
+                    <p className="mt-1 text-xs text-sage">
+                      <MapPin size={11} className="inline-block mr-1" />
+                      {s.pelapor} · {s.lat.toFixed(4)}, {s.lng.toFixed(4)}
+                    </p>
+                  </button>
+                ))}
+                <div className="border-t border-ink-300/40 pt-2" />
+              </div>
+            )}
+
             {laporanFiltered.length === 0 ? (
               <div className="py-12 text-center text-xs text-sage">
                 Tidak ada laporan yang cocok dengan filter.

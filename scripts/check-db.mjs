@@ -9,7 +9,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
 });
 
 async function listAllUsers() {
-  const { data: users, error } = await supabase.from("users").select("id, nama, email, role, wilayah");
+  const { data: users, error } = await supabase.from("users").select("id, nama, email, sandi, role, wilayah, telepon, alamat, foto, aktif");
   console.log("=== ALL USERS IN DB ===");
   console.log(JSON.stringify(users, null, 2));
 }

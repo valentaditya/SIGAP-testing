@@ -17,6 +17,7 @@ import {
   KEGIATAN,
   KEGIATAN_LABEL,
   TREN_BULANAN,
+  getFotoUrls,
   type Laporan,
   type StatusId,
   type WilayahId,
@@ -44,6 +45,8 @@ import {
   ArrowRight,
   Layers,
   AlertCircle,
+  Camera,
+  Siren,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 
@@ -62,7 +65,7 @@ type SubTabLaporan = "semua" | "riwayat";
 type TimeRange = "hari_ini" | "minggu_ini" | "bulan_ini" | "tahun_ini" | "all";
 
 export default function DinasClient() {
-  const { user, laporanWarga, tambahNotif } = useApp();
+  const { user, laporanWarga, updateLaporanStatus, tambahNotif, sinyalDarurat, hapusSinyalDarurat } = useApp();
   const router = useRouter();
 
   // Redirect jika bukan dinas
@@ -80,12 +83,10 @@ export default function DinasClient() {
   const [filterKategori, setFilterKategori] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [selectedLaporan, setSelectedLaporan] = useState<Laporan | null>(null);
+  const [lightboxFoto, setLightboxFoto] = useState<string | null>(null);
 
   // Time Range Filter untuk Analitik
   const [analitikTimeRange, setAnalitikTimeRange] = useState<TimeRange>("all");
-
-  // Local overrides status
-  const [statusMap, setStatusMap] = useState<Record<string, StatusId>>({});
 
   const dinasWilayah = user?.wilayah ?? "sleman";
   const wilayahInfo = useMemo(() => WILAYAH.find((w) => w.id === dinasWilayah)!, [dinasWilayah]);
@@ -96,13 +97,13 @@ export default function DinasClient() {
   }, [dinasWilayah]);
 
   const liveLaporan = useMemo(() => {
-    return laporanWarga
-      .map((l) => ({
-        ...l,
-        status: statusMap[l.id] ?? l.status,
-      }))
-      .filter((l) => l.wilayah === dinasWilayah);
-  }, [laporanWarga, statusMap, dinasWilayah]);
+    return laporanWarga.filter((l) => l.wilayah === dinasWilayah);
+  }, [laporanWarga, dinasWilayah]);
+
+  // Sinyal SOS darurat yang masuk ke wilayah dinas ini
+  const sosDinas = useMemo(() => {
+    return sinyalDarurat.filter((s) => s.wilayah === dinasWilayah);
+  }, [sinyalDarurat, dinasWilayah]);
 
   // Live laporan terfilter rentang waktu analitik
   const liveLaporanAnalitik = useMemo(() => {
@@ -161,7 +162,7 @@ export default function DinasClient() {
     .sort((a, b) => b.ai.priorityScore - a.ai.priorityScore);
 
   const handleUpdateStatus = (id: string, nextStatus: StatusId) => {
-    setStatusMap((prev) => ({ ...prev, [id]: nextStatus }));
+    updateLaporanStatus(id, nextStatus);
     tambahNotif({
       judul: "Status Diperbarui",
       pesan: `Laporan ${id} kini berstatus: ${STATUS_LABEL[nextStatus]}.`,
@@ -243,6 +244,68 @@ export default function DinasClient() {
         {activeTab === "home" && (
           <Reveal>
             <div className="space-y-6">
+
+              {/* 🚨 BANNER SINYAL DARURAT SOS — muncul jika ada SOS masuk ke wilayah ini */}
+              {sosDinas.length > 0 && (
+                <div className="relative overflow-hidden rounded-3xl border-2 border-danger bg-danger/10 p-5 shadow-lg shadow-danger/20">
+                  {/* Animated background pulse */}
+                  <div className="pointer-events-none absolute inset-0 animate-pulse rounded-3xl bg-danger/5" />
+
+                  <div className="relative flex flex-wrap items-start justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <span className="flex h-12 w-12 shrink-0 animate-bounce items-center justify-center rounded-2xl bg-danger text-white shadow-lg shadow-danger/40">
+                        <Siren size={24} />
+                      </span>
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-widest text-danger">⚠ Peringatan Darurat Masuk</p>
+                        <h3 className="font-display text-xl font-extrabold text-danger">
+                          {sosDinas.length} Sinyal SOS Aktif — {sosDinas[0].jenisLabel}
+                        </h3>
+                        <p className="mt-0.5 text-xs font-medium text-danger/80">
+                          Lokasi GPS terlampir · Respons segera diperlukan
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        onClick={() => setActiveTab("home")}
+                        className="flex items-center gap-1.5 rounded-xl bg-danger px-4 py-2 text-xs font-bold text-white shadow hover:bg-red-700 transition-colors"
+                      >
+                        <MapPin size={14} /> Lihat di Peta
+                      </button>
+                      {sosDinas.map((s) => (
+                        <button
+                          key={s.id}
+                          onClick={() => hapusSinyalDarurat(s.id)}
+                          title="Tandai sudah ditangani"
+                          className="flex items-center gap-1.5 rounded-xl border border-danger/40 bg-danger-bg px-3 py-2 text-xs font-semibold text-danger hover:bg-danger/20 transition-colors"
+                        >
+                          <X size={12} /> Tutup
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Detail per sinyal */}
+                  <div className="relative mt-4 grid gap-3 sm:grid-cols-2">
+                    {sosDinas.map((s) => (
+                      <div key={s.id} className="flex items-center gap-3 rounded-2xl border border-danger/20 bg-surface/60 p-3">
+                        <Siren size={18} className="shrink-0 text-danger" />
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-bold text-cream">{s.jenisLabel}</p>
+                          <p className="text-xs text-sage">
+                            {s.pelapor} · {new Date(s.waktu).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+                          </p>
+                          <p className="font-mono text-[11px] text-ink-500">
+                            📍 {s.lat.toFixed(4)}, {s.lng.toFixed(4)}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               {/* 1. RINGKASAN LAPORAN (4 CARDS SEPERTI GAMBAR 2) */}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
                 {/* Total Laporan Wilayah */}
@@ -870,6 +933,35 @@ export default function DinasClient() {
                   </div>
                 </div>
 
+                {/* Foto Bukti Laporan Warga */}
+                <div className="rounded-2xl border border-ink-300/40 bg-ground/50 p-4">
+                  <p className="mb-2.5 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-ink-500">
+                    <Camera size={14} className="text-brand-600" /> Foto Bukti Laporan Warga
+                    <span className="ml-auto font-normal normal-case text-ink-400">
+                      {getFotoUrls(selectedLaporan).length} foto terlampir
+                    </span>
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {getFotoUrls(selectedLaporan).map((url, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setLightboxFoto(url)}
+                        className="group relative h-20 w-28 overflow-hidden rounded-xl border border-ink-300/40 bg-surface transition-all hover:border-brand-600 hover:shadow-md focus:outline-none"
+                      >
+                        <img
+                          src={url}
+                          alt={`Foto Bukti ${idx + 1}`}
+                          className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/35">
+                          <Camera size={18} className="text-white opacity-0 transition-opacity group-hover:opacity-100" />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 {/* AI Priority & SLA */}
                 <div className="rounded-2xl border border-brand-600/30 bg-gradient-to-br from-brand-600/10 to-transparent p-5">
                   <h4 className="flex items-center gap-2 font-display text-sm font-extrabold text-cream">
@@ -938,6 +1030,28 @@ export default function DinasClient() {
                   Tutup
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL LIGHTBOX OVERLAY PREVIEW FOTO */}
+        {lightboxFoto && (
+          <div
+            className="fixed inset-0 z-[300] flex items-center justify-center bg-black/85 p-4 backdrop-blur-md transition-opacity"
+            onClick={() => setLightboxFoto(null)}
+          >
+            <div className="relative max-h-[90vh] max-w-4xl overflow-hidden rounded-2xl border border-white/20 bg-surface p-2 shadow-2xl">
+              <img
+                src={lightboxFoto}
+                alt="Pratinjau foto bukti"
+                className="max-h-[82vh] w-auto rounded-xl object-contain"
+              />
+              <button
+                onClick={() => setLightboxFoto(null)}
+                className="absolute top-4 right-4 grid h-10 w-10 place-items-center rounded-full bg-black/70 text-white transition-colors hover:bg-black"
+              >
+                <X size={20} />
+              </button>
             </div>
           </div>
         )}

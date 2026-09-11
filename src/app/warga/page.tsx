@@ -70,15 +70,14 @@ export default function WargaDashboard() {
     setModalForm(false);
   }
 
-  const milikSaya = laporanWarga.filter(
-    (l) => l.pelapor === nama || l.pelapor.includes(nama.split(" ")[0])
-  );
+  const milikSaya = laporanWarga.filter((l) => {
+    const pName = l.pelapor ? l.pelapor.trim().toLowerCase() : "";
+    const uName = nama.trim().toLowerCase();
+    const firstName = uName.split(" ")[0];
+    return pName === uName || (firstName.length > 2 && pName.includes(firstName)) || (pName.length > 2 && uName.includes(pName));
+  });
 
-  const riwayatSaya = laporanWarga.filter(
-    (l) => l.status === "resolved" && (l.pelapor === nama || l.pelapor.includes(nama.split(" ")[0]))
-  );
-
-  const semuaRiwayat = laporanWarga.filter((l) => l.status === "resolved");
+  const riwayatSaya = milikSaya.filter((l) => l.status === "resolved");
 
   return (
     <RequireAuth role="warga">
@@ -229,7 +228,7 @@ export default function WargaDashboard() {
                 : "bg-surface text-ink-700 hover:bg-brand-50 hover:text-cream"
             }`}
           >
-            <History size={16} /> History ({riwayatSaya.length > 0 ? riwayatSaya.length : semuaRiwayat.length})
+            <History size={16} /> History ({riwayatSaya.length})
           </button>
           <button
             onClick={() => setActiveTab("peta")}
@@ -375,16 +374,16 @@ export default function WargaDashboard() {
               </div>
             </div>
 
-            {semuaRiwayat.length === 0 ? (
+            {riwayatSaya.length === 0 ? (
               <div className="rounded-2xl bg-surface p-10 text-center shadow-[var(--shadow-card)]">
                 <CheckCircle2 size={40} className="mx-auto text-ink-300" />
                 <p className="mt-3 font-semibold text-ink-700">Belum ada riwayat laporan selesai</p>
+                <p className="mt-1 text-xs text-ink-500">Laporan yang Anda buat dan telah berhasil diselesaikan akan muncul di sini.</p>
               </div>
             ) : (
               <div className="grid gap-4 md:grid-cols-2">
-                {semuaRiwayat.map((l) => {
+                {riwayatSaya.map((l) => {
                   const k = getKategori(l.kategori);
-                  const isMilikSaya = l.pelapor === nama || l.pelapor.includes(nama.split(" ")[0]);
                   return (
                     <div
                       key={l.id}
@@ -394,11 +393,9 @@ export default function WargaDashboard() {
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-2">
                           <span className="font-mono text-xs font-bold text-ink-500">{l.id}</span>
-                          {isMilikSaya && (
-                            <span className="rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-bold text-brand-700">
-                              Laporan Saya
-                            </span>
-                          )}
+                          <span className="rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-bold text-brand-700">
+                            Laporan Saya
+                          </span>
                         </div>
                         <Chip tone="success">Selesai ✓</Chip>
                       </div>

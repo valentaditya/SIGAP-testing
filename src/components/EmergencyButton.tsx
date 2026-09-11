@@ -2,8 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { Siren, X, PhoneCall, ShieldAlert, Flame, HeartPulse } from "lucide-react";
+import { Siren, X, PhoneCall, ShieldAlert, Flame, HeartPulse, MapPin, RotateCcw, Loader2 } from "lucide-react";
 import { useApp } from "@/lib/store";
+import { deteksiWilayah } from "@/lib/data";
+
+
 
 const JENIS = [
   { icon: ShieldAlert, label: "Keamanan / Kriminal" },
@@ -16,11 +19,16 @@ const JENIS = [
 // kecil — menimpa tombol utama halaman.
 const SEMBUNYIKAN_DI = ["/login"];
 
+type GpsStatus = "idle" | "loading" | "denied" | "ok";
+
 export function EmergencyButton() {
   const [open, setOpen] = useState(false);
   const [terkirim, setTerkirim] = useState(false);
   const [pilih, setPilih] = useState(0);
-  const { tambahNotif, tambahPoin } = useApp();
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [gpsStatus, setGpsStatus] = useState<GpsStatus>("idle");
+  const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const { tambahNotif, tambahPoin, user, tambahSinyalDarurat } = useApp();
   const pathname = usePathname();
 
   const panelRef = useRef<HTMLDivElement>(null);
@@ -30,6 +38,9 @@ export function EmergencyButton() {
   const tutup = useCallback(() => {
     setOpen(false);
     setTerkirim(false);
+    setGpsStatus("idle");
+    setGpsCoords(null);
+    setCountdown(null);
   }, []);
 
   /* Escape untuk menutup + kunci scroll latar selama dialog terbuka. */
@@ -73,19 +84,90 @@ export function EmergencyButton() {
     else if (!e.shiftKey && document.activeElement === terakhir) { e.preventDefault(); pertama.focus(); }
   }
 
-  /* Bersihkan timer bila komponen dilepas sebelum hitungan selesai. */
+  useEffect(() => {
+    if (countdown === null) return;
+
+    if (countdown === 0) {
+      setCountdown(null);
+      kirim();
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setCountdown((prev) => (prev !== null ? prev - 1 : null));
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [countdown]);
+
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
+  /** Minta izin GPS. Wajib — jika ditolak tampil pesan error + tombol retry. */
+  function mintaGps() {
+    setGpsStatus("loading");
+    if (!navigator.geolocation) {
+      setGpsStatus("denied");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setGpsCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setGpsStatus("ok");
+      },
+      () => {
+        // Ditolak / error → wajib aktifkan, tidak ada fallback
+        setGpsStatus("denied");
+      },
+      { timeout: 10000, enableHighAccuracy: true }
+    );
+  }
+
+  function mulaiCountdown() {
+    if (gpsStatus !== "ok") {
+      // GPS belum aktif, minta dulu
+      mintaGps();
+      return;
+    }
+    setCountdown(10);
+  }
+
+  function batalCountdown() {
+    setCountdown(null);
+  }
+
   function kirim() {
-    setTerkirim(true);
+    if (!gpsCoords) {
+      // Seharusnya tidak terjadi, tapi safeguard
+      setGpsStatus("denied");
+      return;
+    }
+
+    const alamatApprox = `GPS ${gpsCoords.lat.toFixed(5)}, ${gpsCoords.lng.toFixed(5)}`;
+    const wilayah = deteksiWilayah(alamatApprox);
+    const namaPerlapor = user?.nama ?? "Warga Anonim";
+    const idSinyal = `SOS-${Date.now()}`;
+
+    tambahSinyalDarurat({
+      id: idSinyal,
+      jenisLabel: JENIS[pilih].label,
+      lat: gpsCoords.lat,
+      lng: gpsCoords.lng,
+      pelapor: namaPerlapor,
+      wilayah,
+      waktu: new Date().toISOString(),
+    });
+
     tambahPoin(10);
     tambahNotif({
-      judul: "Sinyal Darurat Terkirim",
-      pesan: `${JENIS[pilih].label} — tim terdekat telah diberitahu.`,
+      judul: "🚨 Sinyal Darurat Terkirim",
+      pesan: `${JENIS[pilih].label} — lokasi GPS dilampirkan. Tim terdekat diberitahu.`,
       waktu: "Baru saja",
       tone: "danger",
     });
-    timerRef.current = setTimeout(tutup, 2600);
+
+    setTerkirim(true);
+    timerRef.current = setTimeout(tutup, 2800);
   }
 
   if (SEMBUNYIKAN_DI.includes(pathname)) return null;
@@ -114,7 +196,7 @@ export function EmergencyButton() {
             aria-modal="true"
             aria-labelledby="sos-judul"
             onKeyDown={jeratTab}
-            className="anim-pop w-full max-w-[420px] rounded-3xl border border-ink-300 bg-surface p-7 shadow-2xl"
+            className="anim-pop w-full max-w-[440px] rounded-3xl border border-ink-300 bg-surface p-7 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             {!terkirim ? (
@@ -132,8 +214,12 @@ export function EmergencyButton() {
                     </div>
                   </div>
                   <button
-                    onClick={tutup}
-                    aria-label="Tutup dialog darurat"
+                    onClick={countdown !== null ? batalCountdown : tutup}
+                    aria-label={
+                      countdown !== null
+                        ? "Batalkan pengiriman darurat"
+                        : "Tutup dialog darurat"
+                    }
                     className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-sage transition-colors hover:bg-ground"
                   >
                     <X size={18} aria-hidden="true" />
@@ -151,6 +237,7 @@ export function EmergencyButton() {
                         type="button"
                         role="radio"
                         aria-checked={dipilih}
+                        disabled={countdown !== null}
                         onClick={() => setPilih(i)}
                         className={`flex min-h-[52px] w-full items-center gap-3 rounded-2xl border p-4 text-left text-sm font-semibold transition-all ${
                           dipilih
@@ -166,14 +253,96 @@ export function EmergencyButton() {
                   })}
                 </div>
 
-                <button
-                  onClick={kirim}
-                  className="btn-anim mt-6 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-tan-solid px-6 font-bold text-white shadow-lg shadow-tan/25 transition-colors hover:bg-brand-700"
-                >
-                  <PhoneCall size={18} aria-hidden="true" /> Kirim Sinyal Darurat
-                </button>
+                {/* Pesan error GPS — wajib aktifkan lokasi */}
+                {gpsStatus === "denied" && (
+                  <div className="mt-4 flex items-start gap-3 rounded-2xl border border-danger/40 bg-danger-bg p-4">
+                    <MapPin size={18} className="mt-0.5 shrink-0 text-danger" aria-hidden="true" />
+                    <div className="flex-1">
+                      <p className="text-sm font-bold text-danger">Wajib mengaktifkan lokasi GPS!</p>
+                      <p className="mt-0.5 text-xs text-danger/80">
+                        Izin lokasi diperlukan agar tim darurat tahu posisi Anda. Aktifkan di pengaturan browser, lalu coba lagi.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* GPS loading */}
+                {gpsStatus === "loading" && (
+                  <div className="mt-4 flex items-center gap-3 rounded-2xl border border-tan/30 bg-tan/10 p-4">
+                    <Loader2 size={18} className="shrink-0 animate-spin text-tan" aria-hidden="true" />
+                    <p className="text-sm font-semibold text-cream">Mengambil lokasi GPS Anda…</p>
+                  </div>
+                )}
+
+                {/* GPS berhasil */}
+                {gpsStatus === "ok" && gpsCoords && (
+                  <div className="mt-4 flex items-center gap-3 rounded-2xl border border-success/30 bg-success-bg/30 p-4">
+                    <MapPin size={18} className="shrink-0 text-success" aria-hidden="true" />
+                    <div>
+                      <p className="text-sm font-bold text-success">Lokasi GPS terkunci ✓</p>
+                      <p className="mt-0.5 font-mono text-[11px] text-sage">
+                        {gpsCoords.lat.toFixed(5)}, {gpsCoords.lng.toFixed(5)}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {countdown === null ? (
+                  <div className="mt-5 space-y-2">
+                    {gpsStatus === "denied" ? (
+                      /* Tombol Coba Lagi GPS */
+                      <button
+                        onClick={mintaGps}
+                        className="btn-anim flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full border border-danger bg-danger/10 px-6 font-bold text-danger transition-colors hover:bg-danger/20"
+                      >
+                        <RotateCcw size={18} aria-hidden="true" />
+                        Coba Aktifkan Lokasi Lagi
+                      </button>
+                    ) : (
+                      <button
+                        onClick={mulaiCountdown}
+                        disabled={gpsStatus === "loading"}
+                        className="btn-anim flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-tan-solid px-6 font-bold text-white shadow-lg shadow-tan/25 transition-colors hover:bg-brand-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        {gpsStatus === "loading" ? (
+                          <Loader2 size={18} className="animate-spin" aria-hidden="true" />
+                        ) : (
+                          <PhoneCall size={18} aria-hidden="true" />
+                        )}
+                        {gpsStatus === "idle" ? "Aktifkan Lokasi & Kirim Sinyal" : gpsStatus === "loading" ? "Mengambil GPS…" : "Kirim Sinyal Darurat"}
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="mt-6 space-y-3">
+                    <div className="rounded-2xl border border-danger/30 bg-danger-bg p-5 text-center">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-danger">
+                        Sinyal akan dikirim dalam
+                      </p>
+                
+                      <div
+                        className="my-2 text-5xl font-black text-danger"
+                        aria-live="assertive"
+                        aria-atomic="true"
+                      >
+                        {countdown}
+                      </div>
+                    </div>
+                
+                    <button
+                      type="button"
+                      onClick={batalCountdown}
+                      className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full border border-ink-300 font-bold text-cream transition-colors hover:bg-ground"
+                    >
+                      <X size={18} aria-hidden="true" />
+                      Batalkan Pengiriman
+                    </button>
+                  </div>
+                )}
                 <p className="mt-3 text-center text-xs text-sage">
-                  Lokasi GPS Anda akan dilampirkan otomatis.
+                  {gpsStatus === "ok"
+                    ? "Lokasi GPS Anda akan dilampirkan otomatis."
+                    : "Lokasi GPS wajib untuk mengirim sinyal darurat."}
                 </p>
               </>
             ) : (
@@ -184,8 +353,13 @@ export function EmergencyButton() {
                 </span>
                 <h2 className="font-display text-2xl font-bold text-success">Sinyal Terkirim!</h2>
                 <p className="mt-2 text-sm text-sage">
-                  Tim darurat terdekat telah diberitahu dan menuju lokasi Anda.
+                  Lokasi GPS dilampirkan. Tim darurat terdekat telah diberitahu dan menuju lokasi Anda.
                 </p>
+                {gpsCoords && (
+                  <p className="mt-2 font-mono text-xs text-sage">
+                    📍 {gpsCoords.lat.toFixed(5)}, {gpsCoords.lng.toFixed(5)}
+                  </p>
+                )}
               </div>
             )}
           </div>

@@ -302,3 +302,18 @@ export function deteksiWilayah(alamat: string): WilayahId {
   return "kota_yogya";
 }
 
+const FALLBACK_CATEGORY_FOTOS: Record<string, string[]> = {
+  jalan: ["https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=600"],
+  sampah: ["https://images.unsplash.com/photo-1530587191325-3db32d826c18?w=600"],
+  banjir: ["https://images.unsplash.com/photo-1547683905-f686c993aae5?w=600"],
+  lampu: ["https://images.unsplash.com/photo-1509114397022-ed747cca3f65?w=600"],
+  keamanan: ["https://images.unsplash.com/photo-1563986768609-322da13575f3?w=600"],
+  fasum: ["https://images.unsplash.com/photo-1519331379826-f10be5486c6f?w=600"],
+};
+
+export function getFotoUrls(l: Laporan): string[] {
+  if (l.fotoUrls && l.fotoUrls.length > 0) return l.fotoUrls;
+  return FALLBACK_CATEGORY_FOTOS[l.kategori] || ["https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=600"];
+}
+
+

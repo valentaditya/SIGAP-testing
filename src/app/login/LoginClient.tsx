@@ -49,7 +49,7 @@ const ROLES: RoleDef[] = [
       "Pantau status dari Diterima sampai Selesai",
       "Kumpulkan poin, lencana, dan naik peringkat",
     ],
-    demo: { nama: "Rina Kusuma", email: "rina.warga@sigap.id" },
+    demo: { nama: "Budi Santoso", email: "budi@gmail.com" },
   },
   {
     id: "admin",
@@ -63,7 +63,7 @@ const ROLES: RoleDef[] = [
       "Peta sebaran & analitik dampak kota",
       "Verifikasi, prioritaskan, tugaskan petugas",
     ],
-    demo: { nama: "Budi Santoso", email: "budi.admin@jogjakota.go.id" },
+    demo: { nama: "Super Admin SIGAP", email: "admin@sigap.go.id" },
   },
   {
     id: "petugas",
@@ -77,7 +77,7 @@ const ROLES: RoleDef[] = [
       "Navigasi ke titik lokasi laporan",
       "Unggah foto bukti penanganan",
     ],
-    demo: { nama: "Agus Prasetyo", email: "agus.petugas@sigap.id" },
+    demo: { nama: "Petugas Surya", email: "surya@petugaslapangan.go.id" },
   },
   {
     id: "dinas",
@@ -506,14 +506,13 @@ export default function LoginClient() {
                     type="button"
                     onClick={() => setLihat((v) => !v)}
                     aria-label={lihat ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
-                    className="grid h-11 w-11 shrink-0 place-items-center text-sage hover:text-cream-hi"
+                    className="grid mt-[5px] h-11 w-11 shrink-0 place-items-center text-sage hover:text-cream-hi"
                   >
                     {lihat ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 }
               />
 
-              {/* Re-Password & Syarat Password (Khusus Mode Daftar) */}
               {mode === "daftar" && (
                 <>
                   <Field
@@ -530,7 +529,7 @@ export default function LoginClient() {
                         type="button"
                         onClick={() => setLihatRe((v) => !v)}
                         aria-label={lihatRe ? "Sembunyikan" : "Tampilkan"}
-                        className="grid h-11 w-11 shrink-0 place-items-center text-sage hover:text-cream-hi"
+                        className="grid mt-[5px]h-11 w-11 shrink-0 place-items-center text-sage hover:text-cream-hi"
                       >
                         {lihatRe ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
@@ -631,7 +630,7 @@ export default function LoginClient() {
                 Pendaftaran Berhasil!
               </span>
               <h3 className="font-display text-2xl font-extrabold text-cream-hi sm:text-3xl">
-                Whoops, bentar lagi data kamu lengkap! 🎉
+                Whoops, bentar lagi data kamu lengkap! 
               </h3>
               <p className="mt-3 text-sm leading-relaxed text-sage-pale">
                 Akun SIGAP kamu telah berhasil dibuat. Biar laporan masalah lingkunganmu bisa diproses lebih cepat dan akurat oleh tim lapangan, yuk lengkapi nomor telepon dan alamatmu sekarang!

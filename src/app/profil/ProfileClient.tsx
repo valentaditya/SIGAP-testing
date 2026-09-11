@@ -84,19 +84,24 @@ export default function ProfileClient() {
 
     try {
       // 1. Simpan ke Supabase DB
+      const updatePayload: Record<string, any> = {
+        nama: nama.trim(),
+        telepon: telepon.trim(),
+        alamat: alamat.trim(),
+        foto: fotoUrl,
+      };
+      if (currentUser.role === "dinas") {
+        updatePayload.wilayah = wilayah;
+      }
+
       const { error } = await supabase
         .from("users")
-        .update({
-          nama: nama.trim(),
-          telepon: telepon.trim(),
-          alamat: alamat.trim(),
-          foto: fotoUrl,
-          wilayah: currentUser.role === "dinas" ? wilayah : undefined,
-        })
+        .update(updatePayload)
         .eq("email", currentUser.email);
 
       if (error) {
-        console.warn("Supabase update error (non-fatal):", error);
+        console.error("Supabase update profile error:", error);
+        throw new Error(error.message || "Gagal menyimpan perubahan ke database Supabase.");
       }
 
       // 2. Simpan ke local App store
@@ -212,7 +217,7 @@ export default function ProfileClient() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-ink-300 bg-ground/60 p-4 flex items-center gap-3">
+            {/* <div className="rounded-2xl border border-ink-300 bg-ground/60 p-4 flex items-center gap-3">
               <div className="grid h-10 w-10 place-items-center rounded-xl bg-tan/15 text-tan">
                 <Sparkles size={20} />
               </div>
@@ -220,7 +225,7 @@ export default function ProfileClient() {
                 <span className="block text-xs text-sage">Total Poin</span>
                 <span className="font-display text-lg font-bold text-cream-hi">{user.poin || 0} Poin</span>
               </div>
-            </div>
+            </div> */}
 
             <div className="rounded-2xl border border-ink-300 bg-ground/60 p-4 flex items-center gap-3">
               <div className="grid h-10 w-10 place-items-center rounded-xl bg-tan/15 text-tan">
