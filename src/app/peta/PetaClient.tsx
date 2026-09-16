@@ -57,6 +57,9 @@ export default function PetaClient() {
   const ref = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<{ [id: string]: L.Marker }>({});
+  // Deteksi SOS baru untuk auto-fly & flash
+  const prevSosCountRef = useRef<number>(sinyalDarurat.length);
+  const [showFlash, setShowFlash] = useState(false);
 
   const [fKategori, setFKategori] = useState<KategoriId | "semua">("semua");
   const [fWilayah, setFWilayah] = useState<WilayahId | "semua">("semua");
@@ -67,6 +70,7 @@ export default function PetaClient() {
   const laporanFiltered = useMemo(() => {
     const listData = laporanWarga && laporanWarga.length > 0 ? laporanWarga : LAPORAN;
     return listData.filter((l) => {
+      if (l.status === "resolved") return false;
       if (fKategori !== "semua" && l.kategori !== fKategori) return false;
       if (fWilayah !== "semua" && l.wilayah !== fWilayah) return false;
       if (cari.trim()) {
@@ -172,6 +176,23 @@ export default function PetaClient() {
     });
 
     const t = setTimeout(() => map.invalidateSize(), 300);
+
+    // Auto-fly ke SOS baru jika ada sinyal yang baru masuk
+    const currentCount = sinyalDarurat.length;
+    if (currentCount > prevSosCountRef.current && sinyalDarurat.length > 0) {
+      const newest = sinyalDarurat[0];
+      setTimeout(() => {
+        map.flyTo([newest.lat, newest.lng], 16, { duration: 1.5 });
+        // Buka popup marker SOS terbaru setelah fly selesai
+        const sosMarker = markersRef.current[`SOS-${newest.id}`];
+        if (sosMarker) setTimeout(() => sosMarker.openPopup(), 1600);
+      }, 350);
+      // Flash merah overlay
+      setShowFlash(true);
+      setTimeout(() => setShowFlash(false), 1800);
+    }
+    prevSosCountRef.current = currentCount;
+
     return () => clearTimeout(t);
   }, [laporanFiltered, sinyalDarurat]);
 
@@ -280,7 +301,31 @@ export default function PetaClient() {
       {/* Konten Peta + Sidebar List */}
       <div className="relative flex flex-1 overflow-hidden">
         {/* Main Leaflet Map */}
-        <div ref={ref} className="h-full flex-1" role="application" aria-label="Peta Interaktif Laporan" />
+        <div className="relative h-full flex-1">
+          {/* Flash overlay merah saat SOS baru masuk */}
+          {showFlash && (
+            <div
+              aria-hidden="true"
+              style={{
+                position: "absolute",
+                inset: 0,
+                zIndex: 999,
+                background: "rgba(224,36,36,0.28)",
+                pointerEvents: "none",
+                animation: "sos-map-flash 1.8s ease-out forwards",
+                borderRadius: "0",
+              }}
+            />
+          )}
+          <style>{`
+            @keyframes sos-map-flash {
+              0%   { opacity: 1; }
+              60%  { opacity: 0.6; }
+              100% { opacity: 0; }
+            }
+          `}</style>
+          <div ref={ref} className="h-full w-full" role="application" aria-label="Peta Interaktif Laporan" />
+        </div>
 
         {/* Sidebar Daftar Laporan */}
         <aside className="hidden w-[360px] flex-col border-l border-ink-300 bg-surface md:flex">

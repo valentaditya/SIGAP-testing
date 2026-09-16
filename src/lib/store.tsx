@@ -63,7 +63,8 @@ interface AppState {
   tambahNotif: (n: Omit<Notif, "id" | "baca">) => void;
   laporanWarga: Laporan[];
   tambahLaporan: (l: Laporan) => void;
-  updateLaporanStatus: (id: string, newStatus: StatusId, notes?: string, fotoUrls?: string[]) => Promise<void>;
+  updateLaporanStatus: (id: string, newStatus: StatusId, notes?: string, fotoUrls?: string[], buktiPetugas?: import("@/lib/data").BuktiPetugas) => Promise<void>;
+  kirimBuktiPetugas: (id: string, bukti: import("@/lib/data").BuktiPetugas, targetStatus?: StatusId) => Promise<void>;
   upvoted: Set<string>;
   upvote: (id: string) => void;
   tambahPoin: (n: number) => void;
@@ -71,9 +72,13 @@ interface AppState {
   toggleTheme: () => void;
   // User management (admin-only)
   daftarUser: UserRecord[];
-  tambahUser: (u: Omit<UserRecord, "id" | "bergabung">) => void;
+  tambahUser: (u: Omit<UserRecord, "id" | "bergabung">) => Promise<{ error?: string }>;
+  updateUserRecord: (id: string, u: Partial<UserRecord>) => Promise<void>;
   hapusUser: (id: string) => void;
   ubahStatusUser: (id: string, aktif: boolean) => void;
+  // Laporan management (admin & dinas)
+  updateLaporan: (id: string, updatedData: Partial<Laporan>) => Promise<void>;
+  hapusLaporan: (id: string) => Promise<void>;
   // Sinyal darurat dari tombol SOS warga
   sinyalDarurat: SinyalDarurat[];
   tambahSinyalDarurat: (s: SinyalDarurat) => void;
@@ -129,9 +134,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     async function fetchSupabaseLaporan() {
       try {
         let fotoCache: Record<string, string[]> = {};
+        let buktiCache: Record<string, import("@/lib/data").BuktiPetugas> = {};
         try {
           const raw = localStorage.getItem("sigap_foto_cache");
           if (raw) fotoCache = JSON.parse(raw);
+          const rawBukti = localStorage.getItem("sigap_bukti_cache");
+          if (rawBukti) buktiCache = JSON.parse(rawBukti);
         } catch {}
 
         const { data, error } = await supabase
@@ -151,6 +159,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             foto: row.foto || 1,
             fotoUrls: (row.foto_urls && row.foto_urls.length > 0) ? row.foto_urls : (fotoCache[row.id] || []),
             dukungan: row.dukungan || 0,
+            buktiPetugas: buktiCache[row.id] || undefined,
             ai: {
               kategori: row.ai_kategori || row.kategori,
               confidence: row.ai_confidence || 0.9,
@@ -335,7 +344,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const tambahNotif = (n: Omit<Notif, "id" | "baca">) =>
     setNotifs((ns) => [{ ...n, id: Date.now(), baca: false }, ...ns]);
 
-  const updateLaporanStatus = async (id: string, newStatus: StatusId, notes?: string, fotoUrls?: string[]) => {
+  const updateLaporanStatus = async (
+    id: string,
+    newStatus: StatusId,
+    notes?: string,
+    fotoUrls?: string[],
+    buktiPetugas?: import("@/lib/data").BuktiPetugas
+  ) => {
     // 1. Optimistic Update React Local State & Cache
     setLaporanWarga((prev) =>
       prev.map((l) => {
@@ -348,6 +363,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           status: newStatus,
           fotoUrls: mergedFoto,
           foto: mergedFoto ? mergedFoto.length : l.foto,
+          buktiPetugas: buktiPetugas !== undefined ? buktiPetugas : l.buktiPetugas,
         };
       })
     );
@@ -358,6 +374,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const cache = raw ? JSON.parse(raw) : {};
         cache[id] = Array.from(new Set([...(cache[id] || []), ...fotoUrls]));
         localStorage.setItem("sigap_foto_cache", JSON.stringify(cache));
+      } catch {}
+    }
+
+    if (buktiPetugas) {
+      try {
+        const rawBukti = localStorage.getItem("sigap_bukti_cache");
+        const buktiCache = rawBukti ? JSON.parse(rawBukti) : {};
+        buktiCache[id] = buktiPetugas;
+        localStorage.setItem("sigap_bukti_cache", JSON.stringify(buktiCache));
       } catch {}
     }
 
@@ -380,6 +405,46 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     } catch (err) {
       console.warn("Could not update laporan in Supabase DB:", err);
+    }
+  };
+
+  const kirimBuktiPetugas = async (
+    id: string,
+    bukti: import("@/lib/data").BuktiPetugas,
+    targetStatus: StatusId = "in_progress"
+  ) => {
+    // 1. Update React Local State
+    setLaporanWarga((prev) =>
+      prev.map((l) => {
+        if (l.id !== id) return l;
+        return {
+          ...l,
+          status: targetStatus,
+          buktiPetugas: bukti,
+        };
+      })
+    );
+
+    // 2. Save in localStorage Cache
+    try {
+      const rawBukti = localStorage.getItem("sigap_bukti_cache");
+      const buktiCache = rawBukti ? JSON.parse(rawBukti) : {};
+      buktiCache[id] = bukti;
+      localStorage.setItem("sigap_bukti_cache", JSON.stringify(buktiCache));
+    } catch {}
+
+    // 3. Persist status & photo urls to Supabase
+    try {
+      const updatePayload: Record<string, unknown> = { status: targetStatus };
+      if (bukti.fotoUrls && bukti.fotoUrls.length > 0) {
+        // Also ensure photos are saved
+        const target = laporanWarga.find((l) => l.id === id);
+        const merged = Array.from(new Set([...(target?.fotoUrls || []), ...bukti.fotoUrls]));
+        updatePayload.foto_urls = merged;
+      }
+      await supabase.from("laporan").update(updatePayload).eq("id", id);
+    } catch (err) {
+      console.warn("Supabase kirimBuktiPetugas update failed:", err);
     }
   };
 
@@ -480,6 +545,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const tambahSinyalDarurat = (s: SinyalDarurat) => {
     setSinyalDarurat((prev) => [s, ...prev]);
+    // Auto-notif danger ke bell untuk semua pengguna (termasuk dinas)
+    const wilayahData = WILAYAH.find((w) => w.id === s.wilayah);
+    const namaWilayah = wilayahData?.nama ?? "Wilayah Tidak Diketahui";
+    setNotifs((ns) => [
+      {
+        id: Date.now(),
+        judul: `🚨 SOS DARURAT — ${s.jenisLabel}`,
+        pesan: `${s.pelapor} mengirim sinyal darurat di ${namaWilayah}. Lokasi GPS terlampir. Respons segera diperlukan!`,
+        waktu: "Baru saja",
+        baca: false,
+        tone: "danger" as const,
+      },
+      ...ns,
+    ]);
   };
 
   const hapusSinyalDarurat = (id: string) => {
@@ -505,51 +584,177 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // User management functions (Synced with Supabase DB 'users' table)
-  const tambahUser = async (u: Omit<UserRecord, "id" | "bergabung">) => {
+  // User management functions (via /api/admin-user — uses Service Role Key, bypass RLS)
+  const tambahUser = async (u: Omit<UserRecord, "id" | "bergabung">): Promise<{ error?: string }> => {
+    const tempId = `u${Date.now()}`;
     const newUser: UserRecord = {
       ...u,
-      id: `u${Date.now()}`,
+      id: tempId,
       bergabung: new Date().toISOString().slice(0, 10),
     };
+    // Optimistic update dulu
     setDaftarUser((prev) => [...prev, newUser]);
 
     try {
-      await supabase.from("users").insert({
-        nama: u.nama,
-        email: u.email,
-        role: u.role,
-        wilayah: u.wilayah || null,
+      const res = await fetch("/api/admin-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nama: u.nama,
+          email: u.email,
+          role: u.role,
+          wilayah: u.wilayah || null,
+          telepon: u.telepon || null,
+          alamat: u.alamat || null,
+          aktif: u.aktif !== undefined ? u.aktif : true,
+        }),
       });
-    } catch (e) {
-      console.warn("Supabase insert user failed:", e);
+      const result = await res.json();
+
+      if (!res.ok || result.error) {
+        // Rollback optimistic update jika gagal
+        setDaftarUser((prev) => prev.filter((x) => x.id !== tempId));
+        console.error("[tambahUser] API error:", result.error);
+        return { error: result.error || "Gagal menyimpan user ke database" };
+      }
+
+      // Update id dengan id asli dari DB
+      if (result.data?.id) {
+        setDaftarUser((prev) =>
+          prev.map((x) => (x.id === tempId ? { ...x, id: result.data.id } : x))
+        );
+      }
+      return {};
+    } catch (e: any) {
+      setDaftarUser((prev) => prev.filter((x) => x.id !== tempId));
+      console.error("[tambahUser] Fetch error:", e);
+      return { error: e.message || "Network error" };
     }
   };
 
   const hapusUser = async (id: string) => {
+    // Optimistic update
+    const snapshot = daftarUser;
     setDaftarUser((prev) => prev.filter((u) => u.id !== id));
     try {
-      await supabase.from("users").delete().eq("id", id);
+      const res = await fetch(`/api/admin-user?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+      if (!res.ok) {
+        const result = await res.json();
+        console.error("[hapusUser] API error:", result.error);
+        setDaftarUser(snapshot); // rollback
+      }
     } catch (e) {
-      console.warn("Supabase delete user failed:", e);
+      console.error("[hapusUser] Fetch error:", e);
+      setDaftarUser(snapshot);
     }
   };
 
   const ubahStatusUser = async (id: string, aktif: boolean) => {
+    // Optimistic update
     setDaftarUser((prev) => prev.map((u) => (u.id === id ? { ...u, aktif } : u)));
     try {
-      await supabase.from("users").update({ aktif }).eq("id", id);
+      const res = await fetch("/api/admin-user", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, aktif }),
+      });
+      if (!res.ok) {
+        const result = await res.json();
+        console.error("[ubahStatusUser] API error:", result.error);
+        // Rollback
+        setDaftarUser((prev) => prev.map((u) => (u.id === id ? { ...u, aktif: !aktif } : u)));
+      }
     } catch (e) {
-      console.warn("Supabase update user status failed:", e);
+      console.error("[ubahStatusUser] Fetch error:", e);
+      setDaftarUser((prev) => prev.map((u) => (u.id === id ? { ...u, aktif: !aktif } : u)));
+    }
+  };
+
+  const updateUserRecord = async (id: string, u: Partial<UserRecord>) => {
+    // Optimistic update
+    setDaftarUser((prev) => prev.map((item) => (item.id === id ? { ...item, ...u } : item)));
+    try {
+      const res = await fetch("/api/admin-user", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, ...u }),
+      });
+      if (!res.ok) {
+        const result = await res.json();
+        console.error("[updateUserRecord] API error:", result.error);
+      }
+    } catch (e) {
+      console.error("[updateUserRecord] Fetch error:", e);
+    }
+  };
+
+  const updateLaporan = async (id: string, updatedData: Partial<Laporan>) => {
+    setLaporanWarga((prev) =>
+      prev.map((l) => {
+        if (l.id !== id) return l;
+        return {
+          ...l,
+          ...updatedData,
+          lokasi: updatedData.lokasi ? { ...l.lokasi, ...updatedData.lokasi } : l.lokasi,
+          ai: updatedData.ai ? { ...l.ai, ...updatedData.ai } : l.ai,
+        };
+      })
+    );
+
+    try {
+      const dbPayload: Record<string, unknown> = {};
+      if (updatedData.judul !== undefined) dbPayload.judul = updatedData.judul;
+      if (updatedData.kategori !== undefined) dbPayload.kategori = updatedData.kategori;
+      if (updatedData.status !== undefined) dbPayload.status = updatedData.status;
+      if (updatedData.wilayah !== undefined) dbPayload.wilayah = updatedData.wilayah;
+      if (updatedData.sla !== undefined) dbPayload.sla = updatedData.sla;
+
+      if (updatedData.lokasi) {
+        if (updatedData.lokasi.alamat !== undefined) dbPayload.alamat = updatedData.lokasi.alamat;
+        if (updatedData.lokasi.lat !== undefined) dbPayload.lat = updatedData.lokasi.lat;
+        if (updatedData.lokasi.lng !== undefined) dbPayload.lng = updatedData.lokasi.lng;
+      }
+
+      if (updatedData.ai) {
+        if (updatedData.ai.kategori !== undefined) dbPayload.ai_kategori = updatedData.ai.kategori;
+        if (updatedData.ai.confidence !== undefined) dbPayload.ai_confidence = updatedData.ai.confidence;
+        if (updatedData.ai.severity !== undefined) dbPayload.ai_severity = updatedData.ai.severity;
+        if (updatedData.ai.dampak !== undefined) dbPayload.ai_dampak = updatedData.ai.dampak;
+        if (updatedData.ai.priorityScore !== undefined) dbPayload.ai_priority_score = updatedData.ai.priorityScore;
+      }
+
+      if (updatedData.fotoUrls !== undefined) {
+        dbPayload.foto_urls = updatedData.fotoUrls;
+        dbPayload.foto = updatedData.fotoUrls.length;
+      }
+
+      if (Object.keys(dbPayload).length > 0) {
+        const { error } = await supabase.from("laporan").update(dbPayload).eq("id", id);
+        if (error && (error.message.includes("foto_urls") || error.code === "42703")) {
+          delete dbPayload.foto_urls;
+          await supabase.from("laporan").update(dbPayload).eq("id", id);
+        }
+      }
+    } catch (e) {
+      console.warn("Supabase update laporan failed:", e);
+    }
+  };
+
+  const hapusLaporan = async (id: string) => {
+    setLaporanWarga((prev) => prev.filter((l) => l.id !== id));
+    try {
+      await supabase.from("laporan").delete().eq("id", id);
+    } catch (e) {
+      console.warn("Supabase delete laporan failed:", e);
     }
   };
 
   const value: AppState = {
     user, hydrated, login, updateUser, logout,
     notifs, tandaiBaca, tandaiSemuaBaca, tambahNotif,
-    laporanWarga, tambahLaporan, updateLaporanStatus, upvoted, upvote, tambahPoin,
+    laporanWarga, tambahLaporan, updateLaporanStatus, kirimBuktiPetugas, updateLaporan, hapusLaporan, upvoted, upvote, tambahPoin,
     theme, toggleTheme,
-    daftarUser, tambahUser, hapusUser, ubahStatusUser,
+    daftarUser, tambahUser, updateUserRecord, hapusUser, ubahStatusUser,
     sinyalDarurat, tambahSinyalDarurat, hapusSinyalDarurat,
   };
 

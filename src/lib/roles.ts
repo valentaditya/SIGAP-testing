@@ -41,9 +41,9 @@ export const PERAN: Record<Role, DefinisiPeran> = {
       "sinyal_darurat",
     ],
     navigasi: [
-      { href: "/warga", label: "Laporan Saya" },
-      { href: "/lapor", label: "Buat Laporan" },
-      { href: "/dampak", label: "Dampak Kota" },
+      // { href: "/warga", label: "Laporan Saya" },
+      // { href: "/lapor", label: "Buat Laporan" },
+      // { href: "/dampak", label: "Dampak Kota" },
     ],
   },
   admin: {
@@ -60,8 +60,8 @@ export const PERAN: Record<Role, DefinisiPeran> = {
       "kelola_pengguna",
     ],
     navigasi: [
-      { href: "/dashboard", label: "Dashboard" },
-      { href: "/dampak", label: "Dampak Kota" },
+      // { href: "/dashboard", label: "Dashboard" },
+      // { href: "/dampak", label: "Dampak Kota" },
     ],
   },
   petugas: {
@@ -71,8 +71,8 @@ export const PERAN: Record<Role, DefinisiPeran> = {
     beranda: "/petugas",
     kemampuan: ["ubah_status", "lihat_semua_laporan", "sinyal_darurat"],
     navigasi: [
-      { href: "/petugas", label: "Tugas Saya" },
-      { href: "/dampak", label: "Dampak Kota" },
+      // { href: "/petugas", label: "Tugas Saya" },
+      // { href: "/dampak", label: "Dampak Kota" },
     ],
   },
   dinas: {
@@ -82,8 +82,8 @@ export const PERAN: Record<Role, DefinisiPeran> = {
     beranda: "/dinas",
     kemampuan: ["lihat_laporan_wilayah"],
     navigasi: [
-      { href: "/dinas", label: "Portal Dinas" },
-      { href: "/dampak", label: "Dampak Kota" },
+    //   { href: "/dinas", label: "Portal Dinas" },
+    //   { href: "/dampak", label: "Dampak Kota" },
     ],
   },
 };

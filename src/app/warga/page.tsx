@@ -10,7 +10,7 @@ import { STATUS_LABEL_ID as STATUS_LABEL, statusTone, priorityColor, priorityLab
 import {
   FileText, Plus, ThumbsUp, MapPin, Camera,
   ChevronRight, History, Map as MapIcon, CheckCircle2, TrendingUp, X, Sparkles, Clock, User, ShieldAlert,
-  ArrowRight, Phone, UserCheck,
+  ArrowRight, Phone, UserCheck, Activity, Building2,
 } from "lucide-react";
 import ProfileClient from "../profil/ProfileClient";
 import { supabase } from "@/lib/supabase";
@@ -508,10 +508,10 @@ export default function WargaDashboard() {
                   </div>
                 </div>
 
-                {/* Foto Bukti Gallery */}
-                <div>
+                {/* Foto Bukti Pelapor Gallery */}
+                <div className="rounded-2xl border border-ink-300/40 bg-ground/50 p-4">
                   <p className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase text-ink-500">
-                    <Camera size={13} /> Foto Bukti
+                    <Camera size={13} className="text-brand-600" /> Foto Laporan Kerusakan Awal
                     <span className="ml-auto font-normal normal-case text-ink-400">
                       {(detail.fotoUrls && detail.fotoUrls.length > 0) ? `${detail.fotoUrls.length} foto` : "Tidak ada foto"}
                     </span>
@@ -542,6 +542,151 @@ export default function WargaDashboard() {
                       <Camera size={16} className="opacity-40" /> Pelapor tidak melampirkan foto
                     </div>
                   )}
+                </div>
+
+                {/* Foto Bukti Hasil Penanganan Petugas jika sudah ada */}
+                {detail.buktiPetugas && detail.buktiPetugas.fotoUrls && detail.buktiPetugas.fotoUrls.length > 0 && (
+                  <div className="rounded-2xl border border-success/40 bg-success-bg/15 p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-success">
+                        <CheckCircle2 size={15} /> Foto Bukti Hasil Penanganan (Petugas Lapangan)
+                      </p>
+                      <span className="text-[10px] font-bold text-success bg-success-bg px-2.5 py-0.5 rounded-full border border-success/30">
+                        Hasil Lapangan
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      {detail.buktiPetugas.fotoUrls.map((url, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setLightboxFoto(url)}
+                          className="group relative h-20 w-28 overflow-hidden rounded-xl border border-success/40 bg-surface transition-all hover:border-success hover:shadow-md focus:outline-none"
+                        >
+                          <img
+                            src={url}
+                            alt={`Bukti Selesai ${idx + 1}`}
+                            className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/35">
+                            <Camera size={18} className="text-white opacity-0 transition-opacity group-hover:opacity-100" />
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                    {detail.buktiPetugas.catatan && (
+                      <p className="text-xs text-cream-hi mt-2 bg-surface/60 p-2.5 rounded-xl border border-success/20">
+                        <span className="font-bold text-success">Catatan Tindakan Petugas:</span> {detail.buktiPetugas.catatan}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* LOG TRANSPARANSI STATUS PENANGANAN (Flow: Pelapor -> Dinas -> Petugas -> Dinas -> Selesai) */}
+                <div className="rounded-2xl border border-brand-600/30 bg-surface/80 p-5 space-y-4">
+                  <div className="flex items-center justify-between border-b border-ink-300/30 pb-3">
+                    <h4 className="flex items-center gap-2 font-display text-sm font-extrabold text-cream">
+                      <Activity size={16} className="text-brand-600" /> Log Transparansi &amp; Riwayat Proses
+                    </h4>
+                    <span className="text-[11px] font-semibold text-brand-600 bg-brand-50/70 dark:bg-brand-900/30 px-2.5 py-0.5 rounded-full border border-brand-600/20">
+                      Realtime Tracking
+                    </span>
+                  </div>
+
+                  <div className="relative pl-6 space-y-4 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-ink-300/40">
+                    {/* Step 1: Laporan Dibuat */}
+                    <div className="relative">
+                      <span className="absolute -left-6 top-0.5 grid h-5 w-5 place-items-center rounded-full bg-success text-white text-[10px] font-bold">
+                        ✓
+                      </span>
+                      <p className="text-xs font-bold text-cream">1. Laporan Masuk &amp; Dianalisis AI</p>
+                      <p className="text-[11px] text-ink-500 mt-0.5">
+                        Laporan diterima sistem, dianalisis urgensinya (Skor {detail.ai.priorityScore}/10) dan dialokasikan ke dinas teknis wilayah.
+                      </p>
+                      <p className="text-[10px] text-ink-400 mt-0.5 font-mono">{new Date(detail.waktu).toLocaleString("id-ID")}</p>
+                    </div>
+
+                    {/* Step 2: Ditinjau Dinas */}
+                    <div className="relative">
+                      <span className={`absolute -left-6 top-0.5 grid h-5 w-5 place-items-center rounded-full text-[10px] font-bold ${
+                        ["verified", "assigned", "in_progress", "resolved"].includes(detail.status)
+                          ? "bg-success text-white"
+                          : "bg-ink-300/50 text-ink-500"
+                      }`}>
+                        {["verified", "assigned", "in_progress", "resolved"].includes(detail.status) ? "✓" : "2"}
+                      </span>
+                      <p className={`text-xs font-bold ${["verified", "assigned", "in_progress", "resolved"].includes(detail.status) ? "text-cream" : "text-ink-500"}`}>
+                        2. Ditinjau oleh Dinas Terkait
+                      </p>
+                      <p className="text-[11px] text-ink-500 mt-0.5">
+                        Dinas teknis memeriksa kelayakan laporan dan menyiapkan disposisi petugas lapangan.
+                      </p>
+                    </div>
+
+                    {/* Step 3: Diteruskan ke Petugas */}
+                    <div className="relative">
+                      <span className={`absolute -left-6 top-0.5 grid h-5 w-5 place-items-center rounded-full text-[10px] font-bold ${
+                        ["assigned", "in_progress", "resolved"].includes(detail.status)
+                          ? "bg-success text-white"
+                          : "bg-ink-300/50 text-ink-500"
+                      }`}>
+                        {["assigned", "in_progress", "resolved"].includes(detail.status) ? "✓" : "3"}
+                      </span>
+                      <p className={`text-xs font-bold ${["assigned", "in_progress", "resolved"].includes(detail.status) ? "text-cream" : "text-ink-500"}`}>
+                        3. Diteruskan ke Petugas Lapangan
+                      </p>
+                      <p className="text-[11px] text-ink-500 mt-0.5">
+                        Laporan telah diteruskan dan masuk ke daftar tugas kerja tim petugas lapangan.
+                      </p>
+                    </div>
+
+                    {/* Step 4: Dikerjakan & Kirim Bukti */}
+                    <div className="relative">
+                      <span className={`absolute -left-6 top-0.5 grid h-5 w-5 place-items-center rounded-full text-[10px] font-bold ${
+                        detail.status === "resolved"
+                          ? "bg-success text-white"
+                          : detail.status === "in_progress"
+                          ? "bg-amber-500 text-white animate-pulse"
+                          : "bg-ink-300/50 text-ink-500"
+                      }`}>
+                        {detail.status === "resolved" ? "✓" : "4"}
+                      </span>
+                      <p className={`text-xs font-bold ${["in_progress", "resolved"].includes(detail.status) ? "text-cream" : "text-ink-500"}`}>
+                        4. Dikerjakan oleh Petugas &amp; Pengiriman Foto Bukti
+                      </p>
+                      <p className="text-[11px] text-ink-500 mt-0.5">
+                        {detail.buktiPetugas?.fotoUrls?.length
+                          ? "Petugas telah selesai menangani masalah di lokasi dan mengunggah foto bukti penyelesaian untuk diverifikasi dinas."
+                          : detail.status === "in_progress"
+                          ? "Petugas sedang melakukan pengerjaan perbaikan di lapangan."
+                          : "Menunggu petugas memulai penanganan di titik lokasi."}
+                      </p>
+                      {detail.buktiPetugas?.waktu && (
+                        <p className="text-[10px] text-brand-600 mt-0.5 font-mono">
+                          Bukti dikirim: {new Date(detail.buktiPetugas.waktu).toLocaleString("id-ID")}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Step 5: Selesai & Terverifikasi Dinas */}
+                    <div className="relative">
+                      <span className={`absolute -left-6 top-0.5 grid h-5 w-5 place-items-center rounded-full text-[10px] font-bold ${
+                        detail.status === "resolved"
+                          ? "bg-success text-white"
+                          : "bg-ink-300/50 text-ink-500"
+                      }`}>
+                        {detail.status === "resolved" ? "✓" : "5"}
+                      </span>
+                      <p className={`text-xs font-bold ${detail.status === "resolved" ? "text-success" : "text-ink-500"}`}>
+                        5. Verifikasi Akhir &amp; Selesai
+                      </p>
+                      <p className="text-[11px] text-ink-500 mt-0.5">
+                        {detail.status === "resolved"
+                          ? "Dinas telah mengonfirmasi dan memverifikasi foto bukti hasil perbaikan petugas. Laporan ditutup dengan status SELESAI."
+                          : "Menunggu peninjauan dan konfirmasi penyelesaian dari dinas terkait."}
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Card Analisis AI Multi-Agent */}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/lib/store";
 import { Chip } from "@/components/Chip";
@@ -85,6 +85,10 @@ export default function DinasClient() {
   const [selectedLaporan, setSelectedLaporan] = useState<Laporan | null>(null);
   const [lightboxFoto, setLightboxFoto] = useState<string | null>(null);
 
+  // SOS Toast alert real-time
+  const [sosToast, setSosToast] = useState<typeof sinyalDarurat[0] | null>(null);
+  const prevSosCountRef = useRef(0);
+
   // Time Range Filter untuk Analitik
   const [analitikTimeRange, setAnalitikTimeRange] = useState<TimeRange>("all");
 
@@ -104,6 +108,19 @@ export default function DinasClient() {
   const sosDinas = useMemo(() => {
     return sinyalDarurat.filter((s) => s.wilayah === dinasWilayah);
   }, [sinyalDarurat, dinasWilayah]);
+
+  // Pantau sosDinas — munculkan toast saat ada SOS baru
+  useEffect(() => {
+    const dinasCount = sosDinas.length;
+    if (dinasCount > prevSosCountRef.current && dinasCount > 0) {
+      setSosToast(sosDinas[0]);
+      // Auto-dismiss setelah 8 detik
+      const t = setTimeout(() => setSosToast(null), 8000);
+      return () => clearTimeout(t);
+    }
+    prevSosCountRef.current = dinasCount;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sosDinas.length]);
 
   // Live laporan terfilter rentang waktu analitik
   const liveLaporanAnalitik = useMemo(() => {
@@ -176,6 +193,127 @@ export default function DinasClient() {
 
   return (
     <div className="min-h-screen bg-ground pb-12">
+
+      {/* ===== SOS TOAST ALERT — muncul di pojok kanan atas saat SOS baru masuk ===== */}
+      {sosToast && (
+        <div
+          role="alertdialog"
+          aria-live="assertive"
+          aria-label="Peringatan darurat masuk"
+          style={{
+            position: "fixed",
+            top: "80px",
+            right: "20px",
+            zIndex: 9999,
+            width: "min(400px, calc(100vw - 40px))",
+            animation: "sos-toast-in 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards",
+          }}
+        >
+          <style>{`
+            @keyframes sos-toast-in {
+              0%   { opacity: 0; transform: translateX(110%) scale(0.9); }
+              100% { opacity: 1; transform: translateX(0) scale(1); }
+            }
+            @keyframes sos-siren-spin {
+              0%   { transform: rotate(-15deg); }
+              50%  { transform: rotate(15deg); }
+              100% { transform: rotate(-15deg); }
+            }
+          `}</style>
+          <div
+            style={{
+              background: "linear-gradient(135deg, #7f1d1d 0%, #991b1b 50%, #b91c1c 100%)",
+              border: "2px solid #E02424",
+              borderRadius: "20px",
+              padding: "18px 20px",
+              boxShadow: "0 0 40px rgba(224,36,36,0.5), 0 20px 60px rgba(0,0,0,0.4)",
+              position: "relative",
+              overflow: "hidden",
+            }}
+          >
+            {/* Scanline pulse background */}
+            <div style={{
+              position: "absolute", inset: 0, borderRadius: "18px",
+              background: "rgba(255,255,255,0.04)",
+              animation: "pulse 1.2s ease-in-out infinite",
+              pointerEvents: "none",
+            }} />
+
+            {/* Header */}
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px", position: "relative" }}>
+              <span style={{
+                display: "flex", width: "44px", height: "44px", flexShrink: 0,
+                alignItems: "center", justifyContent: "center",
+                borderRadius: "12px", background: "rgba(255,255,255,0.15)",
+                animation: "sos-siren-spin 0.8s ease-in-out infinite",
+              }}>
+                <Siren size={24} color="#fff" />
+              </span>
+              <div style={{ flex: 1 }}>
+                <p style={{ margin: 0, fontSize: "10px", fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,200,200,0.85)" }}>
+                  ⚠ SINYAL DARURAT MASUK
+                </p>
+                <h4 style={{ margin: "2px 0 0", fontSize: "15px", fontWeight: 900, color: "#fff", lineHeight: 1.3 }}>
+                  {sosToast.jenisLabel}
+                </h4>
+              </div>
+              <button
+                onClick={() => setSosToast(null)}
+                aria-label="Tutup peringatan darurat"
+                style={{
+                  background: "rgba(255,255,255,0.12)", border: "none", borderRadius: "8px",
+                  width: "28px", height: "28px", cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  color: "#fff", flexShrink: 0,
+                }}
+              >
+                <X size={14} />
+              </button>
+            </div>
+
+            {/* Info detail */}
+            <div style={{ position: "relative", display: "flex", flexDirection: "column", gap: "6px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: "rgba(255,220,220,0.9)", fontWeight: 600 }}>
+                <MapPin size={13} style={{ flexShrink: 0 }} />
+                <span>Pelapor: <strong style={{ color: "#fff" }}>{sosToast.pelapor}</strong></span>
+              </div>
+              <div style={{ fontFamily: "monospace", fontSize: "11px", color: "rgba(255,190,190,0.75)", paddingLeft: "19px" }}>
+                📍 {sosToast.lat.toFixed(5)}, {sosToast.lng.toFixed(5)}
+              </div>
+              <div style={{ fontSize: "11px", color: "rgba(255,200,200,0.7)", paddingLeft: "19px" }}>
+                {new Date(sosToast.waktu).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+              </div>
+            </div>
+
+            {/* Action buttons */}
+            <div style={{ position: "relative", marginTop: "14px", display: "flex", gap: "8px" }}>
+              <button
+                onClick={() => { setActiveTab("home"); setSosToast(null); }}
+                style={{
+                  flex: 1, padding: "9px 14px", borderRadius: "10px",
+                  background: "#fff", color: "#b91c1c",
+                  border: "none", fontWeight: 800, fontSize: "12px",
+                  cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
+                }}
+              >
+                <MapPin size={13} /> Lihat di Peta
+              </button>
+              <button
+                onClick={() => hapusSinyalDarurat(sosToast.id)}
+                style={{
+                  padding: "9px 14px", borderRadius: "10px",
+                  background: "rgba(255,255,255,0.15)", color: "#fff",
+                  border: "1px solid rgba(255,255,255,0.2)", fontWeight: 700, fontSize: "12px",
+                  cursor: "pointer",
+                }}
+              >
+                Tangani
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <main className="mx-auto max-w-7xl px-4 pt-6 sm:px-6">
         {/* Header Dinas & Navigasi Tab */}
         <div className="anim-fade-up mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-ink-300/40 pb-5">
@@ -936,7 +1074,7 @@ export default function DinasClient() {
                 {/* Foto Bukti Laporan Warga */}
                 <div className="rounded-2xl border border-ink-300/40 bg-ground/50 p-4">
                   <p className="mb-2.5 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-ink-500">
-                    <Camera size={14} className="text-brand-600" /> Foto Bukti Laporan Warga
+                    <Camera size={14} className="text-brand-600" /> Foto Laporan Kerusakan Awal (Pelapor/Warga)
                     <span className="ml-auto font-normal normal-case text-ink-400">
                       {getFotoUrls(selectedLaporan).length} foto terlampir
                     </span>
@@ -962,6 +1100,52 @@ export default function DinasClient() {
                   </div>
                 </div>
 
+                {/* Foto Bukti Hasil Penanganan Petugas Lapangan jika sudah ada */}
+                {selectedLaporan.buktiPetugas && selectedLaporan.buktiPetugas.fotoUrls?.length > 0 && (
+                  <div className="rounded-2xl border border-brand-600/40 bg-brand-600/10 p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-brand-500">
+                        <CheckCircle2 size={15} /> Foto Bukti Hasil Penanganan (Petugas Lapangan)
+                      </p>
+                      <span className="text-[11px] font-semibold text-brand-600 bg-brand-50/80 dark:bg-brand-900/40 px-2 py-0.5 rounded-full border border-brand-600/30">
+                        Siap Diverifikasi Dinas
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2 mb-3">
+                      {selectedLaporan.buktiPetugas.fotoUrls.map((url, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setLightboxFoto(url)}
+                          className="group relative h-20 w-28 overflow-hidden rounded-xl border border-brand-600/40 bg-surface transition-all hover:border-brand-600 hover:shadow-md focus:outline-none"
+                        >
+                          <img
+                            src={url}
+                            alt={`Bukti Petugas ${idx + 1}`}
+                            className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/35">
+                            <Camera size={18} className="text-white opacity-0 transition-opacity group-hover:opacity-100" />
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+
+                    {selectedLaporan.buktiPetugas.catatan && (
+                      <div className="rounded-xl bg-surface/80 p-3 text-xs border border-brand-600/20">
+                        <p className="font-bold text-brand-600">Catatan Petugas ({selectedLaporan.buktiPetugas.petugas || "Petugas Lapangan"}):</p>
+                        <p className="mt-0.5 text-cream">{selectedLaporan.buktiPetugas.catatan}</p>
+                        {selectedLaporan.buktiPetugas.waktu && (
+                          <p className="mt-1 text-[10px] text-ink-500">
+                            Waktu Pengiriman Bukti: {new Date(selectedLaporan.buktiPetugas.waktu).toLocaleString("id-ID")}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* AI Priority & SLA */}
                 <div className="rounded-2xl border border-brand-600/30 bg-gradient-to-br from-brand-600/10 to-transparent p-5">
                   <h4 className="flex items-center gap-2 font-display text-sm font-extrabold text-cream">
@@ -986,35 +1170,49 @@ export default function DinasClient() {
 
                 {/* Tindakan Status Dinas */}
                 <div className="rounded-2xl border border-ink-300/40 bg-ground/50 p-5 space-y-3">
-                  <h4 className="font-display text-sm font-extrabold text-cream">Perbarui Status Penanganan Dinas</h4>
-                  <div className="grid gap-2 sm:grid-cols-3">
+                  <h4 className="font-display text-sm font-extrabold text-cream">Tindakan &amp; Verifikasi Dinas</h4>
+                  <div className="grid gap-2 sm:grid-cols-2">
                     {selectedLaporan.status === "reported" && (
-                      <button
-                        onClick={() => handleUpdateStatus(selectedLaporan.id, "verified")}
-                        className="flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-brand-700 transition-colors"
-                      >
-                        <CheckSquare size={14} /> Verifikasi
-                      </button>
+                      <>
+                        <button
+                          onClick={() => handleUpdateStatus(selectedLaporan.id, "assigned")}
+                          className="flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-brand-700 transition-colors shadow-md"
+                        >
+                          <CheckSquare size={14} /> Tinjau &amp; Teruskan ke Petugas Lapangan
+                        </button>
+                        <button
+                          onClick={() => handleUpdateStatus(selectedLaporan.id, "verified")}
+                          className="flex items-center justify-center gap-2 rounded-xl border border-brand-600/50 bg-surface px-4 py-2.5 text-xs font-bold text-cream hover:bg-brand-50 transition-colors"
+                        >
+                          <CheckCircle2 size={14} /> Verifikasi Laporan Masuk
+                        </button>
+                      </>
                     )}
-                    {["reported", "verified", "assigned"].includes(selectedLaporan.status) && (
+
+                    {["verified", "assigned"].includes(selectedLaporan.status) && (
                       <button
                         onClick={() => handleUpdateStatus(selectedLaporan.id, "in_progress")}
-                        className="flex items-center justify-center gap-2 rounded-xl bg-warning px-4 py-2.5 text-xs font-bold text-white hover:opacity-90 transition-opacity"
+                        className="col-span-2 flex items-center justify-center gap-2 rounded-xl bg-warning px-4 py-2.5 text-xs font-bold text-white hover:opacity-90 transition-opacity shadow-md"
                       >
-                        <TrendingUp size={14} /> Proses Penanganan
+                        <TrendingUp size={14} /> Instruksikan Petugas Mulai Penanganan
                       </button>
                     )}
+
                     {selectedLaporan.status === "in_progress" && (
                       <button
                         onClick={() => handleUpdateStatus(selectedLaporan.id, "resolved")}
-                        className="flex items-center justify-center gap-2 rounded-xl bg-success px-4 py-2.5 text-xs font-bold text-white hover:bg-success-hi transition-colors"
+                        className="col-span-2 flex items-center justify-center gap-2 rounded-xl bg-success px-5 py-3 text-sm font-bold text-white hover:bg-success-hi transition-colors shadow-lg"
                       >
-                        <CheckCircle2 size={14} /> Selesaikan Penanganan
+                        <CheckCircle2 size={16} /> 
+                        {selectedLaporan.buktiPetugas?.fotoUrls?.length 
+                          ? "✓ Setujui Foto Bukti & Selesaikan Laporan" 
+                          : "✓ Selesaikan & Tutup Laporan"}
                       </button>
                     )}
+
                     {selectedLaporan.status === "resolved" && (
-                      <div className="col-span-3 rounded-xl border border-success/30 bg-success-bg/20 p-3 text-center text-xs font-bold text-success flex items-center justify-center gap-1.5">
-                        <CheckCircle2 size={16} /> Penanganan Telah Tuntas &amp; Dikonfirmasi
+                      <div className="col-span-2 rounded-xl border border-success/30 bg-success-bg/20 p-3 text-center text-xs font-bold text-success flex items-center justify-center gap-1.5">
+                        <CheckCircle2 size={16} /> Penanganan Telah Tuntas &amp; Terverifikasi oleh Dinas
                       </div>
                     )}
                   </div>

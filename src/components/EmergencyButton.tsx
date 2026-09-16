@@ -17,7 +17,7 @@ const JENIS = [
 // Halaman yang sudah punya jalur darurat sendiri di dalam konten.
 // Menampilkan FAB di sini hanya menduplikasi aksi dan — pada layar
 // kecil — menimpa tombol utama halaman.
-const SEMBUNYIKAN_DI = ["/login"];
+const SEMBUNYIKAN_DI = ["/login", "/dinas", "/petugas","/admin"];
 
 type GpsStatus = "idle" | "loading" | "denied" | "ok";
 

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Outfit, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { AppProvider } from "@/lib/store";
 import { Navbar } from "@/components/Navbar";
@@ -54,7 +55,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <head>
         {/* Terapkan tema tersimpan sebelum paint agar tidak berkedip putih */}
-        <script dangerouslySetInnerHTML={{ __html: `try{var t=localStorage.getItem("sigap_theme");if(t==="dark"||(!t&&matchMedia("(prefers-color-scheme: dark)").matches))document.documentElement.classList.add("dark")}catch(e){}` }} />
+        <Script
+          id="theme-script"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem("sigap_theme");if(t==="dark"||(!t&&matchMedia("(prefers-color-scheme: dark)").matches))document.documentElement.classList.add("dark")}catch(e){}`,
+          }}
+        />
       </head>
       <body>
         <AppProvider>

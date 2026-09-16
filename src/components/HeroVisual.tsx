@@ -50,7 +50,9 @@ export function HeroVisual() {
       }
     });
 
-    const dataList = laporanWarga && laporanWarga.length > 0 ? laporanWarga : LAPORAN;
+    const dataList = (laporanWarga && laporanWarga.length > 0 ? laporanWarga : LAPORAN).filter(
+      (l) => l.status !== "resolved"
+    );
     dataList.forEach((l) => {
       L.marker([l.lokasi.lat, l.lokasi.lng], { icon: markerIcon(l.ai.priorityScore), interactive: false }).addTo(map);
     });

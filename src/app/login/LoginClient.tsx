@@ -281,8 +281,8 @@ export default function LoginClient() {
         console.error("[SIGAP Register] Exception:", e);
       }
 
-      // Simpan ke store lokal
-      tambahUser({
+      // Simpan ke store lokal (tidak perlu await, sudah dihandle di store)
+      void tambahUser({
         nama: nama.trim(),
         email: email.trim(),
         role: "warga",

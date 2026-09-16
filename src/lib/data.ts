@@ -74,6 +74,13 @@ export interface AiResult {
   modelUsed?: string;  // AI model yang digunakan (Gemini/OpenAI/Local)
 }
 
+export interface BuktiPetugas {
+  fotoUrls: string[];
+  catatan: string;
+  waktu: string;
+  petugas?: string;
+}
+
 export interface Laporan {
   id: string;
   judul: string;
@@ -88,6 +95,7 @@ export interface Laporan {
   ai: AiResult;
   sla: string;
   wilayah: WilayahId;
+  buktiPetugas?: BuktiPetugas;
 }
 
 export const META = {
@@ -115,13 +123,13 @@ export const STATUS_LABEL: Record<StatusId, string> = {
   resolved: "Resolved",
 };
 
-// Label Bahasa Indonesia sesuai proposal (Petugas Flow: "Diproses" / "Progres")
+// Label Bahasa Indonesia sesuai alur kerja SIGAP (Pelapor -> Dinas -> Petugas -> Dinas -> Selesai)
 export const STATUS_LABEL_ID: Record<StatusId, string> = {
   reported: "Dilaporkan",
-  verified: "Terverifikasi",
-  assigned: "Ditugaskan",
-  in_progress: "Diproses",
-  resolved: "Selesai",
+  verified: "Ditinjau Dinas",
+  assigned: "Diteruskan ke Petugas",
+  in_progress: "Dikerjakan Petugas",
+  resolved: "Selesai & Terverifikasi",
 };
 
 export const LAPORAN: Laporan[] = [

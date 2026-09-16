@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { LAPORAN, priorityColor, priorityLabel, getKategori, STATUS_LABEL, getFotoUrls, type WilayahId } from "@/lib/data";
+import { LAPORAN, priorityColor, priorityLabel, getKategori, STATUS_LABEL, getFotoUrls, type WilayahId, type Laporan } from "@/lib/data";
 import { useApp } from "@/lib/store";
 import { renderToStaticMarkup } from "react-dom/server";
 import { AlertTriangle, Flame, Leaf, Siren } from "lucide-react";
@@ -44,12 +44,27 @@ function sosMarkerIcon() {
   });
 }
 
-export function AdminMap({ height = 420, fill = false, wilayahFilter = "semua" }: { height?: number; fill?: boolean; wilayahFilter?: WilayahId | "semua" }) {
+export function AdminMap({
+  height = 420,
+  fill = false,
+  wilayahFilter = "semua",
+  statusFilter,
+  onSelectLaporan,
+}: {
+  height?: number;
+  fill?: boolean;
+  wilayahFilter?: WilayahId | "semua";
+  statusFilter?: (l: Laporan) => boolean;
+  onSelectLaporan?: (l: Laporan) => void;
+}) {
   const { laporanWarga, sinyalDarurat } = useApp();
   const ref = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   // Track sos markers separately to update independently
   const sosMarkersRef = useRef<L.Marker[]>([]);
+  // Track SOS count untuk deteksi sinyal baru
+  const prevSosCountRef = useRef<number>(sinyalDarurat.length);
+  const [showFlash, setShowFlash] = useState(false);
 
   useEffect(() => {
     if (!ref.current) return;
@@ -89,7 +104,8 @@ export function AdminMap({ height = 420, fill = false, wilayahFilter = "semua" }
     sosMarkersRef.current = [];
 
     const dataList = laporanWarga && laporanWarga.length > 0 ? laporanWarga : LAPORAN;
-    const filtered = wilayahFilter === "semua" ? dataList : dataList.filter((l) => l.wilayah === wilayahFilter);
+    const activeReports = dataList.filter((l) => (statusFilter ? statusFilter(l) : l.status !== "resolved"));
+    const filtered = wilayahFilter === "semua" ? activeReports : activeReports.filter((l) => l.wilayah === wilayahFilter);
 
     // Render laporan normal
     filtered.forEach((l) => {
@@ -99,20 +115,49 @@ export function AdminMap({ height = 420, fill = false, wilayahFilter = "semua" }
         ? `<div style="margin-bottom:6px;overflow:hidden;border-radius:8px;height:100px"><img src="${fotoUrls[0]}" style="width:100%;height:100%;object-fit:cover" /></div>`
         : "";
 
-      L.marker([l.lokasi.lat, l.lokasi.lng], { icon: markerIcon(l.ai.priorityScore) })
-        .addTo(map)
-        .bindPopup(
-          `<div style="font-family:Inter;min-width:210px">
-            ${thumbHtml}
-            <div style="font-weight:700;font-size:.9rem;margin-bottom:4px">${l.judul}</div>
-            <div style="font-size:.75rem;color:#6B7280;margin-bottom:6px">${l.lokasi.alamat}</div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;font-size:.7rem">
-              <span style="background:${k.warna}1a;color:${k.warna};padding:2px 8px;border-radius:999px;font-weight:600">${k.nama}</span>
-              <span style="background:${priorityColor(l.ai.priorityScore)}1a;color:${priorityColor(l.ai.priorityScore)};padding:2px 8px;border-radius:999px;font-weight:600">${priorityLabel(l.ai.priorityScore)} · ${l.ai.priorityScore}</span>
-              <span style="background:#f1f4f2;color:#374151;padding:2px 8px;border-radius:999px;font-weight:600">${STATUS_LABEL[l.status]}</span>
-            </div>
-          </div>`
-        );
+      const marker = L.marker([l.lokasi.lat, l.lokasi.lng], { icon: markerIcon(l.ai.priorityScore) }).addTo(map);
+
+      const popupDiv = document.createElement("div");
+      popupDiv.style.fontFamily = "Inter, sans-serif";
+      popupDiv.style.minWidth = "220px";
+      popupDiv.innerHTML = `
+        ${thumbHtml}
+        <div style="font-weight:700;font-size:.9rem;margin-bottom:4px;color:#111827">${l.judul}</div>
+        <div style="font-size:.75rem;color:#6B7280;margin-bottom:6px">${l.lokasi.alamat}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;font-size:.7rem;margin-bottom:8px">
+          <span style="background:${k.warna}1a;color:${k.warna};padding:2px 8px;border-radius:999px;font-weight:600">${k.nama}</span>
+          <span style="background:${priorityColor(l.ai.priorityScore)}1a;color:${priorityColor(l.ai.priorityScore)};padding:2px 8px;border-radius:999px;font-weight:600">${priorityLabel(l.ai.priorityScore)} · ${l.ai.priorityScore}</span>
+          <span style="background:#f1f4f2;color:#374151;padding:2px 8px;border-radius:999px;font-weight:600">${STATUS_LABEL[l.status]}</span>
+        </div>
+      `;
+
+      if (onSelectLaporan) {
+        const btn = document.createElement("button");
+        btn.innerHTML = "🔍 Buka &amp; Tangani Tugas Ini &rarr;";
+        btn.style.width = "100%";
+        btn.style.padding = "7px 12px";
+        btn.style.backgroundColor = "#0E9F6E";
+        btn.style.color = "#ffffff";
+        btn.style.borderRadius = "8px";
+        btn.style.fontSize = "12px";
+        btn.style.fontWeight = "bold";
+        btn.style.border = "none";
+        btn.style.cursor = "pointer";
+        btn.style.marginTop = "4px";
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          onSelectLaporan(l);
+        };
+        popupDiv.appendChild(btn);
+      }
+
+      marker.bindPopup(popupDiv);
+
+      marker.on("click", () => {
+        if (onSelectLaporan) {
+          onSelectLaporan(l);
+        }
+      });
     });
 
     // Render sinyal darurat SOS (di atas marker biasa via zIndexOffset)
@@ -144,16 +189,59 @@ export function AdminMap({ height = 420, fill = false, wilayahFilter = "semua" }
     });
 
     const t = setTimeout(() => map.invalidateSize(), 300);
+
+    // Auto-fly ke SOS baru jika ada sinyal yang baru masuk
+    const currentCount = filteredSOS.length;
+    const prevCount = prevSosCountRef.current;
+    if (currentCount > prevCount && filteredSOS.length > 0) {
+      const newest = filteredSOS[0];
+      setTimeout(() => {
+        map.flyTo([newest.lat, newest.lng], 16, { duration: 1.5 });
+        // Buka popup marker SOS terbaru setelah fly selesai
+        const sosMarker = sosMarkersRef.current[0];
+        if (sosMarker) setTimeout(() => sosMarker.openPopup(), 1600);
+      }, 350);
+      // Flash merah overlay
+      setShowFlash(true);
+      setTimeout(() => setShowFlash(false), 1800);
+    }
+    prevSosCountRef.current = currentCount;
+
     return () => clearTimeout(t);
-  }, [wilayahFilter, laporanWarga, sinyalDarurat]);
+  }, [wilayahFilter, statusFilter, onSelectLaporan, laporanWarga, sinyalDarurat]);
 
   return (
     <div
-      ref={ref}
       style={fill ? undefined : { height }}
-      className={`w-full ${fill ? "h-full" : ""}`}
-      role="application"
-      aria-label="Peta sebaran laporan admin"
-    />
+      className={`relative w-full ${fill ? "h-full" : ""}`}
+    >
+      {/* Flash overlay merah saat SOS baru masuk */}
+      {showFlash && (
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 999,
+            background: "rgba(224,36,36,0.25)",
+            pointerEvents: "none",
+            animation: "sos-map-flash 1.8s ease-out forwards",
+          }}
+        />
+      )}
+      <style>{`
+        @keyframes sos-map-flash {
+          0%   { opacity: 1; }
+          60%  { opacity: 0.6; }
+          100% { opacity: 0; }
+        }
+      `}</style>
+      <div
+        ref={ref}
+        style={{ width: "100%", height: "100%" }}
+        role="application"
+        aria-label="Peta sebaran laporan admin"
+      />
+    </div>
   );
 }

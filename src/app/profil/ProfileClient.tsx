@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   UserRound, ShieldCheck, HardHat, Building2, Phone, MapPin,
-  Mail, Save, CheckCircle2, Award, Trophy, Sparkles, ArrowLeft, Loader2, Camera, Upload
+  Mail, Save, CheckCircle2, Award, Trophy, Sparkles, ArrowLeft, Loader2, Camera, Upload,
+  Lock, Eye, EyeOff, KeyRound,
 } from "lucide-react";
 import { useApp, type Role } from "@/lib/store";
 import { WILAYAH, type WilayahId } from "@/lib/data";
@@ -31,6 +32,17 @@ export default function ProfileClient() {
   const [saving, setSaving] = useState(false);
   const [sukses, setSukses] = useState(false);
   const [pesanError, setPesanError] = useState("");
+
+  // State Ganti Password
+  const [sandiLama, setSandiLama] = useState("");
+  const [sandiBaru, setSandiBaru] = useState("");
+  const [sandiBaruKonfirmasi, setSandiBaruKonfirmasi] = useState("");
+  const [lihatSandiLama, setLihatSandiLama] = useState(false);
+  const [lihatSandiBaru, setLihatSandiBaru] = useState(false);
+  const [lihatSandiKonfirmasi, setLihatSandiKonfirmasi] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [suksesPassword, setSuksesPassword] = useState(false);
+  const [errorPassword, setErrorPassword] = useState("");
 
   useEffect(() => {
     if (user) {
@@ -119,6 +131,56 @@ export default function ProfileClient() {
       setPesanError(err?.message || "Gagal menyimpan perubahan profil.");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleGantiPassword(e: React.FormEvent) {
+    e.preventDefault();
+    if (!currentUser) return;
+    setErrorPassword("");
+
+    if (sandiBaru.length < 6) {
+      setErrorPassword("Password baru minimal 6 karakter.");
+      return;
+    }
+    if (sandiBaru !== sandiBaruKonfirmasi) {
+      setErrorPassword("Konfirmasi password baru tidak cocok.");
+      return;
+    }
+
+    setSavingPassword(true);
+    try {
+      // Verifikasi password lama ke Supabase
+      const { data, error } = await supabase
+        .from("users")
+        .select("id")
+        .eq("email", currentUser.email)
+        .eq("sandi", sandiLama)
+        .single();
+
+      if (error || !data) {
+        setErrorPassword("Password lama salah. Silakan periksa kembali.");
+        setSavingPassword(false);
+        return;
+      }
+
+      // Simpan password baru
+      const { error: updateError } = await supabase
+        .from("users")
+        .update({ sandi: sandiBaru })
+        .eq("email", currentUser.email);
+
+      if (updateError) throw new Error(updateError.message);
+
+      setSandiLama("");
+      setSandiBaru("");
+      setSandiBaruKonfirmasi("");
+      setSuksesPassword(true);
+      setTimeout(() => setSuksesPassword(false), 4000);
+    } catch (err: any) {
+      setErrorPassword(err?.message || "Gagal mengganti password.");
+    } finally {
+      setSavingPassword(false);
     }
   }
 
@@ -381,6 +443,149 @@ export default function ProfileClient() {
               ) : (
                 <>
                   <Save size={18} /> Simpan Perubahan
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* ============================================ */}
+      {/* SECTION: GANTI PASSWORD */}
+      {/* ============================================ */}
+      <div className="mt-8 rounded-3xl border border-ink-300 bg-surface p-6 sm:p-8 shadow-xl">
+        <div className="flex items-center gap-3 mb-1">
+          <div className="grid h-9 w-9 place-items-center rounded-xl bg-warning/10 text-warning">
+            <KeyRound size={18} />
+          </div>
+          <div>
+            <h2 className="font-display text-xl font-bold text-cream-hi">Ganti Password</h2>
+            <p className="text-xs text-sage">Ubah kata sandi akun Anda. Minimal 6 karakter.</p>
+          </div>
+        </div>
+
+        {suksesPassword && (
+          <div className="mt-4 flex items-center gap-3 rounded-2xl border border-success/30 bg-success/10 p-4 text-sm font-semibold text-success animate-fade-in">
+            <CheckCircle2 size={20} className="shrink-0" />
+            <span>Password berhasil diubah!</span>
+          </div>
+        )}
+
+        {errorPassword && (
+          <div className="mt-4 flex items-center gap-3 rounded-2xl border border-danger/30 bg-danger/10 p-4 text-sm font-semibold text-danger">
+            <Lock size={16} className="shrink-0" />
+            <span>{errorPassword}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleGantiPassword} className="mt-6 space-y-5">
+          {/* Password Lama */}
+          <div>
+            <label htmlFor="sandi-lama" className="block text-xs font-semibold text-sage mb-2">
+              Password Lama
+            </label>
+            <div className="relative">
+              <Lock size={16} className="absolute left-3.5 top-3.5 text-sage" />
+              <input
+                id="sandi-lama"
+                type={lihatSandiLama ? "text" : "password"}
+                value={sandiLama}
+                onChange={(e) => { setSandiLama(e.target.value); setErrorPassword(""); }}
+                required
+                placeholder="Masukkan password lama Anda"
+                className="w-full rounded-xl border border-ink-400 bg-ground/80 px-4 py-3 text-sm text-cream-hi focus:border-tan focus:outline-none transition-colors pl-10 pr-11"
+              />
+              <button
+                type="button"
+                onClick={() => setLihatSandiLama((v) => !v)}
+                className="absolute right-3 top-3 p-0.5 text-sage hover:text-cream-hi"
+                tabIndex={-1}
+              >
+                {lihatSandiLama ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* Password Baru */}
+            <div>
+              <label htmlFor="sandi-baru" className="block text-xs font-semibold text-sage mb-2">
+                Password Baru
+              </label>
+              <div className="relative">
+                <Lock size={16} className="absolute left-3.5 top-3.5 text-sage" />
+                <input
+                  id="sandi-baru"
+                  type={lihatSandiBaru ? "text" : "password"}
+                  value={sandiBaru}
+                  onChange={(e) => { setSandiBaru(e.target.value); setErrorPassword(""); }}
+                  required
+                  placeholder="Min. 6 karakter"
+                  className="w-full rounded-xl border border-ink-400 bg-ground/80 px-4 py-3 text-sm text-cream-hi focus:border-tan focus:outline-none transition-colors pl-10 pr-11"
+                />
+                <button
+                  type="button"
+                  onClick={() => setLihatSandiBaru((v) => !v)}
+                  className="absolute right-3 top-3 p-0.5 text-sage hover:text-cream-hi"
+                  tabIndex={-1}
+                >
+                  {lihatSandiBaru ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Konfirmasi Password Baru */}
+            <div>
+              <label htmlFor="sandi-konfirmasi" className="block text-xs font-semibold text-sage mb-2">
+                Konfirmasi Password Baru
+              </label>
+              <div className="relative">
+                <Lock size={16} className="absolute left-3.5 top-3.5 text-sage" />
+                <input
+                  id="sandi-konfirmasi"
+                  type={lihatSandiKonfirmasi ? "text" : "password"}
+                  value={sandiBaruKonfirmasi}
+                  onChange={(e) => { setSandiBaruKonfirmasi(e.target.value); setErrorPassword(""); }}
+                  required
+                  placeholder="Ulangi password baru"
+                  className={`w-full rounded-xl border bg-ground/80 px-4 py-3 text-sm text-cream-hi focus:outline-none transition-colors pl-10 pr-11 ${
+                    sandiBaruKonfirmasi && sandiBaru !== sandiBaruKonfirmasi
+                      ? "border-danger focus:border-danger"
+                      : sandiBaruKonfirmasi && sandiBaru === sandiBaruKonfirmasi
+                      ? "border-success focus:border-success"
+                      : "border-ink-400 focus:border-tan"
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setLihatSandiKonfirmasi((v) => !v)}
+                  className="absolute right-3 top-3 p-0.5 text-sage hover:text-cream-hi"
+                  tabIndex={-1}
+                >
+                  {lihatSandiKonfirmasi ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+                {sandiBaruKonfirmasi && (
+                  <div className={`absolute right-9 top-3.5 ${sandiBaru === sandiBaruKonfirmasi ? "text-success" : "text-danger"}`}>
+                    {sandiBaru === sandiBaruKonfirmasi ? <CheckCircle2 size={15} /> : null}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end pt-2 border-t border-ink-300">
+            <button
+              type="submit"
+              disabled={savingPassword}
+              className="btn-anim flex items-center gap-2 rounded-xl bg-warning/90 px-6 py-3 font-bold text-white shadow-lg hover:bg-warning disabled:opacity-60"
+            >
+              {savingPassword ? (
+                <>
+                  <Loader2 size={18} className="spin" /> Menyimpan...
+                </>
+              ) : (
+                <>
+                  <KeyRound size={18} /> Ubah Password
                 </>
               )}
             </button>
