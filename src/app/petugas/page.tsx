@@ -38,6 +38,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import ProfileClient from "../profil/ProfileClient";
+import { CameraCaptureModal } from "@/components/CameraCaptureModal";
 
 const AdminMap = dynamic(() => import("@/components/AdminMap").then((m) => m.AdminMap), {
   ssr: false,
@@ -72,7 +73,14 @@ export default function PetugasDashboard() {
   const [modalPreviews, setModalPreviews] = useState<string[]>([]);
   const [modalCatatan, setModalCatatan] = useState("");
   const [isSubmittingBukti, setIsSubmittingBukti] = useState(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  function handleCameraCapture(file: File, previewUrl: string) {
+    if (modalPreviews.length >= 5) return;
+    setModalFiles((prev) => [...prev, file]);
+    setModalPreviews((prev) => [...prev, previewUrl]);
+  }
 
   function handleStartHandling(task: Laporan) {
     updateLaporanStatus(task.id, "in_progress");
@@ -244,22 +252,22 @@ export default function PetugasDashboard() {
 
   return (
     <RequireAuth role="petugas">
-      <main className="mx-auto max-w-[1060px] px-6 py-10">
+      <main className="mx-auto max-w-[1060px] px-3.5 sm:px-6 py-6 sm:py-10">
         {/* Header Dashboard */}
-        <div className="anim-fade-up mb-8 flex flex-wrap items-center justify-between gap-4">
+        <div className="anim-fade-up mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="font-display text-2xl font-extrabold md:text-3xl">
+            <h1 className="font-display text-xl sm:text-2xl md:text-3xl font-extrabold">
               Dashboard <span className="text-brand-600">Petugas Lapangan</span>
             </h1>
-            <p className="mt-1 text-sm text-ink-500">
+            <p className="mt-1 text-xs sm:text-sm text-ink-500">
               Kelola tugas lapangan, navigasi lokasi, dan unggah foto bukti penyelesaian untuk diverifikasi dinas.
             </p>
           </div>
 
-          <div className="flex items-center gap-2 rounded-2xl border border-ink-300 bg-surface p-1.5 shadow-sm">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar rounded-2xl border border-ink-300 bg-surface p-1.5 shadow-sm w-full sm:w-auto">
             <button
               onClick={() => setView("tugas")}
-              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-extrabold transition-all ${
+              className={`flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-extrabold transition-all ${
                 view === "tugas"
                   ? "bg-brand-600 text-white shadow-md"
                   : "text-ink-500 hover:text-cream hover:bg-ground/50"
@@ -269,7 +277,7 @@ export default function PetugasDashboard() {
             </button>
             <button
               onClick={() => setView("profil")}
-              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-extrabold transition-all ${
+              className={`flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-extrabold transition-all ${
                 view === "profil"
                   ? "bg-brand-600 text-white shadow-md"
                   : "text-ink-500 hover:text-cream hover:bg-ground/50"
@@ -295,18 +303,18 @@ export default function PetugasDashboard() {
             </div>
 
             {/* Ringkasan Statistik */}
-            <div className="anim-fade-up mb-6 grid grid-cols-2 gap-4 md:grid-cols-3">
-              <div className="rounded-2xl bg-surface p-5 shadow-[var(--shadow-card)] border border-white/5">
+            <div className="anim-fade-up mb-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+              <div className="rounded-2xl bg-surface p-4 sm:p-5 shadow-[var(--shadow-card)] border border-white/5">
                 <p className="text-xs font-semibold uppercase tracking-wide text-ink-500">Tugas Aktif</p>
-                <p className="mt-1 font-display text-3xl font-extrabold text-cream">{activeCount}</p>
+                <p className="mt-1 font-display text-2xl sm:text-3xl font-extrabold text-cream">{activeCount}</p>
               </div>
-              <div className="rounded-2xl bg-surface p-5 shadow-[var(--shadow-card)] border border-white/5">
+              <div className="rounded-2xl bg-surface p-4 sm:p-5 shadow-[var(--shadow-card)] border border-white/5">
                 <p className="text-xs font-semibold uppercase tracking-wide text-ink-500">Dalam Proses</p>
-                <p className="mt-1 font-display text-3xl font-extrabold text-amber-600">{inProgressCount}</p>
+                <p className="mt-1 font-display text-2xl sm:text-3xl font-extrabold text-amber-600">{inProgressCount}</p>
               </div>
-              <div className="rounded-2xl bg-surface p-5 shadow-[var(--shadow-card)] border border-white/5">
+              <div className="rounded-2xl bg-surface p-4 sm:p-5 shadow-[var(--shadow-card)] border border-white/5 sm:col-span-2 md:col-span-1">
                 <p className="text-xs font-semibold uppercase tracking-wide text-ink-500">Selesai Diverifikasi</p>
-                <p className="mt-1 font-display text-3xl font-extrabold text-success">{resolvedCount}</p>
+                <p className="mt-1 font-display text-2xl sm:text-3xl font-extrabold text-success">{resolvedCount}</p>
               </div>
             </div>
 
@@ -509,6 +517,19 @@ export default function PetugasDashboard() {
                           </div>
                         )}
 
+                        {/* Catatan Revisi dari Dinas jika ada */}
+                        {l.catatanRevisi && (
+                          <div className="mt-3 rounded-xl border border-amber-500/40 bg-amber-500/15 p-3 text-xs text-amber-400">
+                            <div className="flex items-center gap-1.5 font-bold">
+                              <AlertCircle size={15} /> Catatan Revisi dari Dinas:
+                            </div>
+                            <p className="mt-1 text-cream font-medium">{l.catatanRevisi}</p>
+                            <p className="mt-1 text-[11px] text-amber-300">
+                              Harap lakukan perbaikan pengerjaan di lokasi dan kirim ulang foto bukti kamera real-time.
+                            </p>
+                          </div>
+                        )}
+
                         <div className="mt-4 grid gap-3 sm:grid-cols-3">
                           <div className="rounded-xl bg-brand-50/70 dark:bg-ground/60 p-3 border border-ink-300/20">
                             <p className="text-[11px] font-bold uppercase text-ink-500">Kategori</p>
@@ -647,35 +668,46 @@ export default function PetugasDashboard() {
                       </div>
                     </div>
 
-                    {/* Unggah Foto Hasil Penanganan (Input File Asli) */}
+                    {/* Unggah Foto Hasil Penanganan (Real-Time Kamera) */}
                     <div>
                       <div className="mb-2 flex items-center justify-between">
                         <label className="flex items-center gap-1.5 text-sm font-semibold text-cream">
-                          <Camera size={15} className="text-brand-600" /> Unggah Foto Bukti Hasil Perbaikan
+                          <Camera size={16} className="text-brand-600" /> Foto Bukti Perbaikan Real-Time Kamera
                         </label>
                         <span className="text-xs text-ink-500">{modalPreviews.length} / 5 foto</span>
                       </div>
 
-                      {/* Hidden native input */}
-                      <input
-                        type="file"
-                        ref={fileInputRef}
-                        accept="image/*"
-                        multiple
-                        onChange={handleFilesSelected}
-                        className="hidden"
-                      />
-
-                      {/* Dropzone / Upload button area */}
-                      <div
-                        onClick={() => fileInputRef.current?.click()}
-                        className="grid cursor-pointer place-items-center rounded-2xl border-2 border-dashed border-brand-600/50 bg-brand-50/20 hover:bg-brand-50/40 dark:bg-brand-900/10 dark:hover:bg-brand-900/20 p-6 text-center transition-all hover:border-brand-600 hover:shadow-md"
-                      >
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-600/10 text-brand-600 mb-2">
-                          <Upload size={24} />
+                      {/* Primary Live Camera Button */}
+                      {modalPreviews.length < 5 && (
+                        <div className="mb-3">
+                          <button
+                            type="button"
+                            onClick={() => setIsCameraOpen(true)}
+                            className="group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl border-2 border-brand-500/50 bg-gradient-to-r from-brand-600/20 via-brand-600/10 to-brand-500/20 p-4 text-center transition-all hover:border-brand-500 hover:bg-brand-600/30 hover:shadow-lg hover:shadow-brand-500/10 active:scale-[0.99]"
+                          >
+                            <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white shadow-md group-hover:scale-105 transition-transform">
+                              <Camera size={20} />
+                              <span className="absolute -top-0.5 -right-0.5 flex h-3 w-3">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 border-2 border-white"></span>
+                              </span>
+                            </div>
+                            <div className="text-left">
+                              <p className="font-display text-sm font-bold text-cream group-hover:text-brand-400 transition-colors">
+                                Ambil Foto Bukti dari Kamera Langsung
+                              </p>
+                              <p className="text-[11px] text-ink-400">
+                                Mengambil snapshot penanganan terkini di lokasi kejadian.
+                              </p>
+                            </div>
+                          </button>
                         </div>
-                        <p className="text-sm font-bold text-cream">Klik di sini untuk memilih foto bukti</p>
-                        <p className="mt-1 text-xs text-ink-500">Dukung format JPG, PNG (maksimal 5 foto bukti)</p>
+                      )}
+
+                      {/* Strict Real-Time Notice for Officers */}
+                      <div className="mt-2 flex items-center gap-2 rounded-xl border border-warning/30 bg-warning/10 p-2.5 text-xs text-warning">
+                        <span className="flex h-2 w-2 rounded-full bg-warning animate-pulse shrink-0" />
+                        <span>Petugas wajib mengambil foto bukti hasil perbaikan secara langsung dari kamera di lokasi.</span>
                       </div>
 
                       {/* Preview Thumbnails */}
@@ -766,6 +798,14 @@ export default function PetugasDashboard() {
                 </div>
               </div>
             )}
+
+            {/* CAMERA CAPTURE MODAL */}
+            <CameraCaptureModal
+              isOpen={isCameraOpen}
+              onClose={() => setIsCameraOpen(false)}
+              onCapture={handleCameraCapture}
+              title="Foto Kamera Bukti Perbaikan"
+            />
           </>
         )}
       </main>

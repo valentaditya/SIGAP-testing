@@ -39,6 +39,7 @@ export interface Notif {
   waktu: string;
   baca: boolean;
   tone: "info" | "success" | "warning" | "danger";
+  link?: string; // URL tujuan saat notif diklik (opsional)
 }
 
 export interface SinyalDarurat {
@@ -87,19 +88,11 @@ interface AppState {
 
 const Ctx = createContext<AppState | null>(null);
 
-const SEED_NOTIFS: Notif[] = [
-  { id: 1, judul: "Laporan Diverifikasi", pesan: "SGP-2026-0108 telah diverifikasi admin.", waktu: "5 mnt lalu", baca: false, tone: "info" },
-  { id: 2, judul: "Tim Ditugaskan", pesan: "SGP-2026-0098 kini ditangani tim lapangan.", waktu: "1 jam lalu", baca: false, tone: "warning" },
-  { id: 3, judul: "Laporan Selesai", pesan: "SGP-2026-0101 telah diselesaikan. Terima kasih!", waktu: "3 jam lalu", baca: true, tone: "success" },
-];
-
-
-
 const LEVEL_THRESH = [0, 100, 250, 500, 900];
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [notifs, setNotifs] = useState<Notif[]>(SEED_NOTIFS);
+  const [notifs, setNotifs] = useState<Notif[]>([]);
   const [laporanWarga, setLaporanWarga] = useState<Laporan[]>(LAPORAN);
   const [upvoted, setUpvoted] = useState<Set<string>>(new Set());
   const [hydrated, setHydrated] = useState(false);
@@ -178,6 +171,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     }
     fetchSupabaseLaporan();
+
+    // Polling setiap 15 detik agar data selalu up-to-date
+    const interval = setInterval(fetchSupabaseLaporan, 15_000);
+    return () => clearInterval(interval);
   }, [hydrated]);
 
   // Sync users table from Supabase DB on load
@@ -290,6 +287,38 @@ export function AppProvider({ children }: { children: ReactNode }) {
       supabase.removeChannel(channel);
     };
   }, [hydrated]);
+
+  // Sync sinyalDarurat secara otomatis dari laporanWarga (yang dipersist ke DB Supabase)
+  useEffect(() => {
+    const activeSosLaporan = laporanWarga.filter(
+      (l) => (l.id.startsWith("SOS-") || l.judul.includes("SOS DARURAT")) && l.status !== "resolved"
+    );
+
+    const derived: SinyalDarurat[] = activeSosLaporan.map((l) => {
+      let jenisLabel = "SOS Darurat";
+      if (l.judul.includes("—")) {
+        jenisLabel = l.judul.split("—")[1]?.trim() || "SOS Darurat";
+      }
+      return {
+        id: l.id,
+        jenisLabel,
+        lat: l.lokasi.lat,
+        lng: l.lokasi.lng,
+        pelapor: l.pelapor,
+        wilayah: l.wilayah,
+        waktu: l.waktu,
+      };
+    });
+
+    setSinyalDarurat((prev) => {
+      const map = new Map<string, SinyalDarurat>();
+      derived.forEach((item) => map.set(item.id, item));
+      prev.forEach((item) => {
+        if (!map.has(item.id)) map.set(item.id, item);
+      });
+      return Array.from(map.values());
+    });
+  }, [laporanWarga]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -529,7 +558,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
           pesan: `${l.id} (Skor ${l.ai.priorityScore}/10) di ${namaWilayah} — diteruskan otomatis ke dinas.`,
           waktu: "Baru saja",
           baca: false,
-          tone: "danger",
+          tone: "danger" as const,
+          link: "/peta",
         },
         ...ns,
       ]);
@@ -544,10 +574,41 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
 
   const tambahSinyalDarurat = (s: SinyalDarurat) => {
-    setSinyalDarurat((prev) => [s, ...prev]);
-    // Auto-notif danger ke bell untuk semua pengguna (termasuk dinas)
+    setSinyalDarurat((prev) => [s, ...prev.filter((x) => x.id !== s.id)]);
+
+    // Map jenis SOS ke kategori laporan (semua sinyal darurat masuk kategori "keamanan")
+    let kat: import("@/lib/data").KategoriId = "keamanan";
+
     const wilayahData = WILAYAH.find((w) => w.id === s.wilayah);
-    const namaWilayah = wilayahData?.nama ?? "Wilayah Tidak Diketahui";
+    const namaWilayah = wilayahData?.nama ?? "Wilayah Terkait";
+
+    // Buat objek Laporan darurat dengan priorityScore = 10 agar langsung naik ke prioritas tertinggi Dinas
+    const sosLaporan: Laporan = {
+      id: s.id,
+      judul: `🚨 SOS DARURAT — ${s.jenisLabel}`,
+      kategori: kat,
+      status: "reported",
+      lokasi: { lat: s.lat, lng: s.lng, alamat: `GPS ${s.lat.toFixed(5)}, ${s.lng.toFixed(5)}` },
+      pelapor: s.pelapor,
+      waktu: s.waktu || new Date().toISOString(),
+      foto: 0,
+      dukungan: 0,
+      sla: "15 menit",
+      wilayah: s.wilayah,
+      ai: {
+        kategori: s.jenisLabel,
+        confidence: 1.0,
+        severity: 10,
+        dampak: `Sinyal Darurat Tombol SOS ${s.pelapor} di ${namaWilayah} — Respons Segera Diperlukan!`,
+        priorityScore: 10,
+        modelUsed: "Emergency SOS Broadcast",
+      },
+    };
+
+    // Simpan ke state laporan & DB Supabase
+    void tambahLaporan(sosLaporan);
+
+    // Auto-notif danger ke bell untuk semua pengguna (termasuk dinas)
     setNotifs((ns) => [
       {
         id: Date.now(),
@@ -556,6 +617,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         waktu: "Baru saja",
         baca: false,
         tone: "danger" as const,
+        link: "/peta",
       },
       ...ns,
     ]);
@@ -563,6 +625,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const hapusSinyalDarurat = (id: string) => {
     setSinyalDarurat((prev) => prev.filter((s) => s.id !== id));
+    // Set status laporan SOS ke resolved di state & Supabase DB
+    void updateLaporanStatus(id, "resolved");
   };
 
   const upvote = async (id: string) => {

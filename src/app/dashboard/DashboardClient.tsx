@@ -387,7 +387,7 @@ export default function DashboardClient() {
     <div className="grid min-h-[calc(100vh-var(--nav-h))] w-full grid-cols-1 lg:grid-cols-[240px_1fr]">
       <Sidebar view={view} onChange={setView} />
 
-      <main className="w-full max-w-none p-5 md:p-8 bg-ground relative">
+      <main className="w-full max-w-none p-3.5 sm:p-6 md:p-8 bg-ground relative">
         {/* TOAST FEEDBACK */}
         {toast && (
           <div
@@ -409,25 +409,25 @@ export default function DashboardClient() {
           <Reveal>
             <div className="space-y-6">
               {/* Header */}
-              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-ink-300/40 pb-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-ink-300/40 pb-5">
                 <div>
-                  <h1 className="font-display text-2xl font-extrabold text-cream-hi md:text-3xl flex items-center gap-2.5">
-                    <Users className="text-brand-600" /> Kelola Manajemen User System
+                  <h1 className="font-display text-xl sm:text-2xl md:text-3xl font-extrabold text-cream-hi flex items-center gap-2.5">
+                    <Users className="text-brand-600 shrink-0" /> Kelola Manajemen User System
                   </h1>
-                  <p className="mt-1 text-sm text-ink-500">
-                    Sistem Pengelolaan Akun &amp; Hak Akses Instansi Dinas, Petugas Lapangan, dan Warga Pelapor.
+                  <p className="mt-1 text-xs sm:text-sm text-ink-500">
+                    Sistem Pengelolaan Akun &amp; Hak Akses Instansi Dinas dan Petugas Lapangan.
                   </p>
                 </div>
                 <button
                   onClick={() => setShowAddUserModal(true)}
-                  className="btn-anim inline-flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-xs font-bold text-white shadow-md hover:bg-brand-700"
+                  className="btn-anim inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-xs font-bold text-white shadow-md hover:bg-brand-700 shrink-0"
                 >
                   <UserPlus size={16} /> Tambah User Baru
                 </button>
               </div>
 
               {/* Summary Cards (Aktif | Total) */}
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                 <div
                   onClick={() => setRoleTab("dinas")}
                   className={`card-hover cursor-pointer rounded-2xl border p-4 transition-all ${
@@ -458,22 +458,8 @@ export default function DashboardClient() {
                     <span className="text-base font-semibold text-ink-500">| {countPetugasTotal}</span>
                   </p>
                 </div>
-                <div
-                  onClick={() => setRoleTab("warga")}
-                  className={`card-hover cursor-pointer rounded-2xl border p-4 transition-all ${
-                    roleTab === "warga" ? "border-brand-600 bg-brand-50/20" : "border-ink-300/40 bg-surface"
-                  }`}
-                >
-                  <p className="text-xs font-bold text-ink-500 flex items-center justify-between gap-1.5">
-                    <span className="flex items-center gap-1.5"><UserRound size={14} className="text-success" /> Warga Pelapor</span>
-                    <span className="text-[10px] text-ink-500 font-normal">Aktif | Total</span>
-                  </p>
-                  <p className="font-display text-2xl font-extrabold text-cream mt-1 flex items-baseline gap-1.5">
-                    <span>{countWargaAktif}</span>
-                    <span className="text-base font-semibold text-ink-500">| {countWargaTotal}</span>
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-ink-300/40 bg-surface p-4">
+
+                <div className="rounded-2xl border border-ink-300/40 bg-surface p-4 sm:col-span-2 md:col-span-2">
                   <p className="text-xs font-bold text-success flex items-center justify-between gap-1.5">
                     <span className="flex items-center gap-1.5"><CheckCircle2 size={14} /> Total User System</span>
                     <span className="text-[10px] text-ink-500 font-normal">Aktif | Total</span>
@@ -486,7 +472,7 @@ export default function DashboardClient() {
               </div>
 
               {/* Controls & User Table */}
-              <div className="rounded-3xl border border-ink-300/40 bg-surface p-6 shadow-sm">
+              <div className="rounded-3xl border border-ink-300/40 bg-surface p-4 sm:p-6 shadow-sm">
                 <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
                   {/* Role Tabs */}
                   <div className="flex flex-wrap gap-1.5 rounded-xl bg-ground p-1 border border-ink-300/40">
@@ -506,14 +492,7 @@ export default function DashboardClient() {
                     >
                       <HardHat size={13} /> Petugas ({countPetugasTotal})
                     </button>
-                    <button
-                      onClick={() => setRoleTab("warga")}
-                      className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-extrabold transition-all ${
-                        roleTab === "warga" ? "bg-brand-600 text-white shadow" : "text-ink-500 hover:text-cream"
-                      }`}
-                    >
-                      <UserRound size={13} /> Warga ({countWargaTotal})
-                    </button>
+
                     <button
                       onClick={() => setRoleTab("semua")}
                       className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-extrabold transition-all ${
@@ -654,25 +633,25 @@ export default function DashboardClient() {
           <Reveal>
             <div className="space-y-6">
               {/* Header */}
-              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-ink-300/40 pb-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-ink-300/40 pb-5">
                 <div>
-                  <h1 className="font-display text-2xl font-extrabold text-cream-hi md:text-3xl flex items-center gap-2.5">
-                    <FileText className="text-brand-600" /> CRUD Manajemen Laporan &amp; Infrastruktur
+                  <h1 className="font-display text-xl sm:text-2xl md:text-3xl font-extrabold text-cream-hi flex items-center gap-2.5">
+                    <FileText className="text-brand-600 shrink-0" /> CRUD Manajemen Laporan &amp; Infrastruktur
                   </h1>
-                  <p className="mt-1 text-sm text-ink-500">
+                  <p className="mt-1 text-xs sm:text-sm text-ink-500">
                     Kelola, tambah, perbarui status/prioritas AI, dan hapus laporan pengaduan masyarakat.
                   </p>
                 </div>
                 <button
                   onClick={() => setShowAddLaporanModal(true)}
-                  className="btn-anim inline-flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-xs font-bold text-white shadow-md hover:bg-brand-700"
+                  className="btn-anim inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-xs font-bold text-white shadow-md hover:bg-brand-700 shrink-0"
                 >
                   <Plus size={16} /> Buat Laporan Baru
                 </button>
               </div>
 
               {/* Summary Cards */}
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                 <div
                   onClick={() => setLaporanStatusFilter("semua")}
                   className={`card-hover cursor-pointer rounded-2xl border p-4 transition-all ${
@@ -720,7 +699,7 @@ export default function DashboardClient() {
               </div>
 
               {/* Controls & Table */}
-              <div className="rounded-3xl border border-ink-300/40 bg-surface p-6 shadow-sm space-y-6">
+              <div className="rounded-3xl border border-ink-300/40 bg-surface p-4 sm:p-6 shadow-sm space-y-6">
                 <div className="flex flex-wrap items-center justify-between gap-4 border-b border-ink-300/30 pb-4">
                   {/* Search */}
                   <div className="relative w-full sm:w-64">
@@ -865,19 +844,19 @@ export default function DashboardClient() {
         {view === "log" && (
           <Reveal>
             <div className="space-y-6">
-              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-ink-300/40 pb-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-ink-300/40 pb-5">
                 <div>
-                  <h1 className="font-display text-2xl font-extrabold text-cream-hi md:text-3xl flex items-center gap-2.5">
-                    <Activity className="text-brand-600" /> Log Keseluruhan Aktivitas Data Dinas
+                  <h1 className="font-display text-xl sm:text-2xl md:text-3xl font-extrabold text-cream-hi flex items-center gap-2.5">
+                    <Activity className="text-brand-600 shrink-0" /> Log Keseluruhan Aktivitas Data Dinas
                   </h1>
-                  <p className="mt-1 text-sm text-ink-500">
+                  <p className="mt-1 text-xs sm:text-sm text-ink-500">
                     Jejak rekam aktivitas verifikasi, penugasan, dan penanganan di seluruh wilayah instansi dinas.
                   </p>
                 </div>
               </div>
 
               {/* Log Controls */}
-              <div className="rounded-3xl border border-ink-300/40 bg-surface p-6 shadow-sm space-y-6">
+              <div className="rounded-3xl border border-ink-300/40 bg-surface p-4 sm:p-6 shadow-sm space-y-6">
                 <div className="flex flex-wrap items-center justify-between gap-4 border-b border-ink-300/30 pb-4">
                   {/* Date selector */}
                   <div className="flex items-center gap-2">
@@ -1053,8 +1032,6 @@ export default function DashboardClient() {
                   >
                     <option value="dinas">Instansi Dinas</option>
                     <option value="petugas">Petugas Lapangan</option>
-                    <option value="warga">Warga Pelapor</option>
-                    <option value="admin">Administrator System</option>
                   </select>
                 </div>
 
@@ -1156,8 +1133,6 @@ export default function DashboardClient() {
                   >
                     <option value="dinas">Instansi Dinas</option>
                     <option value="petugas">Petugas Lapangan</option>
-                    <option value="warga">Warga Pelapor</option>
-                    <option value="admin">Administrator System</option>
                   </select>
                 </div>
 

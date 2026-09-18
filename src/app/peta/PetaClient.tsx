@@ -10,8 +10,17 @@ import {
   Search, ShieldAlert, Siren
 } from "lucide-react";
 import {
-  LAPORAN, KATEGORI, WILAYAH, priorityColor, priorityLabel, getKategori,
-  STATUS_LABEL, type Laporan, type KategoriId, type WilayahId
+  LAPORAN,
+  KATEGORI,
+  WILAYAH,
+  STATUS_LABEL_ID as STATUS_LABEL,
+  priorityColor,
+  priorityLabel,
+  getKategori,
+  deteksiWilayahFromCoords,
+  type Laporan,
+  type KategoriId,
+  type WilayahId,
 } from "@/lib/data";
 import { useApp } from "@/lib/store";
 
@@ -65,6 +74,7 @@ export default function PetaClient() {
   const [fWilayah, setFWilayah] = useState<WilayahId | "semua">("semua");
   const [cari, setCari] = useState("");
   const [terpilihId, setTerpilihId] = useState<string | null>(null);
+  const [mobileTab, setMobileTab] = useState<"peta" | "daftar">("peta");
 
   // Filtered laporan
   const laporanFiltered = useMemo(() => {
@@ -129,6 +139,7 @@ export default function PetaClient() {
     // Tambah marker laporan biasa
     laporanFiltered.forEach((l) => {
       const k = getKategori(l.kategori);
+      const isDarurat = l.ai.priorityScore >= 8.5;
       const m = L.marker([l.lokasi.lat, l.lokasi.lng], {
         icon: markerIcon(l.ai.priorityScore),
       })
@@ -151,8 +162,13 @@ export default function PetaClient() {
       markersRef.current[l.id] = m;
     });
 
+    // Filter sinyal darurat SOS berdasarkan wilayah
+    const sinyalDaruratFiltered = fWilayah === "semua"
+      ? sinyalDarurat
+      : sinyalDarurat.filter((s) => s.wilayah === fWilayah || deteksiWilayahFromCoords(s.lat, s.lng) === fWilayah);
+
     // Tambah marker SOS darurat (di atas laporan biasa)
-    sinyalDarurat.forEach((s) => {
+    sinyalDaruratFiltered.forEach((s) => {
       const waktuStr = new Date(s.waktu).toLocaleString("id-ID", {
         hour: "2-digit", minute: "2-digit", day: "numeric", month: "short",
       });
@@ -178,9 +194,9 @@ export default function PetaClient() {
     const t = setTimeout(() => map.invalidateSize(), 300);
 
     // Auto-fly ke SOS baru jika ada sinyal yang baru masuk
-    const currentCount = sinyalDarurat.length;
-    if (currentCount > prevSosCountRef.current && sinyalDarurat.length > 0) {
-      const newest = sinyalDarurat[0];
+    const currentCount = sinyalDaruratFiltered.length;
+    if (currentCount > prevSosCountRef.current && sinyalDaruratFiltered.length > 0) {
+      const newest = sinyalDaruratFiltered[0];
       setTimeout(() => {
         map.flyTo([newest.lat, newest.lng], 16, { duration: 1.5 });
         // Buka popup marker SOS terbaru setelah fly selesai
@@ -216,55 +232,55 @@ export default function PetaClient() {
   return (
     <div className="flex h-[calc(100vh-var(--nav-h))] w-full flex-col overflow-hidden bg-bg">
       {/* Header filter & statistik */}
-      <header className="border-b border-ink-300 bg-surface/90 px-6 py-4 backdrop-blur-md">
-        <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-4">
+      <header className="border-b border-ink-300 bg-surface/90 px-3.5 sm:px-6 py-3 sm:py-4 backdrop-blur-md">
+        <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-3 sm:gap-4">
           <div className="flex items-center gap-3">
             <Link
               href="/"
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-ink-300 bg-ground text-sage hover:text-cream"
+              className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-ink-300 bg-ground text-sage hover:text-cream"
               aria-label="Kembali ke beranda"
             >
               <ArrowLeft size={18} />
             </Link>
             <div>
-              <h1 className="font-display text-xl font-extrabold text-cream-hi sm:text-2xl">
-                Peta Sebaran Laporan Warga
+              <h1 className="font-display text-lg font-extrabold text-cream-hi sm:text-2xl">
+                Peta Sebaran Laporan
               </h1>
-              <p className="text-xs text-sage">
+              <p className="text-[11px] sm:text-xs text-sage">
                 Yogyakarta &amp; Wilayah Sekitar · Real-time Open Data
               </p>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2 rounded-2xl border border-ink-300 bg-ground px-3.5 py-1.5 text-xs font-semibold text-cream">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-2 rounded-2xl border border-ink-300 bg-ground px-3 py-1 text-xs font-semibold text-cream">
               <span className="h-2 w-2 rounded-full bg-tan animate-pulse" />
               <span>{totalAktif} Aktif</span>
             </div>
-            <div className="flex items-center gap-2 rounded-2xl border border-danger/30 bg-danger/10 px-3.5 py-1.5 text-xs font-semibold text-danger">
+            <div className="flex items-center gap-2 rounded-2xl border border-danger/30 bg-danger/10 px-3 py-1 text-xs font-semibold text-danger">
               <ShieldAlert size={14} />
               <span>{totalDarurat} Urgensi Tinggi</span>
             </div>
             {sinyalDarurat.length > 0 && (
-              <div className="flex animate-pulse items-center gap-2 rounded-2xl border border-danger bg-danger px-3.5 py-1.5 text-xs font-bold text-white shadow-lg shadow-danger/30">
+              <div className="flex animate-pulse items-center gap-2 rounded-2xl border border-danger bg-danger px-3 py-1 text-xs font-bold text-white shadow-lg shadow-danger/30">
                 <Siren size={14} />
-                <span>{sinyalDarurat.length} SOS Aktif</span>
+                <span>{sinyalDarurat.length} SOS</span>
               </div>
             )}
           </div>
         </div>
 
         {/* Baris Filter & Search */}
-        <div className="mx-auto mt-4 flex max-w-[1400px] flex-wrap items-center gap-3">
+        <div className="mx-auto mt-3 flex max-w-[1400px] flex-wrap items-center gap-2 sm:gap-3">
           {/* Search box */}
-          <div className="relative min-w-[200px] flex-1">
+          <div className="relative min-w-[180px] flex-1">
             <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sage" />
             <input
               type="text"
               placeholder="Cari lokasi atau kata kunci..."
               value={cari}
               onChange={(e) => setCari(e.target.value)}
-              className="h-10 w-full rounded-xl border border-ink-400 bg-ground pl-9 pr-3 text-xs text-cream focus:border-tan focus:outline-none"
+              className="h-9 sm:h-10 w-full rounded-xl border border-ink-400 bg-ground pl-9 pr-3 text-xs text-cream focus:border-tan focus:outline-none"
             />
           </div>
 
@@ -272,7 +288,7 @@ export default function PetaClient() {
           <select
             value={fKategori}
             onChange={(e) => setFKategori(e.target.value as any)}
-            className="h-10 rounded-xl border border-ink-400 bg-ground px-3 text-xs text-cream focus:border-tan focus:outline-none"
+            className="h-9 sm:h-10 rounded-xl border border-ink-400 bg-ground px-3 text-xs text-cream focus:border-tan focus:outline-none"
           >
             <option value="semua">Semua Kategori</option>
             {KATEGORI.map((k) => (
@@ -286,7 +302,7 @@ export default function PetaClient() {
           <select
             value={fWilayah}
             onChange={(e) => setFWilayah(e.target.value as any)}
-            className="h-10 rounded-xl border border-ink-400 bg-ground px-3 text-xs text-cream focus:border-tan focus:outline-none"
+            className="h-9 sm:h-10 rounded-xl border border-ink-400 bg-ground px-3 text-xs text-cream focus:border-tan focus:outline-none"
           >
             <option value="semua">Semua Wilayah</option>
             {WILAYAH.map((w) => (
@@ -301,7 +317,7 @@ export default function PetaClient() {
       {/* Konten Peta + Sidebar List */}
       <div className="relative flex flex-1 overflow-hidden">
         {/* Main Leaflet Map */}
-        <div className="relative h-full flex-1">
+        <div className={`relative h-full flex-1 ${mobileTab === "daftar" ? "hidden md:block" : "block"}`}>
           {/* Flash overlay merah saat SOS baru masuk */}
           {showFlash && (
             <div
@@ -328,7 +344,7 @@ export default function PetaClient() {
         </div>
 
         {/* Sidebar Daftar Laporan */}
-        <aside className="hidden w-[360px] flex-col border-l border-ink-300 bg-surface md:flex">
+        <aside className={`${mobileTab === "daftar" ? "flex w-full" : "hidden"} md:flex md:w-[360px] flex-col border-l border-ink-300 bg-surface`}>
           <div className="border-b border-ink-300 p-4">
             <h2 className="font-display text-sm font-bold uppercase tracking-wider text-sage">
               Daftar Titik Laporan ({laporanFiltered.length})
@@ -421,6 +437,26 @@ export default function PetaClient() {
             )}
           </div>
         </aside>
+      </div>
+
+      {/* Mobile View Switcher Floating Pill */}
+      <div className="md:hidden fixed bottom-5 left-1/2 -translate-x-1/2 z-40 flex items-center gap-1 rounded-full border border-ink-300 bg-surface/95 p-1.5 shadow-2xl backdrop-blur-md">
+        <button
+          onClick={() => setMobileTab("peta")}
+          className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold transition-all ${
+            mobileTab === "peta" ? "bg-tan text-white shadow-md" : "text-sage hover:text-cream"
+          }`}
+        >
+          <MapPin size={14} /> Peta
+        </button>
+        <button
+          onClick={() => setMobileTab("daftar")}
+          className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold transition-all ${
+            mobileTab === "daftar" ? "bg-tan text-white shadow-md" : "text-sage hover:text-cream"
+          }`}
+        >
+          <Search size={14} /> Daftar ({laporanFiltered.length})
+        </button>
       </div>
     </div>
   );

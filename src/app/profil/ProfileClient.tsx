@@ -10,6 +10,7 @@ import {
 import { useApp, type Role } from "@/lib/store";
 import { WILAYAH, type WilayahId } from "@/lib/data";
 import { supabase } from "@/lib/supabase";
+import { CameraCaptureModal } from "@/components/CameraCaptureModal";
 
 const ROLE_META: Record<Role, { label: string; icon: any; color: string; bg: string }> = {
   warga: { label: "Warga", icon: UserRound, color: "text-tan", bg: "bg-tan/10 border-tan/30" },
@@ -28,6 +29,11 @@ export default function ProfileClient() {
   const [alamat, setAlamat] = useState("");
   const [wilayah, setWilayah] = useState<WilayahId>("sleman");
   const [fotoUrl, setFotoUrl] = useState<string | null>(null);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+
+  function handleCameraCapture(_file: File, previewUrl: string) {
+    setFotoUrl(previewUrl);
+  }
 
   const [saving, setSaving] = useState(false);
   const [sukses, setSukses] = useState(false);
@@ -221,19 +227,15 @@ export default function ProfileClient() {
                   <RoleIcon size={44} className={roleMeta.color} />
                 )}
               </div>
-              <label
-                htmlFor="avatar-input"
-                className="cursor-pointer inline-flex items-center gap-1.5 rounded-lg border border-ink-300 bg-ground/80 px-2.5 py-1 text-[11px] font-bold text-tan transition-colors hover:border-tan hover:bg-ground hover:text-cream"
-              >
-                <Camera size={12} /> [ Ganti Foto ]
-              </label>
-              <input
-                id="avatar-input"
-                type="file"
-                accept="image/*"
-                onChange={handleFotoUpload}
-                className="hidden"
-              />
+              <div className="flex flex-col gap-1.5 w-full">
+                <button
+                  type="button"
+                  onClick={() => setIsCameraOpen(true)}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-sky-600 px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-sky-500 shadow-md"
+                >
+                  <Camera size={14} /> Foto Kamera Live
+                </button>
+              </div>
             </div>
 
             {/* Identity Details */}
@@ -592,6 +594,14 @@ export default function ProfileClient() {
           </div>
         </form>
       </div>
+
+      {/* Camera Capture Modal */}
+      <CameraCaptureModal
+        isOpen={isCameraOpen}
+        onClose={() => setIsCameraOpen(false)}
+        onCapture={handleCameraCapture}
+        title="Ambil Foto Profil Kamera Langsung"
+      />
     </main>
   );
 }

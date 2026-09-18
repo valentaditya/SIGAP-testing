@@ -25,11 +25,11 @@ export default function DampakPage() {
   ];
 
   return (
-    <main className="mx-auto max-w-[1160px] px-6 py-12">
-      <Reveal className="mb-10 text-center">
+    <main className="mx-auto max-w-[1160px] px-3.5 sm:px-6 py-6 sm:py-12">
+      <Reveal className="mb-6 sm:mb-10 text-center">
         <p className="text-xs font-bold uppercase tracking-[.12em] text-brand-600">City Impact Dashboard</p>
-        <h1 className="mt-2 font-display text-3xl font-extrabold md:text-4xl">Dampak SIGAP untuk Kota</h1>
-        <p className="mx-auto mt-3 max-w-[560px] text-ink-500">Statistik dan visualisasi persebaran laporan, kategori, dan tingkat penyelesaian sebagai gambaran dampak nyata SIGAP.</p>
+        <h1 className="mt-2 font-display text-2xl sm:text-3xl md:text-4xl font-extrabold">Dampak SIGAP untuk Kota</h1>
+        <p className="mx-auto mt-2 sm:mt-3 max-w-[560px] text-xs sm:text-sm text-ink-500">Statistik dan visualisasi persebaran laporan, kategori, dan tingkat penyelesaian sebagai gambaran dampak nyata SIGAP.</p>
       </Reveal>
 
       {/* Stat cards */}

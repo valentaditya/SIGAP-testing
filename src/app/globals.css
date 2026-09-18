@@ -440,6 +440,9 @@ details.faq[open] .faq-plus { transform: rotate(45deg); }
 ::-webkit-scrollbar-thumb { background: var(--color-ink-300); }
 ::-webkit-scrollbar-track { background: transparent; }
 
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
 /* Hormati prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce) {
   [data-rev], .reveal, .cs-letter { opacity: 1 !important; transform: none !important; transition: none !important; }

@@ -65,7 +65,7 @@ type SubTabLaporan = "semua" | "riwayat";
 type TimeRange = "hari_ini" | "minggu_ini" | "bulan_ini" | "tahun_ini" | "all";
 
 export default function DinasClient() {
-  const { user, laporanWarga, updateLaporanStatus, tambahNotif, sinyalDarurat, hapusSinyalDarurat } = useApp();
+  const { user, laporanWarga, updateLaporanStatus, updateLaporan, tambahNotif, sinyalDarurat, hapusSinyalDarurat } = useApp();
   const router = useRouter();
 
   // Redirect jika bukan dinas
@@ -84,6 +84,10 @@ export default function DinasClient() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [selectedLaporan, setSelectedLaporan] = useState<Laporan | null>(null);
   const [lightboxFoto, setLightboxFoto] = useState<string | null>(null);
+
+  // Modal Revisi Bukti oleh Dinas
+  const [revisionModalLaporan, setRevisionModalLaporan] = useState<Laporan | null>(null);
+  const [catatanRevisiText, setCatatanRevisiText] = useState("");
 
   // SOS Toast alert real-time
   const [sosToast, setSosToast] = useState<typeof sinyalDarurat[0] | null>(null);
@@ -179,9 +183,17 @@ export default function DinasClient() {
     .sort((a, b) => b.ai.priorityScore - a.ai.priorityScore);
 
   const handleUpdateStatus = (id: string, nextStatus: StatusId) => {
+    const target = laporanWarga.find((l) => l.id === id);
+    if (nextStatus === "resolved") {
+      if (!target?.buktiPetugas || !target.buktiPetugas.fotoUrls || target.buktiPetugas.fotoUrls.length === 0) {
+        alert("⛔ Penguncian Sistem: Dinas tidak dapat menyelesaikan laporan sebelum Petugas Lapangan mengunggah foto bukti perbaikan real-time dari kamera. Silakan terbantu teruskan laporan ke Petugas Lapangan terlebih dahulu.");
+        return;
+      }
+    }
+
     updateLaporanStatus(id, nextStatus);
     tambahNotif({
-      judul: "Status Diperbarui",
+      judul: "Status Laporan Diperbarui",
       pesan: `Laporan ${id} kini berstatus: ${STATUS_LABEL[nextStatus]}.`,
       waktu: "Baru saja",
       tone: nextStatus === "resolved" ? "success" : "warning",
@@ -202,17 +214,19 @@ export default function DinasClient() {
           aria-label="Peringatan darurat masuk"
           style={{
             position: "fixed",
-            top: "80px",
-            right: "20px",
+            top: "76px",
+            right: "16px",
+            left: "16px",
+            margin: "0 auto",
             zIndex: 9999,
-            width: "min(400px, calc(100vw - 40px))",
+            width: "min(400px, calc(100vw - 32px))",
             animation: "sos-toast-in 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards",
           }}
         >
           <style>{`
             @keyframes sos-toast-in {
-              0%   { opacity: 0; transform: translateX(110%) scale(0.9); }
-              100% { opacity: 1; transform: translateX(0) scale(1); }
+              0%   { opacity: 0; transform: translateY(-20px) scale(0.9); }
+              100% { opacity: 1; transform: translateY(0) scale(1); }
             }
             @keyframes sos-siren-spin {
               0%   { transform: rotate(-15deg); }
@@ -314,28 +328,28 @@ export default function DinasClient() {
         </div>
       )}
 
-      <main className="mx-auto max-w-7xl px-4 pt-6 sm:px-6">
+      <main className="mx-auto max-w-7xl px-3.5 sm:px-6 pt-4 sm:pt-6">
         {/* Header Dinas & Navigasi Tab */}
-        <div className="anim-fade-up mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-ink-300/40 pb-5">
+        <div className="anim-fade-up mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-ink-300/40 pb-5">
           <div className="flex items-center gap-3">
-            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-success-bg text-success shadow-inner">
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-success-bg text-success shadow-inner">
               <Building2 size={24} />
             </span>
             <div>
-              <h1 className="font-display text-2xl font-extrabold text-cream-hi md:text-3xl">
+              <h1 className="font-display text-xl sm:text-2xl md:text-3xl font-extrabold text-cream-hi">
                 Dashboard Dinas
               </h1>
-              <p className="mt-0.5 flex items-center gap-1.5 text-sm font-semibold text-success">
+              <p className="mt-0.5 flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-success">
                 <MapPin size={14} /> {wilayahInfo?.nama} <span className="text-ink-500 font-normal">({wilayahInfo?.dinasEmail})</span>
               </p>
             </div>
           </div>
 
           {/* Navigation Tabs (Home, Analitik, Laporan) */}
-          <div className="flex flex-wrap gap-2 rounded-2xl bg-surface p-1.5 border border-ink-300/40 shadow-sm">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar rounded-2xl bg-surface p-1.5 border border-ink-300/40 shadow-sm w-full sm:w-auto">
             <button
               onClick={() => setActiveTab("home")}
-              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-extrabold transition-all ${
+              className={`flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-extrabold transition-all ${
                 activeTab === "home"
                   ? "bg-brand-600 text-white shadow-md"
                   : "text-ink-500 hover:text-cream hover:bg-ground/50"
@@ -345,7 +359,7 @@ export default function DinasClient() {
             </button>
             <button
               onClick={() => setActiveTab("analitik")}
-              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-extrabold transition-all ${
+              className={`flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-extrabold transition-all ${
                 activeTab === "analitik"
                   ? "bg-brand-600 text-white shadow-md"
                   : "text-ink-500 hover:text-cream hover:bg-ground/50"
@@ -355,7 +369,7 @@ export default function DinasClient() {
             </button>
             <button
               onClick={() => setActiveTab("laporan")}
-              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-extrabold transition-all ${
+              className={`flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-extrabold transition-all ${
                 activeTab === "laporan"
                   ? "bg-brand-600 text-white shadow-md"
                   : "text-ink-500 hover:text-cream hover:bg-ground/50"
@@ -365,7 +379,7 @@ export default function DinasClient() {
             </button>
             <button
               onClick={() => setActiveTab("profil")}
-              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-extrabold transition-all ${
+              className={`flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-extrabold transition-all ${
                 activeTab === "profil"
                   ? "bg-brand-600 text-white shadow-md"
                   : "text-ink-500 hover:text-cream hover:bg-ground/50"
@@ -1199,15 +1213,32 @@ export default function DinasClient() {
                     )}
 
                     {selectedLaporan.status === "in_progress" && (
-                      <button
-                        onClick={() => handleUpdateStatus(selectedLaporan.id, "resolved")}
-                        className="col-span-2 flex items-center justify-center gap-2 rounded-xl bg-success px-5 py-3 text-sm font-bold text-white hover:bg-success-hi transition-colors shadow-lg"
-                      >
-                        <CheckCircle2 size={16} /> 
-                        {selectedLaporan.buktiPetugas?.fotoUrls?.length 
-                          ? "✓ Setujui Foto Bukti & Selesaikan Laporan" 
-                          : "✓ Selesaikan & Tutup Laporan"}
-                      </button>
+                      <div className="col-span-2 flex flex-col gap-2.5">
+                        {selectedLaporan.buktiPetugas?.fotoUrls?.length ? (
+                          <>
+                            <button
+                              onClick={() => handleUpdateStatus(selectedLaporan.id, "resolved")}
+                              className="flex w-full items-center justify-center gap-2 rounded-xl bg-success px-5 py-3 text-sm font-bold text-white hover:bg-success-hi transition-colors shadow-lg"
+                            >
+                              <CheckCircle2 size={16} /> ✓ Setujui Foto Bukti &amp; Selesaikan Laporan
+                            </button>
+
+                            <button
+                              onClick={() => setRevisionModalLaporan(selectedLaporan)}
+                              className="flex w-full items-center justify-center gap-2 rounded-xl border border-amber-500/50 bg-amber-500/15 px-4 py-2.5 text-xs font-bold text-amber-400 hover:bg-amber-500/25 transition-colors"
+                            >
+                              <AlertCircle size={15} /> ⚠️ Tolak &amp; Minta Perbaikan Ulang ke Petugas
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => alert("⛔ Penguncian Sistem: Dinas tidak dapat menyelesaikan laporan sebelum Petugas Lapangan mengerjakan dan mengunggah foto bukti perbaikan real-time dari kamera.")}
+                            className="flex w-full items-center justify-center gap-2 rounded-xl border border-warning/40 bg-warning/10 px-4 py-3 text-xs font-bold text-warning hover:bg-warning/20 transition-colors"
+                          >
+                            <Clock size={16} className="animate-spin" /> ⏳ Menunggu Petugas Mengambil Foto Bukti Kamera Real-Time
+                          </button>
+                        )}
+                      </div>
                     )}
 
                     {selectedLaporan.status === "resolved" && (
@@ -1250,6 +1281,65 @@ export default function DinasClient() {
               >
                 <X size={20} />
               </button>
+            </div>
+          </div>
+        )}
+        {/* MODAL REVISI BUKTI OLEH DINAS */}
+        {revisionModalLaporan && (
+          <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm animate-fade-in">
+            <div className="w-full max-w-md overflow-hidden rounded-2xl border border-amber-500/40 bg-surface p-6 shadow-2xl">
+              <h3 className="flex items-center gap-2 font-display text-base font-extrabold text-amber-400">
+                <AlertCircle size={18} /> Minta Perbaikan Ulang ke Petugas
+              </h3>
+              <p className="mt-2 text-xs text-ink-400 leading-relaxed">
+                Tuliskan catatan kekurangan atau instruksi perbaikan untuk Petugas Lapangan mengenai laporan <strong>{revisionModalLaporan.id}</strong>.
+              </p>
+
+              <textarea
+                value={catatanRevisiText}
+                onChange={(e) => setCatatanRevisiText(e.target.value)}
+                placeholder="Contoh: Foto bukti kurang jelas / Pengerjaan pembersihan drainase belum tuntas..."
+                className="mt-4 h-28 w-full rounded-xl border border-ink-300/40 bg-ground/80 p-3 text-xs text-cream outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+              />
+
+              <div className="mt-5 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRevisionModalLaporan(null);
+                    setCatatanRevisiText("");
+                  }}
+                  className="rounded-xl px-4 py-2 text-xs font-semibold text-ink-500 hover:text-cream"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  disabled={!catatanRevisiText.trim()}
+                  onClick={async () => {
+                    if (!catatanRevisiText.trim()) return;
+                    const targetId = revisionModalLaporan.id;
+                    await updateLaporan(targetId, {
+                      status: "in_progress",
+                      catatanRevisi: catatanRevisiText.trim(),
+                    });
+                    tambahNotif({
+                      judul: "Permintaan Revisi Bukti",
+                      pesan: `Dinas meminta perbaikan bukti untuk ${targetId}: "${catatanRevisiText.trim()}".`,
+                      waktu: "Baru saja",
+                      tone: "warning",
+                    });
+                    if (selectedLaporan?.id === targetId) {
+                      setSelectedLaporan((prev) => (prev ? { ...prev, status: "in_progress", catatanRevisi: catatanRevisiText.trim() } : null));
+                    }
+                    setRevisionModalLaporan(null);
+                    setCatatanRevisiText("");
+                  }}
+                  className="rounded-xl bg-amber-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-amber-500 disabled:opacity-50 shadow-md"
+                >
+                  Kirim Catatan Revisi
+                </button>
+              </div>
             </div>
           </div>
         )}

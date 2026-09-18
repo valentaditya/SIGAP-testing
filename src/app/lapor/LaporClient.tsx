@@ -14,6 +14,7 @@ import { useApp } from "@/lib/store";
 import { bisa } from "@/lib/roles";
 import { useSearchParams } from "next/navigation";
 import type { AIAnalysisResult } from "@/app/api/analyze-priority/route";
+import { CameraCaptureModal } from "@/components/CameraCaptureModal";
 
 const MiniMap = dynamic(() => import("@/components/MiniMap").then((m) => m.MiniMap), {
   ssr: false,
@@ -58,9 +59,21 @@ export default function LaporClient() {
   const [fotoFiles, setFotoFiles] = useState<File[]>([]);               // raw File objects for Storage upload
   const [fotoStorageUrls, setFotoStorageUrls] = useState<string[]>([]); // permanent URLs after upload
   const [isUploadingFoto, setIsUploadingFoto] = useState(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [aiResult, setAiResult] = useState<AIAnalysisResult | null>(null);
   const [, setIsAnalyzing] = useState(false);
+
+  function handleCameraCapture(file: File, previewUrl: string) {
+    setFotoFiles((prev) => {
+      if (prev.length >= 5) return prev;
+      return [...prev, file];
+    });
+    setFotoPreviews((prev) => {
+      if (prev.length >= 5) return prev;
+      return [...prev, previewUrl];
+    });
+  }
 
   const [tiket, setTiket] = useState("");
   const pelaporNama = anonim ? "Anonim" : (user?.nama ?? "Warga");
@@ -111,29 +124,7 @@ export default function LaporClient() {
     );
   }
 
-  // Handle Image File Selection
-  function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = e.target.files;
-    if (!files) return;
 
-    const fileList = Array.from(files);
-    fileList.forEach((file) => {
-      setFotoFiles((prev) => {
-        if (prev.length >= 5) return prev;
-        return [...prev, file];
-      });
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          setFotoPreviews((prev) => {
-            if (prev.length >= 5) return prev;
-            return [...prev, event.target!.result as string];
-          });
-        }
-      };
-      reader.readAsDataURL(file);
-    });
-  }
 
   function removePhoto(index: number) {
     setFotoPreviews((prev) => prev.filter((_, i) => i !== index));
@@ -287,15 +278,15 @@ export default function LaporClient() {
   const kat = KATEGORI.find((x) => x.id === kategori)!;
 
   return (
-    <main className="mx-auto max-w-[860px] px-6 py-12">
-      <div className="mb-8 text-center">
+    <main className="mx-auto max-w-[860px] px-3.5 sm:px-6 py-6 sm:py-12">
+      <div className="mb-6 sm:mb-8 text-center">
         <Chip tone="brand" className="mb-4"><FileText size={13} /> Form Pelaporan Multi-AI</Chip>
-        <h1 className="font-display text-3xl font-extrabold md:text-4xl">Laporkan Masalah di Sekitarmu</h1>
-        <p className="mt-3 text-ink-500">Unggah foto, tentukan lokasi GPS & detail — Multi-AI Agent yang menganalisis prioritasnya.</p>
+        <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-extrabold">Laporkan Masalah di Sekitarmu</h1>
+        <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-ink-500">Unggah foto, tentukan lokasi GPS & detail — Multi-AI Agent yang menganalisis prioritasnya.</p>
       </div>
 
       {phase === "form" && (
-        <div className="rounded-2xl bg-surface p-6 shadow-[var(--shadow-card)] md:p-8">
+        <div className="rounded-2xl bg-surface p-4 sm:p-6 md:p-8 shadow-[var(--shadow-card)]">
           {/* Stepper */}
           <ol className="mb-8 flex items-center gap-2">
             {[1, 2, 3].map((n) => (
@@ -344,22 +335,52 @@ export default function LaporClient() {
                 </div>
               </div>
 
-              {/* Real Image File Uploader */}
+              {/* Real Camera Capture & Image Uploader */}
               <div>
                 <label className="mb-2 flex items-center justify-between text-sm font-semibold">
                   <span className="flex items-center gap-1.5">
-                    <Camera size={15} className="text-brand-600" /> Unggah Foto Pendukung
+                    <Camera size={16} className="text-brand-600" /> Foto Kejadian Real-Time Kamera
                   </span>
                   <span className="text-xs text-ink-500">{fotoPreviews.length} / 5 foto</span>
                 </label>
 
+                {/* Main Camera Live Trigger Button */}
+                {fotoPreviews.length < 5 && (
+                  <div className="mb-4">
+                    <button
+                      type="button"
+                      onClick={() => setIsCameraOpen(true)}
+                      className="group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl border-2 border-brand-500/50 bg-gradient-to-r from-brand-600/15 via-brand-600/10 to-brand-500/15 p-5 text-center transition-all hover:border-brand-500 hover:bg-brand-600/25 hover:shadow-lg hover:shadow-brand-500/10 active:scale-[0.99]"
+                    >
+                      <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white shadow-md group-hover:scale-105 transition-transform">
+                        <Camera size={24} />
+                        <span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-red-500 border-2 border-white"></span>
+                        </span>
+                      </div>
+                      <div className="text-left">
+                        <p className="font-display text-base font-bold text-cream group-hover:text-brand-400 transition-colors">
+                          Ambil Foto dari Kamera Langsung
+                        </p>
+                        <p className="text-xs text-ink-400 mt-0.5">
+                          Ambil snapshot terkini secara otomatis dengan watermark otentikasi lokasi & waktu.
+                        </p>
+                      </div>
+                    </button>
+                  </div>
+                )}
+
                 {/* Previews Grid */}
                 {fotoPreviews.length > 0 && (
-                  <div className="mb-3 grid grid-cols-3 gap-3 sm:grid-cols-5">
+                  <div className="mb-4 grid grid-cols-3 gap-3 sm:grid-cols-5">
                     {fotoPreviews.map((src, idx) => (
                       <div key={idx} className="relative group aspect-square rounded-xl overflow-hidden border border-ink-300 bg-black/5">
                         {/* eslint-disable-next-html-loader */}
-                        <img src={src} alt={`Upload ${idx + 1}`} className="h-full w-full object-cover" />
+                        <img src={src} alt={`Kamera ${idx + 1}`} className="h-full w-full object-cover" />
+                        <span className="absolute bottom-1 left-1 rounded bg-black/70 px-1.5 py-0.5 text-[9px] font-bold text-sky-400 backdrop-blur-xs">
+                          LIVE
+                        </span>
                         <button
                           type="button"
                           onClick={() => removePhoto(idx)}
@@ -373,20 +394,13 @@ export default function LaporClient() {
                   </div>
                 )}
 
-                {fotoPreviews.length < 5 && (
-                  <label className="grid cursor-pointer place-items-center rounded-xl border-2 border-dashed border-ink-300 bg-brand-50/40 p-8 text-center transition-colors hover:border-brand-600 hover:bg-brand-50/80">
-                    <Upload size={28} className="text-brand-600 mb-1" />
-                    <p className="text-sm font-semibold text-ink-700">Pilih / Seret Foto ke Sini</p>
-                    <p className="text-xs text-ink-500 mt-1">Format JPG, PNG, WEBP (Multimodal AI akan menganalisis foto ini)</p>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={handleImageUpload}
-                      className="hidden"
-                    />
-                  </label>
-                )}
+                {/* Strict Real-Time Notice */}
+                <div className="flex items-center gap-2 rounded-xl border border-sky-500/30 bg-sky-500/10 p-3 text-xs font-semibold text-sky-400">
+                  <span className="flex h-2 w-2 rounded-full bg-sky-400 animate-pulse shrink-0" />
+                  <span>
+                    <strong>Strict Real-Time Capture:</strong> Hanya menerima foto langsung dari kamera (Upload file galeri dinonaktifkan demi otentisitas laporan).
+                  </span>
+                </div>
               </div>
 
               {formError && step === 1 && (
@@ -778,6 +792,14 @@ export default function LaporClient() {
           </div>
         </div>
       )}
+
+      {/* Camera Capture Modal */}
+      <CameraCaptureModal
+        isOpen={isCameraOpen}
+        onClose={() => setIsCameraOpen(false)}
+        onCapture={handleCameraCapture}
+        title="Ambil Foto Kejadian Real-Time"
+      />
     </main>
   );
 }

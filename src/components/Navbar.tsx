@@ -204,7 +204,7 @@ export function Navbar() {
             {theme === "dark" ? <Sun size={18} aria-hidden="true" /> : <Moon size={18} aria-hidden="true" />}
           </button>
 
-          {user && <NotifBell />}
+          {user && (user.role === "dinas" || user.role === "admin") && <NotifBell />}
 
           {hydrated && (user ? (
             <div className="flex items-center gap-2">

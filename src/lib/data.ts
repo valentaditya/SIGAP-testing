@@ -96,6 +96,7 @@ export interface Laporan {
   sla: string;
   wilayah: WilayahId;
   buktiPetugas?: BuktiPetugas;
+  catatanRevisi?: string;
 }
 
 export const META = {
@@ -294,8 +295,32 @@ export function formatHari(k: string): string {
   return `${Number(d)} ${bulan[Number(m) - 1]}`;
 }
 
+export function deteksiWilayahFromCoords(lat: number, lng: number): WilayahId {
+  if (isNaN(lat) || isNaN(lng)) return "kota_yogya";
+  // Bounding box geografis DIY
+  if (lng < 110.24) return "kulonprogo";
+  if (lng > 110.50) return "gunungkidul";
+  // Sleman: Utara (-7.778 ke utara) atau sebelah Timur/Barat Kota Yogya
+  if (lat > -7.778) return "sleman"; // Sleman bagian utara/tengah
+  if (lat < -7.835) return "bantul";  // Bantul bagian selatan
+  if (lng > 110.405) return "sleman"; // Sleman bagian timur (Depok/Kalasan)
+  if (lng < 110.335) return "sleman"; // Sleman bagian barat (Godean)
+  return "kota_yogya";
+}
+
 export function deteksiWilayah(alamat: string): WilayahId {
   const cleanAlamat = alamat.toLowerCase();
+
+  // Parsing jika format alamat berisi GPS "GPS -7.xxxx, 110.xxxx"
+  const gpsMatch = cleanAlamat.match(/gps\s*([-\d.]+)\s*,\s*([-\d.]+)/);
+  if (gpsMatch) {
+    const lat = parseFloat(gpsMatch[1]);
+    const lng = parseFloat(gpsMatch[2]);
+    if (!isNaN(lat) && !isNaN(lng)) {
+      return deteksiWilayahFromCoords(lat, lng);
+    }
+  }
+
   for (const w of WILAYAH) {
     if (cleanAlamat.includes(w.nama.toLowerCase()) || cleanAlamat.includes(w.id)) {
       return w.id;
@@ -306,7 +331,6 @@ export function deteksiWilayah(alamat: string): WilayahId {
       }
     }
   }
-  // Default ke kota_yogya jika tidak terdeteksi
   return "kota_yogya";
 }
 

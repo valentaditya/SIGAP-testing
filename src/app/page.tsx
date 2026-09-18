@@ -124,7 +124,7 @@ export default async function Home() {
                 <div className="mt-6 max-w-[58ch]">
                   <Rise d={180}>
                     <p className="text-base sm:text-lg leading-relaxed text-sage-pale font-normal">
-                      Platform terintegrasi pelaporan warga Yogyakarta ditenagai <strong className="font-semibold text-cream">tiga agen AI</strong> yang membaca, menganalisis dampak, dan memprioritaskan penyelesaian setiap laporan secara transparan.
+                      Platform resmi layanan pelaporan &amp; tanggap darurat publik Yogyakarta. Sistem cerdas otomatis memverifikasi lokasi, mengukur tingkat dampak urgensi, dan menyalurkan langsung ke Dinas &amp; Petugas terkait secara transparan.
                     </p>
                   </Rise>
                 </div>
@@ -133,7 +133,7 @@ export default async function Home() {
                 <div className="mt-9 flex justify-center">
                   <Rise d={260}>
                     <Link
-                      href="/lapor"
+                      href="/login?redirect=/lapor"
                       className="btn-anim inline-flex items-center gap-3.5 rounded-full bg-tan px-10 py-5 font-display text-lg font-bold text-white no-underline shadow-xl shadow-tan/30 hover:bg-tan-solid hover:shadow-tan/40"
                     >
                       Lapor Sekarang <ArrowUpRight size={22} className="stroke-[2.5]" />
@@ -453,7 +453,7 @@ export default async function Home() {
                   <ul className="mt-4 space-y-2.5 text-sm text-sage-pale font-medium">
                     {[
                       ["Beranda", "/"],
-                      ["Buat Laporan", "/lapor"],
+                      ["Buat Laporan", "/login?redirect=/lapor"],
                       ["Dashboard", "/dashboard"],
                       ["Petugas", "/petugas"],
                       ["Dampak Kota", "/dampak"],

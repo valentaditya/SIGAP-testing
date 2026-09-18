@@ -189,66 +189,66 @@ export default function WargaDashboard() {
         </div>
       )}
 
-      <main className="mx-auto max-w-[1160px] px-6 py-10">
+      <main className="mx-auto max-w-[1160px] px-3.5 sm:px-6 py-6 sm:py-10">
         {/* Sapaan */}
-        <div className="anim-fade-up mb-8 flex flex-wrap items-center justify-between gap-4">
+        <div className="anim-fade-up mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="font-display text-2xl font-extrabold md:text-3xl">
+            <h1 className="font-display text-xl sm:text-2xl md:text-3xl font-extrabold">
               Halo, <span className="text-brand-600">{nama}</span>
             </h1>
-            <p className="mt-1 text-sm text-ink-500">
+            <p className="mt-1 text-xs sm:text-sm text-ink-500">
               Pantau laporanmu dan jelajahi perkembangan fasilitas serta kondisi lingkungan terkini.
             </p>
           </div>
           <Link
             href="/lapor"
-            className="btn-anim inline-flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-3 font-semibold text-ink-900 no-underline hover:bg-brand-700"
+            className="btn-anim inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-5 py-3 text-xs sm:text-sm font-semibold text-ink-900 no-underline hover:bg-brand-700 shrink-0"
           >
             <Plus size={18} /> Buat Laporan
           </Link>
         </div>
 
         {/* Tab Navigation */}
-        <div className="anim-fade-up mb-6 flex flex-wrap gap-2 border-b border-ink-300/40 pb-4">
+        <div className="anim-fade-up mb-6 flex items-center gap-1.5 overflow-x-auto no-scrollbar border-b border-ink-300/40 pb-4 w-full">
           <button
             onClick={() => setActiveTab("aktif")}
-            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all ${
+            className={`inline-flex shrink-0 items-center gap-2 rounded-xl px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-bold transition-all ${
               activeTab === "aktif"
                 ? "bg-brand-600 text-white shadow-md"
                 : "bg-surface text-ink-700 hover:bg-brand-50 hover:text-cream"
             }`}
           >
-            <FileText size={16} /> Laporan Aktif
+            <FileText size={15} /> Laporan Aktif
           </button>
           <button
             onClick={() => setActiveTab("history")}
-            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all ${
+            className={`inline-flex shrink-0 items-center gap-2 rounded-xl px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-bold transition-all ${
               activeTab === "history"
                 ? "bg-brand-600 text-white shadow-md"
                 : "bg-surface text-ink-700 hover:bg-brand-50 hover:text-cream"
             }`}
           >
-            <History size={16} /> History ({riwayatSaya.length})
+            <History size={15} /> History ({riwayatSaya.length})
           </button>
           <button
             onClick={() => setActiveTab("peta")}
-            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all ${
+            className={`inline-flex shrink-0 items-center gap-2 rounded-xl px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-bold transition-all ${
               activeTab === "peta"
                 ? "bg-brand-600 text-white shadow-md"
                 : "bg-surface text-ink-700 hover:bg-brand-50 hover:text-cream"
             }`}
           >
-            <MapIcon size={16} /> Peta Laporan
+            <MapIcon size={15} /> Peta Laporan
           </button>
           <button
             onClick={() => setActiveTab("profil")}
-            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all ${
+            className={`inline-flex shrink-0 items-center gap-2 rounded-xl px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-bold transition-all ${
               activeTab === "profil"
                 ? "bg-brand-600 text-white shadow-md"
                 : "bg-surface text-ink-700 hover:bg-brand-50 hover:text-cream"
             }`}
           >
-            <User size={16} /> Profil Akun
+            <User size={15} /> Profil Akun
           </button>
         </div>
 

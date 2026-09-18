@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { LAPORAN, priorityColor, priorityLabel, getKategori, STATUS_LABEL, getFotoUrls, type WilayahId, type Laporan } from "@/lib/data";
+import { LAPORAN, priorityColor, priorityLabel, getKategori, STATUS_LABEL, getFotoUrls, deteksiWilayahFromCoords, type WilayahId, type Laporan } from "@/lib/data";
 import { useApp } from "@/lib/store";
 import { renderToStaticMarkup } from "react-dom/server";
 import { AlertTriangle, Flame, Leaf, Siren } from "lucide-react";
@@ -44,6 +44,14 @@ function sosMarkerIcon() {
   });
 }
 
+const WILAYAH_CENTER: Record<string, { center: [number, number]; zoom: number }> = {
+  sleman: { center: [-7.68, 110.38], zoom: 12 },
+  bantul: { center: [-7.90, 110.36], zoom: 12 },
+  kota_yogya: { center: [-7.795, 110.369], zoom: 13 },
+  gunungkidul: { center: [-7.96, 110.60], zoom: 11 },
+  kulonprogo: { center: [-7.82, 110.16], zoom: 11 },
+};
+
 export function AdminMap({
   height = 420,
   fill = false,
@@ -57,7 +65,7 @@ export function AdminMap({
   statusFilter?: (l: Laporan) => boolean;
   onSelectLaporan?: (l: Laporan) => void;
 }) {
-  const { laporanWarga, sinyalDarurat } = useApp();
+  const { laporanWarga, sinyalDarurat, user } = useApp();
   const ref = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   // Track sos markers separately to update independently
@@ -106,6 +114,12 @@ export function AdminMap({
     const dataList = laporanWarga && laporanWarga.length > 0 ? laporanWarga : LAPORAN;
     const activeReports = dataList.filter((l) => (statusFilter ? statusFilter(l) : l.status !== "resolved"));
     const filtered = wilayahFilter === "semua" ? activeReports : activeReports.filter((l) => l.wilayah === wilayahFilter);
+
+    // Auto-center ke wilayah terpilih jika berganti tab filter
+    if (wilayahFilter !== "semua" && WILAYAH_CENTER[wilayahFilter]) {
+      const cfg = WILAYAH_CENTER[wilayahFilter];
+      map.flyTo(cfg.center, cfg.zoom, { duration: 1.2 });
+    }
 
     // Render laporan normal
     filtered.forEach((l) => {
@@ -160,10 +174,10 @@ export function AdminMap({
       });
     });
 
-    // Render sinyal darurat SOS (di atas marker biasa via zIndexOffset)
+    // Render sinyal darurat SOS (Filter berdasarkan ID wilayah ATAU koordinat geografis)
     const filteredSOS = wilayahFilter === "semua"
       ? sinyalDarurat
-      : sinyalDarurat.filter((s) => s.wilayah === wilayahFilter);
+      : sinyalDarurat.filter((s) => s.wilayah === wilayahFilter || deteksiWilayahFromCoords(s.lat, s.lng) === wilayahFilter);
 
     filteredSOS.forEach((s) => {
       const waktuStr = new Date(s.waktu).toLocaleString("id-ID", {
@@ -197,11 +211,9 @@ export function AdminMap({
       const newest = filteredSOS[0];
       setTimeout(() => {
         map.flyTo([newest.lat, newest.lng], 16, { duration: 1.5 });
-        // Buka popup marker SOS terbaru setelah fly selesai
         const sosMarker = sosMarkersRef.current[0];
         if (sosMarker) setTimeout(() => sosMarker.openPopup(), 1600);
       }, 350);
-      // Flash merah overlay
       setShowFlash(true);
       setTimeout(() => setShowFlash(false), 1800);
     }
@@ -210,11 +222,51 @@ export function AdminMap({
     return () => clearTimeout(t);
   }, [wilayahFilter, statusFilter, onSelectLaporan, laporanWarga, sinyalDarurat]);
 
+  const activeSosList = wilayahFilter === "semua"
+    ? sinyalDarurat
+    : sinyalDarurat.filter((s) => s.wilayah === wilayahFilter || deteksiWilayahFromCoords(s.lat, s.lng) === wilayahFilter);
+
+  const isDinasOrAdmin = user && (user.role === "dinas" || user.role === "admin");
+
   return (
     <div
       style={fill ? undefined : { height }}
       className={`relative w-full ${fill ? "h-full" : ""}`}
     >
+      {/* Floating Alert Banner Notifikasi SOS di atas Peta (HANYA untuk Dinas & Admin) */}
+      {activeSosList.length > 0 && isDinasOrAdmin && (
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] flex w-[calc(100%-24px)] max-w-[480px] items-center gap-2.5 rounded-2xl border-2 border-danger bg-danger/95 px-3.5 py-2 text-white shadow-2xl backdrop-blur-md">
+          <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/20">
+            <Siren className="h-5 w-5 animate-pulse text-white" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="rounded-full bg-white px-2 py-0.5 text-[9px] font-extrabold text-danger uppercase tracking-wider shrink-0 whitespace-nowrap">
+                🚨 SOS ({activeSosList.length})
+              </span>
+              <span className="truncate text-xs font-bold text-white">
+                {activeSosList[0].jenisLabel}
+              </span>
+            </div>
+            <p className="truncate text-[10px] text-white/90 mt-0.5">
+              Pelapor: <strong>{activeSosList[0].pelapor}</strong>
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              if (mapRef.current && activeSosList[0]) {
+                mapRef.current.flyTo([activeSosList[0].lat, activeSosList[0].lng], 16, { duration: 1.2 });
+                const sosMarker = sosMarkersRef.current[0];
+                if (sosMarker) setTimeout(() => sosMarker.openPopup(), 1200);
+              }
+            }}
+            className="shrink-0 rounded-xl bg-white px-3 py-1.5 text-xs font-extrabold text-danger hover:bg-white/90 transition-all shadow-md active:scale-95 cursor-pointer whitespace-nowrap"
+          >
+            Lihat Titik SOS &rarr;
+          </button>
+        </div>
+      )}
+
       {/* Flash overlay merah saat SOS baru masuk */}
       {showFlash && (
         <div

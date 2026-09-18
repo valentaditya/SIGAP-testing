@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Siren, X, PhoneCall, ShieldAlert, Flame, HeartPulse, MapPin, RotateCcw, Loader2 } from "lucide-react";
 import { useApp } from "@/lib/store";
-import { deteksiWilayah } from "@/lib/data";
+import { deteksiWilayah, deteksiWilayahFromCoords } from "@/lib/data";
 
 
 
@@ -14,10 +14,9 @@ const JENIS = [
   { icon: HeartPulse, label: "Medis / Kecelakaan" },
 ];
 
-// Halaman yang sudah punya jalur darurat sendiri di dalam konten.
-// Menampilkan FAB di sini hanya menduplikasi aksi dan — pada layar
-// kecil — menimpa tombol utama halaman.
-const SEMBUNYIKAN_DI = ["/login", "/dinas", "/petugas","/admin"];
+// Tombol SOS hanya tampil di landing page dan halaman warga.
+// Sembunyikan untuk admin, dinas, petugas, dan halaman login.
+const SEMBUNYIKAN_DI = ["/login", "/dinas", "/petugas", "/dashboard", "/lapor", "/profil"];
 
 type GpsStatus = "idle" | "loading" | "denied" | "ok";
 
@@ -144,7 +143,7 @@ export function EmergencyButton() {
     }
 
     const alamatApprox = `GPS ${gpsCoords.lat.toFixed(5)}, ${gpsCoords.lng.toFixed(5)}`;
-    const wilayah = deteksiWilayah(alamatApprox);
+    const wilayah = user?.wilayah || deteksiWilayahFromCoords(gpsCoords.lat, gpsCoords.lng);
     const namaPerlapor = user?.nama ?? "Warga Anonim";
     const idSinyal = `SOS-${Date.now()}`;
 
@@ -164,13 +163,17 @@ export function EmergencyButton() {
       pesan: `${JENIS[pilih].label} — lokasi GPS dilampirkan. Tim terdekat diberitahu.`,
       waktu: "Baru saja",
       tone: "danger",
+      link: "/peta",
     });
 
     setTerkirim(true);
     timerRef.current = setTimeout(tutup, 2800);
   }
 
-  if (SEMBUNYIKAN_DI.includes(pathname)) return null;
+  // Sembunyikan di halaman tertentu
+  if (SEMBUNYIKAN_DI.some((p) => pathname.startsWith(p))) return null;
+  // Sembunyikan jika user adalah admin, dinas, atau petugas
+  if (user && (user.role === "admin" || user.role === "dinas" || user.role === "petugas")) return null;
 
   return (
     <>
