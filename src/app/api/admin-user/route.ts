@@ -65,6 +65,7 @@ export async function PATCH(req: NextRequest) {
     if (updateData.alamat !== undefined) payload.alamat = updateData.alamat;
     if (updateData.aktif !== undefined) payload.aktif = updateData.aktif;
     if (updateData.sandi !== undefined) payload.sandi = updateData.sandi;
+    if (updateData.foto !== undefined) payload.foto = updateData.foto;
 
     if (Object.keys(payload).length === 0) {
       return NextResponse.json({ error: "Tidak ada data yang diupdate" }, { status: 400 });

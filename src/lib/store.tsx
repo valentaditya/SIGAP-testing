@@ -141,29 +141,48 @@ export function AppProvider({ children }: { children: ReactNode }) {
           .order("waktu", { ascending: false });
 
         if (!error && data && data.length > 0) {
-          const mapped: Laporan[] = data.map((row: any) => ({
-            id: row.id,
-            judul: row.judul,
-            kategori: row.kategori,
-            lokasi: { lat: row.lat, lng: row.lng, alamat: row.alamat },
-            pelapor: row.pelapor,
-            waktu: row.waktu,
-            status: row.status,
-            foto: row.foto || 1,
-            fotoUrls: (row.foto_urls && row.foto_urls.length > 0) ? row.foto_urls : (fotoCache[row.id] || []),
-            dukungan: row.dukungan || 0,
-            buktiPetugas: buktiCache[row.id] || undefined,
-            ai: {
-              kategori: row.ai_kategori || row.kategori,
-              confidence: row.ai_confidence || 0.9,
-              severity: row.ai_severity || 7.0,
-              dampak: row.ai_dampak || "Dianalisis AI",
-              priorityScore: row.ai_priority_score || 7.0,
-              modelUsed: row.ai_model_used || undefined,
-            },
-            sla: row.sla || "48 jam",
-            wilayah: row.wilayah,
-          }));
+          const mapped: Laporan[] = data.map((row: any) => {
+            const defaultLaporan = LAPORAN.find((x) => x.id === row.id);
+            let parsedBukti: import("@/lib/data").BuktiPetugas | undefined =
+              row.bukti_petugas || buktiCache[row.id] || defaultLaporan?.buktiPetugas || undefined;
+            let displayDampak = row.ai_dampak || "Dianalisis AI";
+
+            if (row.ai_dampak && typeof row.ai_dampak === "string" && row.ai_dampak.includes("[BUKTI_PETUGAS]:")) {
+              try {
+                const match = row.ai_dampak.match(/\[BUKTI_PETUGAS\]:(.+?)\[\/BUKTI_PETUGAS\]/);
+                if (match && match[1]) {
+                  parsedBukti = JSON.parse(match[1]);
+                  displayDampak = row.ai_dampak.replace(/\[BUKTI_PETUGAS\]:.+?\[\/BUKTI_PETUGAS\]/, "").trim();
+                }
+              } catch (e) {
+                console.warn("Failed to parse buktiPetugas tag:", e);
+              }
+            }
+
+            return {
+              id: row.id,
+              judul: row.judul,
+              kategori: row.kategori,
+              lokasi: { lat: row.lat, lng: row.lng, alamat: row.alamat },
+              pelapor: row.pelapor,
+              waktu: row.waktu,
+              status: row.status,
+              foto: row.foto || 1,
+              fotoUrls: (row.foto_urls && row.foto_urls.length > 0) ? row.foto_urls : (fotoCache[row.id] || (defaultLaporan?.fotoUrls || [])),
+              dukungan: row.dukungan || 0,
+              buktiPetugas: parsedBukti,
+              ai: {
+                kategori: row.ai_kategori || row.kategori,
+                confidence: row.ai_confidence || 0.9,
+                severity: row.ai_severity || 7.0,
+                dampak: displayDampak,
+                priorityScore: row.ai_priority_score || 7.0,
+                modelUsed: row.ai_model_used || undefined,
+              },
+              sla: row.sla || "48 jam",
+              wilayah: row.wilayah,
+            };
+          });
           setLaporanWarga(mapped);
         }
       } catch (err) {
@@ -235,6 +254,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
         (payload) => {
           if (payload.eventType === "UPDATE" && payload.new) {
             const row = payload.new;
+            let parsedBukti: import("@/lib/data").BuktiPetugas | undefined = undefined;
+            let displayDampak = row.ai_dampak || undefined;
+
+            if (row.ai_dampak && typeof row.ai_dampak === "string" && row.ai_dampak.includes("[BUKTI_PETUGAS]:")) {
+              try {
+                const match = row.ai_dampak.match(/\[BUKTI_PETUGAS\]:(.+?)\[\/BUKTI_PETUGAS\]/);
+                if (match && match[1]) {
+                  parsedBukti = JSON.parse(match[1]);
+                  displayDampak = row.ai_dampak.replace(/\[BUKTI_PETUGAS\]:.+?\[\/BUKTI_PETUGAS\]/, "").trim();
+                }
+              } catch {}
+            }
+
             setLaporanWarga((prev) =>
               prev.map((l) => {
                 if (l.id !== row.id) return l;
@@ -245,6 +277,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
                   fotoUrls: newFotoUrls,
                   foto: newFotoUrls ? newFotoUrls.length : l.foto,
                   dukungan: row.dukungan !== undefined ? row.dukungan : l.dukungan,
+                  buktiPetugas: parsedBukti !== undefined ? parsedBukti : l.buktiPetugas,
+                  ai: {
+                    ...l.ai,
+                    dampak: displayDampak || l.ai.dampak,
+                  },
                 };
               })
             );
@@ -462,16 +499,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
       localStorage.setItem("sigap_bukti_cache", JSON.stringify(buktiCache));
     } catch {}
 
-    // 3. Persist status & photo urls to Supabase
+    // 3. Persist status, photo urls & encoded proof to Supabase
     try {
-      const updatePayload: Record<string, unknown> = { status: targetStatus };
-      if (bukti.fotoUrls && bukti.fotoUrls.length > 0) {
-        // Also ensure photos are saved
-        const target = laporanWarga.find((l) => l.id === id);
-        const merged = Array.from(new Set([...(target?.fotoUrls || []), ...bukti.fotoUrls]));
-        updatePayload.foto_urls = merged;
+      const target = laporanWarga.find((l) => l.id === id);
+      const mergedPhotos = Array.from(new Set([...(target?.fotoUrls || []), ...(bukti.fotoUrls || [])]));
+      
+      const cleanDampak = (target?.ai.dampak || "Dianalisis AI").replace(/\[BUKTI_PETUGAS\]:.+?\[\/BUKTI_PETUGAS\]/, "").trim();
+      const buktiTag = `[BUKTI_PETUGAS]:${JSON.stringify(bukti)}[/BUKTI_PETUGAS]`;
+      const combinedDampak = `${cleanDampak} ${buktiTag}`.trim();
+
+      const updatePayload: Record<string, unknown> = {
+        status: targetStatus,
+        ai_dampak: combinedDampak,
+      };
+      if (mergedPhotos.length > 0) {
+        updatePayload.foto_urls = mergedPhotos;
+        updatePayload.foto = mergedPhotos.length;
       }
-      await supabase.from("laporan").update(updatePayload).eq("id", id);
+
+      const { error } = await supabase.from("laporan").update(updatePayload).eq("id", id);
+      if (error) {
+        console.warn("Supabase kirimBuktiPetugas update error:", error.message);
+      } else {
+        console.log(`✅ Bukti petugas untuk laporan ${id} berhasil dipersist ke Supabase DB`);
+      }
     } catch (err) {
       console.warn("Supabase kirimBuktiPetugas update failed:", err);
     }

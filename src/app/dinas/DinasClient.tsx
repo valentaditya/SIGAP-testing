@@ -183,14 +183,6 @@ export default function DinasClient() {
     .sort((a, b) => b.ai.priorityScore - a.ai.priorityScore);
 
   const handleUpdateStatus = (id: string, nextStatus: StatusId) => {
-    const target = laporanWarga.find((l) => l.id === id);
-    if (nextStatus === "resolved") {
-      if (!target?.buktiPetugas || !target.buktiPetugas.fotoUrls || target.buktiPetugas.fotoUrls.length === 0) {
-        alert("⛔ Penguncian Sistem: Dinas tidak dapat menyelesaikan laporan sebelum Petugas Lapangan mengunggah foto bukti perbaikan real-time dari kamera. Silakan terbantu teruskan laporan ke Petugas Lapangan terlebih dahulu.");
-        return;
-      }
-    }
-
     updateLaporanStatus(id, nextStatus);
     tambahNotif({
       judul: "Status Laporan Diperbarui",
@@ -1231,12 +1223,18 @@ export default function DinasClient() {
                             </button>
                           </>
                         ) : (
-                          <button
-                            onClick={() => alert("⛔ Penguncian Sistem: Dinas tidak dapat menyelesaikan laporan sebelum Petugas Lapangan mengerjakan dan mengunggah foto bukti perbaikan real-time dari kamera.")}
-                            className="flex w-full items-center justify-center gap-2 rounded-xl border border-warning/40 bg-warning/10 px-4 py-3 text-xs font-bold text-warning hover:bg-warning/20 transition-colors"
-                          >
-                            <Clock size={16} className="animate-spin" /> ⏳ Menunggu Petugas Mengambil Foto Bukti Kamera Real-Time
-                          </button>
+                          <>
+                            <button
+                              onClick={() => handleUpdateStatus(selectedLaporan.id, "resolved")}
+                              className="flex w-full items-center justify-center gap-2 rounded-xl bg-success px-5 py-3 text-sm font-bold text-white hover:bg-success-hi transition-colors shadow-lg"
+                            >
+                              <CheckCircle2 size={16} /> ✓ Konfirmasi Selesai &amp; Terverifikasi
+                            </button>
+
+                            <div className="rounded-xl border border-warning/30 bg-warning/10 p-2 text-center text-xs text-warning">
+                              <span>Petugas sedang dalam proses penanganan di lapangan. Dinas dapat langsung memverifikasi selesai atau memantau foto bukti live.</span>
+                            </div>
+                          </>
                         )}
                       </div>
                     )}

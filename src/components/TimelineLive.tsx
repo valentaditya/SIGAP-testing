@@ -6,7 +6,7 @@ import { Rise } from "@/components/Words";
 const ROWS = [
   { n: "01", label: "Laporan Diterima", desc: "Foto bukti dan titik koordinat GPS tervalidasi otomatis oleh sistem." },
   { n: "02", label: "AI Menganalisis", desc: "Tiga agen AI mengukur kategori, bobot dampak, dan Skor Urgensi." },
-  { n: "03", label: "Diverifikasi Admin", desc: "Penetapan antrean prioritas dan penerbitan tiket penanganan resmi." },
+  { n: "03", label: "Ditinjau & Disposisi Dinas", desc: "Dinas wilayah terkait meninjau laporan dan langsung menerbitkan penugasan ke petugas lapangan." },
   { n: "04", label: "Tim Lapangan Bertindak", desc: "Unit petugas dinas terdekat diberangkatkan langsung menuju lokasi." },
   { n: "05", label: "Selesai & Terpublikasi", desc: "Warga menerima kabar, foto hasil penanganan, dan tercatat di data kota." },
 ];

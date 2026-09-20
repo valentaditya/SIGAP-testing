@@ -101,33 +101,34 @@ export default function ProfileClient() {
     setSaving(true);
 
     try {
-      // 1. Simpan ke Supabase DB
-      const updatePayload: Record<string, any> = {
-        nama: nama.trim(),
-        telepon: telepon.trim(),
-        alamat: alamat.trim(),
-        foto: fotoUrl,
-      };
-      if (currentUser.role === "dinas") {
-        updatePayload.wilayah = wilayah;
+      // 1. Simpan ke database via /api/profile (Bypass RLS & Upload ke Storage jika base64)
+      const res = await fetch("/api/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: currentUser.email,
+          nama: nama.trim(),
+          telepon: telepon.trim(),
+          alamat: alamat.trim(),
+          wilayah: currentUser.role === "dinas" ? wilayah : currentUser.wilayah,
+          foto: fotoUrl,
+        }),
+      });
+
+      const result = await res.json();
+      if (!res.ok || result.error) {
+        throw new Error(result.error || "Gagal menyimpan perubahan ke database.");
       }
 
-      const { error } = await supabase
-        .from("users")
-        .update(updatePayload)
-        .eq("email", currentUser.email);
-
-      if (error) {
-        console.error("Supabase update profile error:", error);
-        throw new Error(error.message || "Gagal menyimpan perubahan ke database Supabase.");
-      }
+      const savedFoto = result.data?.foto || fotoUrl || undefined;
+      if (savedFoto) setFotoUrl(savedFoto);
 
       // 2. Simpan ke local App store
       updateUser({
         nama: nama.trim(),
         telepon: telepon.trim(),
         alamat: alamat.trim(),
-        foto: fotoUrl || undefined,
+        foto: savedFoto,
         wilayah: currentUser.role === "dinas" ? wilayah : currentUser.wilayah,
       });
 
@@ -156,27 +157,22 @@ export default function ProfileClient() {
 
     setSavingPassword(true);
     try {
-      // Verifikasi password lama ke Supabase
-      const { data, error } = await supabase
-        .from("users")
-        .select("id")
-        .eq("email", currentUser.email)
-        .eq("sandi", sandiLama)
-        .single();
+      const res = await fetch("/api/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: currentUser.email,
+          sandiLama,
+          sandiBaru,
+        }),
+      });
 
-      if (error || !data) {
-        setErrorPassword("Password lama salah. Silakan periksa kembali.");
+      const result = await res.json();
+      if (!res.ok || result.error) {
+        setErrorPassword(result.error || "Gagal mengganti password.");
         setSavingPassword(false);
         return;
       }
-
-      // Simpan password baru
-      const { error: updateError } = await supabase
-        .from("users")
-        .update({ sandi: sandiBaru })
-        .eq("email", currentUser.email);
-
-      if (updateError) throw new Error(updateError.message);
 
       setSandiLama("");
       setSandiBaru("");
@@ -235,6 +231,10 @@ export default function ProfileClient() {
                 >
                   <Camera size={14} /> Foto Kamera Live
                 </button>
+                <label className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-ink-400/60 bg-ground/80 px-3 py-1.5 text-xs font-semibold text-cream-hi hover:bg-ink-300/30 cursor-pointer transition-colors">
+                  <Upload size={14} /> Unggah File Foto
+                  <input type="file" accept="image/*" onChange={handleFotoUpload} className="hidden" />
+                </label>
               </div>
             </div>
 

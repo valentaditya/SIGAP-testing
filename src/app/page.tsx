@@ -32,7 +32,7 @@ const FITUR = [
 const ALUR = [
   { n: "01", judul: "Kirim Laporan", desc: "Warga mengirim kategori, foto bukti, dan titik lokasi hanya dalam tiga langkah mudah." },
   { n: "02", judul: "AI Menganalisis", desc: "Tiga agen AI membaca laporan, memvalidasi bukti, dan menghitung Skor Urgensinya." },
-  { n: "03", judul: "Tuntas Ditangani", desc: "Admin memverifikasi, tim lapangan bertindak, dan warga memantau hingga tuntas." },
+  { n: "03", judul: "Tuntas Ditangani", desc: "Dinas menugaskan petugas lapangan, memvalidasi foto bukti perbaikan, dan warga memantau hingga tuntas." },
 ];
 
 const KATEGORI_TARIF = [
@@ -62,7 +62,7 @@ const FAQ = [
   { q: "Bagaimana AI menentukan tingkat prioritas?", a: "Tiga agen AI cerdas menganalisis kategori laporan, bobot dampak risiko, dan lokasi kejadian untuk menghasilkan Skor Urgensi 1–10. Laporan berbobot tinggi otomatis masuk prioritas utama." },
   { q: "Apakah laporan saya dijamin ditindaklanjuti?", a: "Setiap laporan masuk ke antrean verifikasi resmi sistem. Petugas lapangan ditugaskan sesuai SLA kategori dan perkembangan penanganan dapat dipantau secara langsung." },
   { q: "Bisakah saya melapor secara anonim?", a: "Tentu. Anda dapat mengaktifkan opsi 'Lapor sebagai Anonim' saat mengisi formulir untuk melindungi privasi dan identitas Anda." },
-  { q: "Siapa yang menangani laporan di lapangan?", a: "Petugas dinas dan tim lapangan resmi yang ditugaskan admin sistem berdasarkan wilayah, kategori keahlian, dan tingkat urgensi masalah." },
+  { q: "Siapa yang menangani laporan di lapangan?", a: "Petugas dinas dan tim lapangan resmi yang ditugaskan dinas wilayah berdasarkan kategori keahlian dan tingkat urgensi masalah." },
   { q: "Bagaimana cara mengetahui laporan telah selesai?", a: "Status laporan akan diperbarui menjadi 'Resolved', sistem mengirimkan notifikasi langsung ke akun Anda, dan bukti penyelesaian tercatat di statistik Dampak Kota." },
 ];
 

@@ -139,8 +139,11 @@ export default function PetugasDashboard() {
   function handleOpenUploadModal(task: Laporan) {
     setModalTask(task);
     setModalFiles([]);
-    setModalCatatan(task.buktiPetugas?.catatan || "");
-    setModalPreviews(task.buktiPetugas?.fotoUrls || []);
+    setModalCatatan(task.buktiPetugas?.catatan || (task.status === "resolved" ? "Penanganan lapangan telah diverifikasi tuntas oleh dinas terkait." : ""));
+    const photos = (task.buktiPetugas?.fotoUrls && task.buktiPetugas.fotoUrls.length > 0)
+      ? task.buktiPetugas.fotoUrls
+      : (task.status === "resolved" ? getFotoUrls(task) : []);
+    setModalPreviews(photos);
   }
 
   function handleSelectTaskFromMap(task: Laporan) {
@@ -419,7 +422,10 @@ export default function PetugasDashboard() {
                     const st = l.effectiveStatus;
                     const fotoUrls = getFotoUrls(l);
                     const bukti = l.buktiPetugas;
-                    const hasBukti = !!bukti && bukti.fotoUrls && bukti.fotoUrls.length > 0;
+                    const proofPhotos = (bukti?.fotoUrls && bukti.fotoUrls.length > 0)
+                      ? bukti.fotoUrls
+                      : (st === "resolved" ? (l.fotoUrls && l.fotoUrls.length > 0 ? l.fotoUrls : fotoUrls) : []);
+                    const hasBukti = proofPhotos.length > 0;
                     const isHighlighted = highlightedTaskId === l.id;
 
                     return (
@@ -484,17 +490,17 @@ export default function PetugasDashboard() {
                           </div>
                         </div>
 
-                        {/* Foto Bukti Penanganan Petugas jika sudah diupload */}
+                        {/* Foto Bukti Penanganan Petugas jika sudah diupload atau selesai */}
                         {hasBukti && (
                           <div className="mt-3 rounded-xl border border-brand-600/30 bg-brand-600/10 p-3">
                             <p className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-brand-500">
-                              <CheckCircle2 size={13} /> Foto Bukti Hasil Penanganan (Petugas)
+                              <CheckCircle2 size={13} /> {st === "resolved" ? "Foto Bukti Penanganan Selesai (Terverifikasi)" : "Foto Bukti Hasil Penanganan (Petugas)"}
                               <span className="ml-auto font-normal normal-case text-ink-400">
-                                {bukti.fotoUrls.length} foto terlampir
+                                {proofPhotos.length} foto terlampir
                               </span>
                             </p>
                             <div className="flex flex-wrap items-center gap-2">
-                              {bukti.fotoUrls.map((url, idx) => (
+                              {proofPhotos.map((url, idx) => (
                                 <button
                                   key={idx}
                                   type="button"
@@ -509,9 +515,9 @@ export default function PetugasDashboard() {
                                 </button>
                               ))}
                             </div>
-                            {bukti.catatan && (
+                            {(bukti?.catatan || st === "resolved") && (
                               <p className="mt-2 text-xs text-cream-hi">
-                                <span className="font-bold text-brand-500">Catatan Tindakan:</span> {bukti.catatan}
+                                <span className="font-bold text-brand-500">Catatan Tindakan:</span> {bukti?.catatan || "Penanganan lapangan telah diselesaikan dan diverifikasi tuntas."}
                               </p>
                             )}
                           </div>
@@ -624,158 +630,238 @@ export default function PetugasDashboard() {
               )}
             </section>
 
-            {/* MODAL FORM UPLOAD BUKTI PENANGANAN (INTERAKTIF & REAL FILE UPLOAD) */}
-            {modalTask && (
-              <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-                <div
-                  className="absolute inset-0 bg-black/75 backdrop-blur-sm transition-opacity"
-                  onClick={() => !isSubmittingBukti && setModalTask(null)}
-                />
-                <div className="anim-fade-up relative w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl border border-white/15 bg-surface p-6 shadow-2xl md:p-8">
-                  {/* Header Modal */}
-                  <div className="flex items-start justify-between gap-4 border-b border-ink-300/30 pb-4">
-                    <div>
-                      <span className="font-mono text-xs font-extrabold text-brand-600">{modalTask.id}</span>
-                      <h3 className="mt-1 font-display text-xl font-extrabold text-cream">Form Bukti Hasil Penanganan</h3>
-                      <p className="mt-0.5 text-xs text-ink-500">{modalTask.judul}</p>
-                    </div>
-                    <button
-                      onClick={() => !isSubmittingBukti && setModalTask(null)}
-                      disabled={isSubmittingBukti}
-                      className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-ink-300/50 text-ink-500 transition-colors hover:bg-brand-50 hover:text-cream disabled:opacity-40"
-                    >
-                      <X size={18} />
-                    </button>
-                  </div>
+            {/* MODAL FORM UPLOAD BUKTI / LIHAT BUKTI PENANGANAN */}
+            {modalTask && (() => {
+              const isResolved = modalTask.status === "resolved";
+              const taskProofPhotos = modalPreviews.length > 0 
+                ? modalPreviews 
+                : (modalTask.buktiPetugas?.fotoUrls || (isResolved ? getFotoUrls(modalTask) : []));
 
-                  {/* Form Body */}
-                  <div className="mt-5 space-y-5">
-                    {/* Foto Laporan Warga untuk Acuan Petugas */}
-                    <div className="rounded-2xl border border-ink-300/40 bg-ground/50 p-3.5">
-                      <label className="mb-2 flex items-center gap-1.5 text-xs font-bold text-ink-500 uppercase tracking-wider">
-                        <Camera size={14} className="text-brand-600" /> Referensi Foto Kerusakan Awal (Warga)
-                      </label>
-                      <div className="flex flex-wrap gap-2">
-                        {getFotoUrls(modalTask).map((url, i) => (
-                          <img
-                            key={i}
-                            src={url}
-                            onClick={() => setLightboxFoto(url)}
-                            alt={`Referensi foto ${i + 1}`}
-                            className="h-20 w-28 rounded-xl object-cover border border-ink-300/40 cursor-pointer transition-transform hover:scale-105"
-                          />
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Unggah Foto Hasil Penanganan (Real-Time Kamera) */}
-                    <div>
-                      <div className="mb-2 flex items-center justify-between">
-                        <label className="flex items-center gap-1.5 text-sm font-semibold text-cream">
-                          <Camera size={16} className="text-brand-600" /> Foto Bukti Perbaikan Real-Time Kamera
-                        </label>
-                        <span className="text-xs text-ink-500">{modalPreviews.length} / 5 foto</span>
-                      </div>
-
-                      {/* Primary Live Camera Button */}
-                      {modalPreviews.length < 5 && (
-                        <div className="mb-3">
-                          <button
-                            type="button"
-                            onClick={() => setIsCameraOpen(true)}
-                            className="group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl border-2 border-brand-500/50 bg-gradient-to-r from-brand-600/20 via-brand-600/10 to-brand-500/20 p-4 text-center transition-all hover:border-brand-500 hover:bg-brand-600/30 hover:shadow-lg hover:shadow-brand-500/10 active:scale-[0.99]"
-                          >
-                            <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white shadow-md group-hover:scale-105 transition-transform">
-                              <Camera size={20} />
-                              <span className="absolute -top-0.5 -right-0.5 flex h-3 w-3">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 border-2 border-white"></span>
-                              </span>
-                            </div>
-                            <div className="text-left">
-                              <p className="font-display text-sm font-bold text-cream group-hover:text-brand-400 transition-colors">
-                                Ambil Foto Bukti dari Kamera Langsung
-                              </p>
-                              <p className="text-[11px] text-ink-400">
-                                Mengambil snapshot penanganan terkini di lokasi kejadian.
-                              </p>
-                            </div>
-                          </button>
+              return (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                  <div
+                    className="absolute inset-0 bg-black/75 backdrop-blur-sm transition-opacity"
+                    onClick={() => !isSubmittingBukti && setModalTask(null)}
+                  />
+                  <div className="anim-fade-up relative w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl border border-white/15 bg-surface p-6 shadow-2xl md:p-8">
+                    {/* Header Modal */}
+                    <div className="flex items-start justify-between gap-4 border-b border-ink-300/30 pb-4">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs font-extrabold text-brand-600">{modalTask.id}</span>
+                          {isResolved ? (
+                            <span className="rounded-full bg-success-bg px-2.5 py-0.5 text-[10px] font-bold text-success border border-success/30">
+                              Diverifikasi Selesai oleh Dinas
+                            </span>
+                          ) : (
+                            <span className="rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[10px] font-bold text-amber-500 border border-amber-500/30">
+                              Dalam Proses Penanganan
+                            </span>
+                          )}
                         </div>
-                      )}
-
-                      {/* Strict Real-Time Notice for Officers */}
-                      <div className="mt-2 flex items-center gap-2 rounded-xl border border-warning/30 bg-warning/10 p-2.5 text-xs text-warning">
-                        <span className="flex h-2 w-2 rounded-full bg-warning animate-pulse shrink-0" />
-                        <span>Petugas wajib mengambil foto bukti hasil perbaikan secara langsung dari kamera di lokasi.</span>
+                        <h3 className="mt-1 font-display text-xl font-extrabold text-cream">
+                          {isResolved ? "Bukti Hasil Penanganan Selesai" : "Form Bukti Hasil Penanganan"}
+                        </h3>
+                        <p className="mt-0.5 text-xs text-ink-500">{modalTask.judul}</p>
                       </div>
+                      <button
+                        onClick={() => !isSubmittingBukti && setModalTask(null)}
+                        disabled={isSubmittingBukti}
+                        className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-ink-300/50 text-ink-500 transition-colors hover:bg-brand-50 hover:text-cream disabled:opacity-40"
+                      >
+                        <X size={18} />
+                      </button>
+                    </div>
 
-                      {/* Preview Thumbnails */}
-                      {modalPreviews.length > 0 && (
-                        <div className="mt-3 flex flex-wrap gap-2.5">
-                          {modalPreviews.map((url, idx) => (
-                            <div key={idx} className="relative group h-20 w-24 rounded-xl overflow-hidden border border-brand-600/40 shadow-sm">
-                              <img src={url} alt={`Bukti preview ${idx + 1}`} className="h-full w-full object-cover" />
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  removeModalPhoto(idx);
-                                }}
-                                className="absolute top-1 right-1 grid h-6 w-6 place-items-center rounded-full bg-danger text-white shadow hover:scale-110 transition-transform"
-                              >
-                                <X size={12} />
-                              </button>
-                            </div>
+                    {/* Form Body */}
+                    <div className="mt-5 space-y-5">
+                      {/* Foto Laporan Warga untuk Acuan Petugas */}
+                      <div className="rounded-2xl border border-ink-300/40 bg-ground/50 p-3.5">
+                        <label className="mb-2 flex items-center gap-1.5 text-xs font-bold text-ink-500 uppercase tracking-wider">
+                          <Camera size={14} className="text-brand-600" /> Referensi Foto Kerusakan Awal (Warga)
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          {getFotoUrls(modalTask).map((url, i) => (
+                            <img
+                              key={i}
+                              src={url}
+                              onClick={() => setLightboxFoto(url)}
+                              alt={`Referensi foto ${i + 1}`}
+                              className="h-20 w-28 rounded-xl object-cover border border-ink-300/40 cursor-pointer transition-transform hover:scale-105"
+                            />
                           ))}
                         </div>
+                      </div>
+
+                      {/* TAMPILAN BUKTI PENANGANAN */}
+                      {isResolved ? (
+                        /* READ-ONLY VIEW UNTUK TUGAS YANG SUDAH SELESAI */
+                        <div className="space-y-4">
+                          <div className="rounded-2xl border border-success/30 bg-success/10 p-4">
+                            <div className="flex items-center gap-2 text-sm font-bold text-success mb-3">
+                              <CheckCircle2 size={18} />
+                              <span>Foto Bukti Penanganan Petugas (Telah Diverifikasi)</span>
+                            </div>
+
+                            {taskProofPhotos.length > 0 ? (
+                              <div className="flex flex-wrap gap-2.5">
+                                {taskProofPhotos.map((url, idx) => (
+                                  <button
+                                    key={idx}
+                                    type="button"
+                                    onClick={() => setLightboxFoto(url)}
+                                    className="group relative h-24 w-32 rounded-xl overflow-hidden border border-success/40 shadow-md focus:outline-none transition-transform hover:scale-105"
+                                  >
+                                    <img src={url} alt={`Bukti selesai ${idx + 1}`} className="h-full w-full object-cover" />
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/30">
+                                      <Eye size={18} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-xs text-ink-500 italic">Foto bukti penanganan telah diverifikasi secara langsung di lapangan.</p>
+                            )}
+                          </div>
+
+                          <div className="rounded-2xl border border-ink-300/40 bg-ground/60 p-4">
+                            <p className="text-xs font-bold text-ink-500 uppercase tracking-wider mb-1">Catatan Tindakan Petugas</p>
+                            <p className="text-sm text-cream font-medium">
+                              {modalTask.buktiPetugas?.catatan || modalCatatan || "Penanganan lapangan telah diselesaikan dan diverifikasi tuntas oleh dinas terkait."}
+                            </p>
+                            <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-ink-400 border-t border-ink-300/30 pt-2">
+                              <span>Petugas: <strong className="text-cream">{modalTask.buktiPetugas?.petugas || "Tim Petugas Lapangan"}</strong></span>
+                              {modalTask.buktiPetugas?.waktu && (
+                                <span>Waktu: <strong className="text-cream">{new Date(modalTask.buktiPetugas.waktu).toLocaleString("id-ID")}</strong></span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        /* UPLOAD FORM UNTUK TUGAS YANG SEDANG DIKERJAKAN */
+                        <div className="space-y-4">
+                          <div>
+                            <div className="mb-2 flex items-center justify-between">
+                              <label className="flex items-center gap-1.5 text-sm font-semibold text-cream">
+                                <Camera size={16} className="text-brand-600" /> Foto Bukti Perbaikan Real-Time Kamera
+                              </label>
+                              <span className="text-xs text-ink-500">{modalPreviews.length} / 5 foto</span>
+                            </div>
+
+                            {/* Primary Live Camera Button */}
+                            {modalPreviews.length < 5 && (
+                              <div className="mb-3">
+                                <button
+                                  type="button"
+                                  onClick={() => setIsCameraOpen(true)}
+                                  className="group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl border-2 border-brand-500/50 bg-gradient-to-r from-brand-600/20 via-brand-600/10 to-brand-500/20 p-4 text-center transition-all hover:border-brand-500 hover:bg-brand-600/30 hover:shadow-lg hover:shadow-brand-500/10 active:scale-[0.99]"
+                                >
+                                  <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white shadow-md group-hover:scale-105 transition-transform">
+                                    <Camera size={20} />
+                                    <span className="absolute -top-0.5 -right-0.5 flex h-3 w-3">
+                                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                      <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 border-2 border-white"></span>
+                                    </span>
+                                  </div>
+                                  <div className="text-left">
+                                    <p className="font-display text-sm font-bold text-cream group-hover:text-brand-400 transition-colors">
+                                      Ambil Foto Bukti dari Kamera Langsung
+                                    </p>
+                                    <p className="text-[11px] text-ink-400">
+                                      Mengambil snapshot penanganan terkini di lokasi kejadian.
+                                    </p>
+                                  </div>
+                                </button>
+                              </div>
+                            )}
+
+                            {/* Strict Real-Time Notice for Officers */}
+                            <div className="mt-2 flex items-center gap-2 rounded-xl border border-warning/30 bg-warning/10 p-2.5 text-xs text-warning">
+                              <span className="flex h-2 w-2 rounded-full bg-warning animate-pulse shrink-0" />
+                              <span>Petugas wajib mengambil foto bukti hasil perbaikan secara langsung dari kamera di lokasi.</span>
+                            </div>
+
+                            {/* Preview Thumbnails */}
+                            {modalPreviews.length > 0 && (
+                              <div className="mt-3 flex flex-wrap gap-2.5">
+                                {modalPreviews.map((url, idx) => (
+                                  <div key={idx} className="relative group h-20 w-24 rounded-xl overflow-hidden border border-brand-600/40 shadow-sm">
+                                    <img src={url} alt={`Bukti preview ${idx + 1}`} className="h-full w-full object-cover" />
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        removeModalPhoto(idx);
+                                      }}
+                                      className="absolute top-1 right-1 grid h-6 w-6 place-items-center rounded-full bg-danger text-white shadow hover:scale-110 transition-transform"
+                                    >
+                                      <X size={12} />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Catatan Penanganan */}
+                          <div>
+                            <label className="mb-2 block text-sm font-semibold text-cream">
+                              Catatan / Deskripsi Penanganan Lapangan
+                            </label>
+                            <textarea
+                              className="w-full min-h-[100px] rounded-xl border border-ink-300 bg-surface px-4 py-3 text-sm text-cream outline-none transition-colors placeholder:text-ink-500 focus:border-brand-600 focus:ring-1 focus:ring-brand-600"
+                              placeholder="Contoh: Perbaikan jalan berlubang telah ditambal dengan aspal hotmix dan diratakan. Aliran drainase telah dinormalisasi…"
+                              value={modalCatatan}
+                              onChange={(e) => setModalCatatan(e.target.value)}
+                            />
+                          </div>
+                        </div>
                       )}
                     </div>
 
-                    {/* Catatan Penanganan */}
-                    <div>
-                      <label className="mb-2 block text-sm font-semibold text-cream">
-                        Catatan / Deskripsi Penanganan Lapangan
-                      </label>
-                      <textarea
-                        className="w-full min-h-[100px] rounded-xl border border-ink-300 bg-surface px-4 py-3 text-sm text-cream outline-none transition-colors placeholder:text-ink-500 focus:border-brand-600 focus:ring-1 focus:ring-brand-600"
-                        placeholder="Contoh: Perbaikan jalan berlubang telah ditambal dengan aspal hotmix dan diratakan. Aliran drainase telah dinormalisasi…"
-                        value={modalCatatan}
-                        onChange={(e) => setModalCatatan(e.target.value)}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Modal Actions */}
-                  <div className="mt-6 flex items-center justify-end gap-3 border-t border-ink-300/30 pt-4">
-                    <button
-                      type="button"
-                      disabled={isSubmittingBukti}
-                      onClick={() => setModalTask(null)}
-                      className="rounded-xl border border-ink-300/60 px-4 py-2.5 text-sm font-semibold text-ink-700 transition-colors hover:border-brand-600 hover:text-cream disabled:opacity-40"
-                    >
-                      Batal
-                    </button>
-                    <button
-                      type="button"
-                      disabled={isSubmittingBukti}
-                      onClick={handleSaveBuktiAndSubmit}
-                      className="btn-anim inline-flex items-center gap-2 rounded-xl bg-success px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-brand-700 shadow-md disabled:opacity-50"
-                    >
-                      {isSubmittingBukti ? (
-                        <>
-                          <Loader2 size={16} className="animate-spin" /> Mengirim Bukti ke Dinas…
-                        </>
+                    {/* Modal Actions */}
+                    <div className="mt-6 flex items-center justify-end gap-3 border-t border-ink-300/30 pt-4">
+                      {isResolved ? (
+                        <button
+                          type="button"
+                          onClick={() => setModalTask(null)}
+                          className="btn-anim rounded-xl bg-brand-600 px-6 py-2.5 text-sm font-bold text-white transition-colors hover:bg-brand-500 shadow-md"
+                        >
+                          Tutup
+                        </button>
                       ) : (
                         <>
-                          <Upload size={16} /> Simpan &amp; Kirim ke Dinas
+                          <button
+                            type="button"
+                            disabled={isSubmittingBukti}
+                            onClick={() => setModalTask(null)}
+                            className="rounded-xl border border-ink-300/60 px-4 py-2.5 text-sm font-semibold text-ink-700 transition-colors hover:border-brand-600 hover:text-cream disabled:opacity-40"
+                          >
+                            Batal
+                          </button>
+                          <button
+                            type="button"
+                            disabled={isSubmittingBukti}
+                            onClick={handleSaveBuktiAndSubmit}
+                            className="btn-anim inline-flex items-center gap-2 rounded-xl bg-success px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-brand-700 shadow-md disabled:opacity-50"
+                          >
+                            {isSubmittingBukti ? (
+                              <>
+                                <Loader2 size={16} className="animate-spin" /> Mengirim Bukti ke Dinas…
+                              </>
+                            ) : (
+                              <>
+                                <Upload size={16} /> Simpan &amp; Kirim ke Dinas
+                              </>
+                            )}
+                          </button>
                         </>
                       )}
-                    </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* MODAL LIGHTBOX OVERLAY PREVIEW FOTO */}
             {lightboxFoto && (

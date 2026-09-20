@@ -149,15 +149,33 @@ export const LAPORAN: Laporan[] = [
   { id: "SGP-2026-0105", judul: "Lampu PJU mati beruntun 6 titik", kategori: "lampu",
     lokasi: { lat: -7.8275, lng: 110.3967, alamat: "Jl. Imogiri Timur, Giwangan, Umbulharjo" },
     pelapor: "Bu Sari W.", waktu: "2026-01-10T20:12:00+07:00", status: "resolved", foto: 1, dukungan: 22,
-    ai: { kategori: "Lampu Jalan", confidence: 0.91, severity: 5.5, dampak: "Sedang — rawan kecelakaan & tindak kriminal malam", priorityScore: 6.1 }, sla: "72 jam", wilayah: "kota_yogya" },
+    ai: { kategori: "Lampu Jalan", confidence: 0.91, severity: 5.5, dampak: "Sedang — rawan kecelakaan & tindak kriminal malam", priorityScore: 6.1 }, sla: "72 jam", wilayah: "kota_yogya",
+    buktiPetugas: {
+      fotoUrls: ["https://images.unsplash.com/photo-1509114397022-ed747cca3f65?w=600", "https://images.unsplash.com/photo-1517646287270-a5a9ca602e5c?w=600"],
+      catatan: "Penggantian 6 unit bohlam LED PJU dan perbaikan konektor kabel telah tuntas. Seluruh titik lampu telah menyala normal dan stabil.",
+      waktu: "2026-01-10T22:30:00+07:00",
+      petugas: "Tim Penerangan Jalan Kota Yogya"
+    } },
   { id: "SGP-2026-0103", judul: "Portal parkir liar meresahkan pengguna jalan", kategori: "keamanan",
     lokasi: { lat: -7.7926, lng: 110.3658, alamat: "Jl. Malioboro, Sosromenduran, Gedongtengen" },
     pelapor: "Pak Heru N.", waktu: "2026-01-10T11:40:00+07:00", status: "resolved", foto: 2, dukungan: 39,
-    ai: { kategori: "Keamanan & Ketertiban", confidence: 0.88, severity: 6.5, dampak: "Sedang — mengganggu kenyamanan wisatawan", priorityScore: 7.0 }, sla: "48 jam", wilayah: "kota_yogya" },
+    ai: { kategori: "Keamanan & Ketertiban", confidence: 0.88, severity: 6.5, dampak: "Sedang — mengganggu kenyamanan wisatawan", priorityScore: 7.0 }, sla: "48 jam", wilayah: "kota_yogya",
+    buktiPetugas: {
+      fotoUrls: ["https://images.unsplash.com/photo-1563986768609-322da13575f3?w=600"],
+      catatan: "Portal dan palang liar telah ditertibkan bersama Satpol PP. Akses pedestrian Malioboro kembali steril dan lancar.",
+      waktu: "2026-01-10T14:15:00+07:00",
+      petugas: "Regu Satpol PP & Dishub Kota"
+    } },
   { id: "SGP-2026-0101", judul: "Ayunan taman rusak & berkarat", kategori: "fasum",
     lokasi: { lat: -7.8165, lng: 110.3856, alamat: "Taman Pintar, Panembahan, Kraton" },
     pelapor: "Bu Endah", waktu: "2026-01-09T09:30:00+07:00", status: "resolved", foto: 2, dukungan: 18,
-    ai: { kategori: "Fasilitas Umum", confidence: 0.94, severity: 4.0, dampak: "Rendah — risiko cedera ringan anak", priorityScore: 4.5 }, sla: "7 hari", wilayah: "kota_yogya" },
+    ai: { kategori: "Fasilitas Umum", confidence: 0.94, severity: 4.0, dampak: "Rendah — risiko cedera ringan anak", priorityScore: 4.5 }, sla: "7 hari", wilayah: "kota_yogya",
+    buktiPetugas: {
+      fotoUrls: ["https://images.unsplash.com/photo-1519331379826-f10be5486c6f?w=600"],
+      catatan: "Unit ayunan rusak telah diganti baru dengan rantai baja anti-karat dan bantalan karet berstandar keselamatan anak.",
+      waktu: "2026-01-09T13:00:00+07:00",
+      petugas: "Dinas Lingkungan Hidup & Fasum"
+    } },
   { id: "SGP-2026-0098", judul: "Pohon tumbang menutup separuh jalan", kategori: "jalan",
     lokasi: { lat: -7.7708, lng: 110.4022, alamat: "Jl. Affandi, Caturtunggal, Depok" },
     pelapor: "Pak Bambang R.", waktu: "2026-01-08T16:55:00+07:00", status: "in_progress", foto: 5, dukungan: 64,
@@ -181,7 +199,13 @@ export const LAPORAN: Laporan[] = [
   { id: "SGP-2026-0082", judul: "Halte bus rusak, atap bocor & kursi patah", kategori: "fasum",
     lokasi: { lat: -7.7825, lng: 110.4145, alamat: "Jl. Solo KM 9, Kalasan" },
     pelapor: "Bu Sri M.", waktu: "2026-01-05T14:30:00+07:00", status: "resolved", foto: 2, dukungan: 12,
-    ai: { kategori: "Fasilitas Umum", confidence: 0.92, severity: 3.5, dampak: "Rendah — ketidaknyamanan penumpang", priorityScore: 3.8 }, sla: "7 hari", wilayah: "sleman" },
+    ai: { kategori: "Fasilitas Umum", confidence: 0.92, severity: 3.5, dampak: "Rendah — ketidaknyamanan penumpang", priorityScore: 3.8 }, sla: "7 hari", wilayah: "sleman",
+    buktiPetugas: {
+      fotoUrls: ["https://images.unsplash.com/photo-1519003722824-194d4455a60c?w=600"],
+      catatan: "Perbaikan atap bocor dan penggantian kursi besi tunggu halte telah selesai dikerjakan.",
+      waktu: "2026-01-05T16:00:00+07:00",
+      petugas: "Tim Prasarana Dishub Sleman"
+    } },
 ];
 
 export const TREN_BULANAN = {
