@@ -137,12 +137,10 @@ export function EmergencyButton() {
 
   function kirim() {
     if (!gpsCoords) {
-      // Seharusnya tidak terjadi, tapi safeguard
       setGpsStatus("denied");
       return;
     }
 
-    const alamatApprox = `GPS ${gpsCoords.lat.toFixed(5)}, ${gpsCoords.lng.toFixed(5)}`;
     const wilayah = user?.wilayah || deteksiWilayahFromCoords(gpsCoords.lat, gpsCoords.lng);
     const namaPerlapor = user?.nama ?? "Warga Anonim";
     const idSinyal = `SOS-${Date.now()}`;

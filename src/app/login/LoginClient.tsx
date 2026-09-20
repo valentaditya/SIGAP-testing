@@ -273,12 +273,10 @@ export default function LoginClient() {
           },
         ]).select();
         if (insertError) {
-          console.error("[SIGAP Register] Supabase insert error:", insertError.code, insertError.message, insertError.details, insertError.hint);
-        } else {
-          console.log("[SIGAP Register] Insert berhasil:", insertedData);
+          console.error("Register error:", insertError.message);
         }
       } catch (e) {
-        console.error("[SIGAP Register] Exception:", e);
+        console.error("Register exception:", e);
       }
 
       // Simpan ke store lokal (tidak perlu await, sudah dihandle di store)

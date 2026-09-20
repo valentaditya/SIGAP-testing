@@ -24,8 +24,8 @@ const mono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "SIGAP — Smart Community Platform",
-    template: "%s — SIGAP",
+    default: "SIGAP - Smart Community Platform",
+    template: "%s - SIGAP",
   },
   description:
     "Sistem Informasi & Gerak Aktif Pelaporan — platform pelaporan warga dengan AI Multi-Agent untuk kota yang lebih responsif.",

@@ -462,12 +462,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const { error } = await supabase.from("laporan").update(updatePayload).eq("id", id);
       if (error) {
         console.warn("Supabase update status laporan error:", error.message);
-        // Fallback retry without foto_urls if column issue
         if (error.message.includes("foto_urls") || error.code === "42703") {
           await supabase.from("laporan").update({ status: newStatus }).eq("id", id);
         }
-      } else {
-        console.log(`✅ Laporan ${id} berhasil diperbarui di Supabase (Status: ${newStatus})`);
       }
     } catch (err) {
       console.warn("Could not update laporan in Supabase DB:", err);
@@ -479,7 +476,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     bukti: import("@/lib/data").BuktiPetugas,
     targetStatus: StatusId = "in_progress"
   ) => {
-    // 1. Update React Local State
     setLaporanWarga((prev) =>
       prev.map((l) => {
         if (l.id !== id) return l;
@@ -491,7 +487,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       })
     );
 
-    // 2. Save in localStorage Cache
     try {
       const rawBukti = localStorage.getItem("sigap_bukti_cache");
       const buktiCache = rawBukti ? JSON.parse(rawBukti) : {};
@@ -499,7 +494,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       localStorage.setItem("sigap_bukti_cache", JSON.stringify(buktiCache));
     } catch {}
 
-    // 3. Persist status, photo urls & encoded proof to Supabase
     try {
       const target = laporanWarga.find((l) => l.id === id);
       const mergedPhotos = Array.from(new Set([...(target?.fotoUrls || []), ...(bukti.fotoUrls || [])]));
@@ -520,8 +514,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const { error } = await supabase.from("laporan").update(updatePayload).eq("id", id);
       if (error) {
         console.warn("Supabase kirimBuktiPetugas update error:", error.message);
-      } else {
-        console.log(`✅ Bukti petugas untuk laporan ${id} berhasil dipersist ke Supabase DB`);
       }
     } catch (err) {
       console.warn("Supabase kirimBuktiPetugas update failed:", err);
@@ -529,7 +521,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const tambahLaporan = async (l: Laporan) => {
-    // 1. Update React Local State & localStorage Cache
     setLaporanWarga((ls) => [l, ...ls]);
     if (l.fotoUrls && l.fotoUrls.length > 0) {
       try {
@@ -540,7 +531,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       } catch {}
     }
 
-    // 2. Insert into Supabase DB Table 'laporan'
     try {
       let userId: string | null = null;
       if (user?.email) {
@@ -572,7 +562,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         ai_severity: l.ai.severity,
         ai_dampak: l.ai.dampak,
         ai_priority_score: l.ai.priorityScore,
-        ai_model_used: l.ai.modelUsed || "Local Intelligent Rules (Offline Fallback)",
+        ai_model_used: l.ai.modelUsed || "Local Intelligent Rules",
       };
 
       if (l.fotoUrls && l.fotoUrls.length > 0) {
@@ -581,19 +571,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       const { error: insertError } = await supabase.from("laporan").insert(insertPayload);
       if (insertError) {
-        console.warn("Supabase insert laporan error:", insertError.message, insertError.details);
         if (insertError.message.includes("foto_urls") || insertError.code === "42703") {
           const { foto_urls, ...withoutFoto } = insertPayload;
           void foto_urls;
-          const { error: retryErr } = await supabase.from("laporan").insert(withoutFoto);
-          if (retryErr) {
-            console.warn("Supabase insert retry juga gagal:", retryErr.message);
-          } else {
-            console.log("✅ Laporan berhasil disimpan ke Supabase (tanpa foto_urls).");
-          }
+          await supabase.from("laporan").insert(withoutFoto);
         }
-      } else {
-        console.log("✅ Laporan berhasil disimpan ke Supabase.");
       }
     } catch (err) {
       console.warn("Could not insert laporan to Supabase DB:", err);

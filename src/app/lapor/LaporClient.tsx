@@ -8,8 +8,8 @@ import { Icon } from "@/components/Icon";
 import { Chip } from "@/components/Chip";
 import {
   MapPin, Camera, FileText, CheckCircle2, ArrowRight, ArrowLeft,
-  Bot, Network, Gauge, Sparkles, Ticket, EyeOff, UserRound, Building2,
-  Upload, X, Cpu, AlertTriangle, Crosshair, Loader2
+  Bot, Network, Gauge, Ticket, Building2,
+  X, AlertTriangle, Loader2, Crosshair, EyeOff, UserRound, Sparkles, Upload
 } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { bisa, berandaPeran } from "@/lib/roles";
@@ -51,19 +51,16 @@ export default function LaporClient() {
   const [judul, setJudul] = useState("");
   const [deskripsi, setDeskripsi] = useState("");
 
-  // GPS Location State
   const [isLocating, setIsLocating] = useState(false);
   const [locatingError, setLocatingError] = useState<string | null>(null);
 
-  // Real Image Upload state
-  const [fotoPreviews, setFotoPreviews] = useState<string[]>([]);       // base64 for preview & AI
-  const [fotoFiles, setFotoFiles] = useState<File[]>([]);               // raw File objects for Storage upload
-  const [fotoStorageUrls, setFotoStorageUrls] = useState<string[]>([]); // permanent URLs after upload
+  const [fotoPreviews, setFotoPreviews] = useState<string[]>([]);
+  const [fotoFiles, setFotoFiles] = useState<File[]>([]);
+  const [fotoStorageUrls, setFotoStorageUrls] = useState<string[]>([]);
   const [isUploadingFoto, setIsUploadingFoto] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [aiResult, setAiResult] = useState<AIAnalysisResult | null>(null);
-  const [, setIsAnalyzing] = useState(false);
 
   function handleCameraCapture(file: File, previewUrl: string) {
     setFotoFiles((prev) => {
@@ -135,11 +132,9 @@ export default function LaporClient() {
     setTiket(nomor);
     setPhase("running");
     setRunIdx(0);
-    setIsAnalyzing(true);
 
     const kData = KATEGORI.find((x) => x.id === kategori)!;
 
-    // === STEP 1: Upload foto ke Supabase Storage dulu ===
     let storageUrls: string[] = [];
     if (fotoFiles.length > 0) {
       setIsUploadingFoto(true);
@@ -162,7 +157,6 @@ export default function LaporClient() {
       }
     }
 
-    // === STEP 2: Kirim analisis ===
     const aiPromise = fetch("/api/analyze-priority", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -200,7 +194,6 @@ export default function LaporClient() {
         clearInterval(t);
         const resultAI = await aiPromise;
         setAiResult(resultAI);
-        setIsAnalyzing(false);
         setTimeout(() => {
           selesaiAnalisis(nomor, resultAI, storageUrls);
           setPhase("done");

@@ -1,21 +1,17 @@
 import type { Role } from "@/lib/store";
 
-/* ============================================================
-   SATU SUMBER KEBENARAN UNTUK HAK AKSES PER PERAN.
-   ============================================================ */
-
 export type Kemampuan =
-  | "buat_laporan"      // mengirim laporan baru
+  | "buat_laporan"
   | "lihat_laporan_sendiri"
-  | "upvote"            // mendukung laporan warga lain
-  | "gamifikasi"        // poin, lencana, papan peringkat
+  | "upvote"
+  | "gamifikasi"
   | "lihat_semua_laporan"
-  | "lihat_laporan_wilayah"  // hanya laporan di wilayah dinas sendiri
-  | "verifikasi"        // menyetujui / menolak laporan masuk
-  | "tugaskan"          // menunjuk petugas untuk laporan
-  | "ubah_status"       // menandai proses / selesai di lapangan
-  | "analitik"          // grafik, tren, ekspor
-  | "kelola_pengguna"   // tambah / hapus / ubah user (admin only)
+  | "lihat_laporan_wilayah"
+  | "verifikasi"
+  | "tugaskan"
+  | "ubah_status"
+  | "analitik"
+  | "kelola_pengguna"
   | "sinyal_darurat";
 
 export interface DefinisiPeran {
@@ -40,11 +36,7 @@ export const PERAN: Record<Role, DefinisiPeran> = {
       "gamifikasi",
       "sinyal_darurat",
     ],
-    navigasi: [
-      // { href: "/warga", label: "Laporan Saya" },
-      // { href: "/lapor", label: "Buat Laporan" },
-      // { href: "/dampak", label: "Dampak Kota" },
-    ],
+    navigasi: [],
   },
   admin: {
     id: "admin",
@@ -59,10 +51,7 @@ export const PERAN: Record<Role, DefinisiPeran> = {
       "ubah_status",
       "kelola_pengguna",
     ],
-    navigasi: [
-      // { href: "/dashboard", label: "Dashboard" },
-      // { href: "/dampak", label: "Dampak Kota" },
-    ],
+    navigasi: [],
   },
   petugas: {
     id: "petugas",
@@ -70,10 +59,7 @@ export const PERAN: Record<Role, DefinisiPeran> = {
     singkat: "Petugas",
     beranda: "/petugas",
     kemampuan: ["ubah_status", "lihat_semua_laporan", "sinyal_darurat"],
-    navigasi: [
-      // { href: "/petugas", label: "Tugas Saya" },
-      // { href: "/dampak", label: "Dampak Kota" },
-    ],
+    navigasi: [],
   },
   dinas: {
     id: "dinas",
@@ -81,14 +67,10 @@ export const PERAN: Record<Role, DefinisiPeran> = {
     singkat: "Dinas",
     beranda: "/dinas",
     kemampuan: ["lihat_laporan_wilayah"],
-    navigasi: [
-    //   { href: "/dinas", label: "Portal Dinas" },
-    //   { href: "/dampak", label: "Dampak Kota" },
-    ],
+    navigasi: [],
   },
 };
 
-/* Navigasi untuk pengunjung yang belum masuk (khusus section landing page + peta). */
 export const NAV_TAMU = [
   { href: "/", label: "Beranda" },
   { href: "/#fitur", label: "Fitur" },
@@ -107,8 +89,6 @@ export function berandaPeran(role: Role | undefined): string {
   return role ? PERAN[role].beranda : "/";
 }
 
-/* Peran yang diizinkan untuk tiap rute terproteksi.
-   Rute yang tidak terdaftar bersifat publik. */
 export const AKSES_RUTE: Record<string, readonly Role[]> = {
   "/dashboard": ["admin"],
   "/petugas": ["petugas"],
@@ -119,7 +99,7 @@ export const AKSES_RUTE: Record<string, readonly Role[]> = {
 
 export function bolehMasukRute(path: string, role: Role | undefined): boolean {
   const entri = Object.entries(AKSES_RUTE).find(([p]) => path.startsWith(p));
-  if (!entri) return true;              // rute publik
-  if (!role) return false;              // butuh masuk dulu
+  if (!entri) return true;
+  if (!role) return false;
   return entri[1].includes(role);
 }

@@ -264,53 +264,28 @@ export async function POST(req: Request) {
     const geminiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
     const openaiKey = process.env.OPENAI_API_KEY || process.env.NEXT_PUBLIC_OPENAI_API_KEY;
 
-    console.log("\n=======================================================");
-    console.log("🤖 [SIGAP AI ROUTER] INCOMING REPORT FOR AI ANALYSIS");
-    console.log("=======================================================");
-    console.log(`📌 Judul      : ${judul}`);
-    console.log(`📌 Kategori   : ${category}`);
-    console.log(`📌 Deskripsi  : ${description}`);
-    console.log(`📌 Lokasi     : ${alamat}`);
-    console.log(`📷 Foto Bukti : ${imageBase64 ? "Ada (Base64 Image Attached)" : "Tidak Ada"}`);
-    console.log(`🔑 Gemini Key : ${geminiKey ? "TERSEDIA ✅" : "KOSONG / BELUM SET ❌"}`);
-    console.log(`🔑 OpenAI Key : ${openaiKey ? "TERSEDIA ✅" : "KOSONG / BELUM SET ❌"}`);
-
-    // 1. Try Gemini (Primary)
+    // 1. Coba Gemini
     if (geminiKey) {
-      console.log("🚀 [AI ROUTER] Memproses dengan AI Utama: Google Gemini 1.5 Flash...");
       const geminiResult = await tryGemini(geminiKey, category, description, judul, alamat, imageBase64, mimeType);
       if (geminiResult) {
-        console.log("✅ [AI ROUTER] BERHASIL! Diproses oleh Google Gemini 1.5 Flash");
-        console.log("📊 AI OUTPUT PAYLOAD:", JSON.stringify(geminiResult, null, 2));
-        console.log("=======================================================\n");
         return NextResponse.json({ success: true, data: geminiResult });
       }
-      console.warn("⚠️ [AI ROUTER] Google Gemini Gagal/Error. Berpindah ke AI Cadangan 1...");
     }
 
-    // 2. Try OpenAI (Fallback 1)
+    // 2. Coba OpenAI
     if (openaiKey) {
-      console.log("🚀 [AI ROUTER] Memproses dengan AI Cadangan 1: OpenAI GPT-4o-mini...");
       const openaiResult = await tryOpenAI(openaiKey, category, description, judul, alamat, imageBase64);
       if (openaiResult) {
-        console.log("✅ [AI ROUTER] BERHASIL! Diproses oleh OpenAI GPT-4o-mini");
-        console.log("📊 AI OUTPUT PAYLOAD:", JSON.stringify(openaiResult, null, 2));
-        console.log("=======================================================\n");
         return NextResponse.json({ success: true, data: openaiResult });
       }
-      console.warn("⚠️ [AI ROUTER] OpenAI Gagal/Error. Berpindah ke Offline Fallback Engine...");
     }
 
-    // 3. Fallback to Local Rule Engine (Fallback 2)
-    console.log("🚀 [AI ROUTER] Memproses dengan Offline Fallback: Local Intelligent Rules Engine...");
+    // 3. Fallback ke kalkulasi lokal
     const localResult = fallbackLocal(category, description, judul, !!imageBase64);
-    console.log("✅ [AI ROUTER] BERHASIL! Diproses oleh Local Intelligent Rules Engine");
-    console.log("📊 AI OUTPUT PAYLOAD:", JSON.stringify(localResult, null, 2));
-    console.log("=======================================================\n");
     return NextResponse.json({ success: true, data: localResult });
 
   } catch (error) {
-    console.error("❌ [AI ROUTER CRITICAL ERROR]:", error);
+    console.error("AI analysis error:", error);
     const safeFallback = fallbackLocal("jalan", "", "", false);
     return NextResponse.json({ success: true, data: safeFallback });
   }

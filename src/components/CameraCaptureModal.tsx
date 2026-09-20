@@ -28,7 +28,6 @@ export function CameraCaptureModal({
   const [capturedFile, setCapturedFile] = useState<File | null>(null);
   const [isCapturing, setIsCapturing] = useState<boolean>(false);
 
-  // Stop current camera stream reliably
   const stopStream = useCallback(() => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => {
@@ -40,12 +39,10 @@ export function CameraCaptureModal({
     setStream(null);
   }, []);
 
-  // Start camera stream with constraints & progressive fallbacks
   const startCamera = useCallback(async () => {
     stopStream();
     setErrorMsg(null);
 
-    // Short tick to give OS driver time to release hardware lock
     await new Promise((res) => setTimeout(res, 150));
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -121,12 +118,10 @@ export function CameraCaptureModal({
     };
   }, [isOpen, facingMode, capturedPreview, startCamera, stopStream]);
 
-  // Toggle front/back camera
   const toggleFacingMode = () => {
     setFacingMode((prev) => (prev === "environment" ? "user" : "environment"));
   };
 
-  // Capture photo from video feed with watermark
   const takeSnapshot = () => {
     if (!videoRef.current || !canvasRef.current) return;
 
@@ -154,7 +149,6 @@ export function CameraCaptureModal({
     ctx.drawImage(video, 0, 0, width, height);
     ctx.restore();
 
-    // Draw Watermark timestamp
     const now = new Date();
     const timeStr =
       now.toLocaleDateString("id-ID", {
