@@ -199,10 +199,10 @@ export default function ProfileClient() {
 
         <div>
           <h1 className="font-display text-2xl font-extrabold text-cream-hi sm:text-3xl">
-            Profile
+            Profil
           </h1>
           <p className="mt-1 text-sm text-sage">
-            Kelola informasi pribadi dan keamanan akun Anda
+            Kelola data pribadi dan keamanan akun
           </p>
         </div>
       </div>
@@ -229,10 +229,10 @@ export default function ProfileClient() {
                   onClick={() => setIsCameraOpen(true)}
                   className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-sky-600 px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-sky-500 shadow-md"
                 >
-                  <Camera size={14} /> Foto Kamera Live
+                  <Camera size={14} /> Ambil Foto
                 </button>
                 <label className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-ink-400/60 bg-ground/80 px-3 py-1.5 text-xs font-semibold text-cream-hi hover:bg-ink-300/30 cursor-pointer transition-colors">
-                  <Upload size={14} /> Unggah File Foto
+                  <Upload size={14} /> Pilih dari Galeri
                   <input type="file" accept="image/*" onChange={handleFotoUpload} className="hidden" />
                 </label>
               </div>
@@ -245,7 +245,7 @@ export default function ProfileClient() {
                   {currentUser.nama}
                 </h2>
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-success/15 border border-success/30 px-3 py-1 text-xs font-extrabold text-success">
-                  <span className="h-2 w-2 rounded-full bg-success animate-pulse" /> Akun Aktif
+                  <span className="h-2 w-2 rounded-full bg-success animate-pulse" /> Aktif
                 </span>
               </div>
 
@@ -261,7 +261,7 @@ export default function ProfileClient() {
 
               {currentUser.role === "dinas" && currentUser.wilayah && (
                 <p className="text-xs text-tan flex items-center gap-1.5 font-semibold">
-                  <MapPin size={13} /> Wilayah Wewenang: {WILAYAH.find(w => w.id === currentUser.wilayah)?.nama}
+                  <MapPin size={13} /> Wilayah: {WILAYAH.find(w => w.id === currentUser.wilayah)?.nama}
                 </p>
               )}
             </div>
@@ -276,27 +276,17 @@ export default function ProfileClient() {
                 <Trophy size={20} />
               </div>
               <div>
-                <span className="block text-xs text-sage">Level Akun</span>
+                <span className="block text-xs text-sage">Level</span>
                 <span className="font-display text-lg font-bold text-cream-hi">Level {user.level || 1}</span>
               </div>
             </div>
-
-            {/* <div className="rounded-2xl border border-ink-300 bg-ground/60 p-4 flex items-center gap-3">
-              <div className="grid h-10 w-10 place-items-center rounded-xl bg-tan/15 text-tan">
-                <Sparkles size={20} />
-              </div>
-              <div>
-                <span className="block text-xs text-sage">Total Poin</span>
-                <span className="font-display text-lg font-bold text-cream-hi">{user.poin || 0} Poin</span>
-              </div>
-            </div> */}
 
             <div className="rounded-2xl border border-ink-300 bg-ground/60 p-4 flex items-center gap-3">
               <div className="grid h-10 w-10 place-items-center rounded-xl bg-tan/15 text-tan">
                 <Award size={20} />
               </div>
               <div>
-                <span className="block text-xs text-sage">Lencana Kontribusi</span>
+                <span className="block text-xs text-sage">Lencana</span>
                 <span className="font-display text-xs font-bold text-cream-hi truncate block max-w-[140px]">
                   {user.lencana && user.lencana.length > 0 ? user.lencana.join(", ") : "Warga Baru"}
                 </span>
@@ -309,16 +299,16 @@ export default function ProfileClient() {
       {/* Form Edit Profil */}
       <div className="mt-8 rounded-3xl border border-ink-300 bg-surface p-6 sm:p-8 shadow-xl">
         <h2 className="font-display text-xl font-bold text-cream-hi mb-1">
-          Pengaturan Informasi Akun
+          Informasi Akun
         </h2>
         <p className="text-xs text-sage mb-6">
-          Lihat dan perbarui data profil akun Anda yang terhubung dengan database SIGAP.
+          Perbarui informasi profil akun Anda.
         </p>
 
         {sukses && (
           <div className="mb-6 flex items-center gap-3 rounded-2xl border border-success/30 bg-success/10 p-4 text-sm font-semibold text-success animate-fade-in">
             <CheckCircle2 size={20} className="shrink-0" />
-            <span>Perubahan profil berhasil disimpan ke database!</span>
+            <span>Profil berhasil diperbarui.</span>
           </div>
         )}
 
@@ -348,7 +338,7 @@ export default function ProfileClient() {
             {/* Email (Read-only / info) */}
             <div>
               <label htmlFor="p-email" className="block text-xs font-semibold text-sage mb-2">
-                Alamat Email (Akun)
+                Email
               </label>
               <input
                 id="p-email"
@@ -364,7 +354,7 @@ export default function ProfileClient() {
             {/* Nomor Telepon / WA */}
             <div>
               <label htmlFor="p-telepon" className="block text-xs font-semibold text-sage mb-2">
-                Nomor Telepon / WhatsApp
+                Nomor Telepon
               </label>
               <div className="relative">
                 <input
@@ -382,7 +372,7 @@ export default function ProfileClient() {
             {/* Role (Read only) */}
             <div>
               <label className="block text-xs font-semibold text-sage mb-2">
-                Peran Akses
+                Peran
               </label>
               <input
                 type="text"
@@ -397,7 +387,7 @@ export default function ProfileClient() {
           {user.role === "dinas" && (
             <div>
               <label htmlFor="p-wilayah" className="block text-xs font-semibold text-sage mb-2">
-                Wilayah Tanggung Jawab
+                Wilayah
               </label>
               <select
                 id="p-wilayah"
@@ -407,7 +397,7 @@ export default function ProfileClient() {
               >
                 {WILAYAH.map((w) => (
                   <option key={w.id} value={w.id} className="bg-ground text-cream-hi">
-                    {w.nama} ({w.id})
+                    {w.nama}
                   </option>
                 ))}
               </select>
@@ -417,7 +407,7 @@ export default function ProfileClient() {
           {/* Alamat Lengkap */}
           <div>
             <label htmlFor="p-alamat" className="block text-xs font-semibold text-sage mb-2">
-              Alamat Lengkap / Domisili
+              Alamat
             </label>
             <div className="relative">
               <textarea
@@ -425,7 +415,7 @@ export default function ProfileClient() {
                 rows={3}
                 value={alamat}
                 onChange={(e) => setAlamat(e.target.value)}
-                placeholder="Masukkan alamat rumah / domisili lengkap Anda"
+                placeholder="Alamat lengkap"
                 className="w-full rounded-xl border border-ink-400 bg-ground/80 px-4 py-3 text-sm text-cream-hi focus:border-tan focus:outline-none transition-colors pl-10 resize-none"
               />
               <MapPin size={16} className="absolute left-3.5 top-3.5 text-sage" />
@@ -444,7 +434,7 @@ export default function ProfileClient() {
                 </>
               ) : (
                 <>
-                  <Save size={18} /> Simpan Perubahan
+                  <Save size={18} /> Simpan
                 </>
               )}
             </button>
@@ -462,14 +452,14 @@ export default function ProfileClient() {
           </div>
           <div>
             <h2 className="font-display text-xl font-bold text-cream-hi">Ganti Password</h2>
-            <p className="text-xs text-sage">Ubah kata sandi akun Anda. Minimal 6 karakter.</p>
+            <p className="text-xs text-sage">Minimal 6 karakter.</p>
           </div>
         </div>
 
         {suksesPassword && (
           <div className="mt-4 flex items-center gap-3 rounded-2xl border border-success/30 bg-success/10 p-4 text-sm font-semibold text-success animate-fade-in">
             <CheckCircle2 size={20} className="shrink-0" />
-            <span>Password berhasil diubah!</span>
+            <span>Password berhasil diubah.</span>
           </div>
         )}
 
@@ -494,7 +484,7 @@ export default function ProfileClient() {
                 value={sandiLama}
                 onChange={(e) => { setSandiLama(e.target.value); setErrorPassword(""); }}
                 required
-                placeholder="Masukkan password lama Anda"
+                placeholder="Password saat ini"
                 className="w-full rounded-xl border border-ink-400 bg-ground/80 px-4 py-3 text-sm text-cream-hi focus:border-tan focus:outline-none transition-colors pl-10 pr-11"
               />
               <button
@@ -522,7 +512,7 @@ export default function ProfileClient() {
                   value={sandiBaru}
                   onChange={(e) => { setSandiBaru(e.target.value); setErrorPassword(""); }}
                   required
-                  placeholder="Min. 6 karakter"
+                  placeholder="Minimal 6 karakter"
                   className="w-full rounded-xl border border-ink-400 bg-ground/80 px-4 py-3 text-sm text-cream-hi focus:border-tan focus:outline-none transition-colors pl-10 pr-11"
                 />
                 <button
@@ -587,7 +577,7 @@ export default function ProfileClient() {
                 </>
               ) : (
                 <>
-                  <KeyRound size={18} /> Ubah Password
+                  <KeyRound size={18} /> Ganti Password
                 </>
               )}
             </button>
@@ -600,7 +590,7 @@ export default function ProfileClient() {
         isOpen={isCameraOpen}
         onClose={() => setIsCameraOpen(false)}
         onCapture={handleCameraCapture}
-        title="Ambil Foto Profil Kamera Langsung"
+        title="Ambil Foto Profil"
       />
     </main>
   );

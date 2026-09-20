@@ -147,7 +147,7 @@ export function AdminMap({
 
       if (onSelectLaporan) {
         const btn = document.createElement("button");
-        btn.innerHTML = "🔍 Buka &amp; Tangani Tugas Ini &rarr;";
+        btn.innerHTML = "Buka Laporan &rarr;";
         btn.style.width = "100%";
         btn.style.padding = "7px 12px";
         btn.style.backgroundColor = "#0E9F6E";
@@ -262,7 +262,7 @@ export function AdminMap({
             }}
             className="shrink-0 rounded-xl bg-white px-3 py-1.5 text-xs font-extrabold text-danger hover:bg-white/90 transition-all shadow-md active:scale-95 cursor-pointer whitespace-nowrap"
           >
-            Lihat Titik SOS &rarr;
+            Lihat Titik SOS
           </button>
         </div>
       )}

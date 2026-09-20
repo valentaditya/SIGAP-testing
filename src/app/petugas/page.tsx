@@ -260,10 +260,10 @@ export default function PetugasDashboard() {
         <div className="anim-fade-up mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="font-display text-xl sm:text-2xl md:text-3xl font-extrabold">
-              Dashboard <span className="text-brand-600">Petugas Lapangan</span>
+              Tugas <span className="text-brand-600">Petugas Lapangan</span>
             </h1>
             <p className="mt-1 text-xs sm:text-sm text-ink-500">
-              Kelola tugas lapangan, navigasi lokasi, dan unggah foto bukti penyelesaian untuk diverifikasi dinas.
+              Lihat daftar tugas, buka lokasi di peta, dan kirim foto bukti perbaikan ke dinas.
             </p>
           </div>
 
@@ -286,7 +286,7 @@ export default function PetugasDashboard() {
                   : "text-ink-500 hover:text-cream hover:bg-ground/50"
               }`}
             >
-              <User size={15} /> Profil Akun
+              <User size={15} /> Profil
             </button>
           </div>
         </div>
@@ -301,22 +301,22 @@ export default function PetugasDashboard() {
                 onClick={() => setShowMap((v) => !v)}
                 className="btn-anim inline-flex items-center gap-2 rounded-xl border border-ink-300 bg-surface px-4 py-2 text-xs font-semibold text-ink-700 shadow-sm transition-colors hover:border-brand-600 hover:text-cream"
               >
-                <MapIcon size={14} /> {showMap ? "Sembunyikan Peta" : "Tampilkan Peta Lokasi"}
+                <MapIcon size={14} /> {showMap ? "Sembunyikan Peta" : "Tampilkan Peta"}
               </button>
             </div>
 
             {/* Ringkasan Statistik */}
             <div className="anim-fade-up mb-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
               <div className="rounded-2xl bg-surface p-4 sm:p-5 shadow-[var(--shadow-card)] border border-white/5">
-                <p className="text-xs font-semibold uppercase tracking-wide text-ink-500">Tugas Aktif</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-ink-500">Tugas Baru</p>
                 <p className="mt-1 font-display text-2xl sm:text-3xl font-extrabold text-cream">{activeCount}</p>
               </div>
               <div className="rounded-2xl bg-surface p-4 sm:p-5 shadow-[var(--shadow-card)] border border-white/5">
-                <p className="text-xs font-semibold uppercase tracking-wide text-ink-500">Dalam Proses</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-ink-500">Sedang Dikerjakan</p>
                 <p className="mt-1 font-display text-2xl sm:text-3xl font-extrabold text-amber-600">{inProgressCount}</p>
               </div>
               <div className="rounded-2xl bg-surface p-4 sm:p-5 shadow-[var(--shadow-card)] border border-white/5 sm:col-span-2 md:col-span-1">
-                <p className="text-xs font-semibold uppercase tracking-wide text-ink-500">Selesai Diverifikasi</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-ink-500">Selesai</p>
                 <p className="mt-1 font-display text-2xl sm:text-3xl font-extrabold text-success">{resolvedCount}</p>
               </div>
             </div>
@@ -327,10 +327,10 @@ export default function PetugasDashboard() {
                 <div className="mb-3 flex items-center justify-between">
                   <div>
                     <h2 className="flex items-center gap-2 font-display text-lg font-bold">
-                      <MapIcon size={18} className="text-brand-600" /> Peta Lokasi Tugas Lapangan
+                      <MapIcon size={18} className="text-brand-600" /> Peta Lokasi Tugas
                     </h2>
                     <p className="text-xs text-ink-500">
-                      Klik salah satu pin masalah di peta untuk langsung menampilkan informasi dan menindaklanjuti tugas.
+                      Pilih pin lokasi pada peta untuk melihat detail dan menindaklanjuti tugas.
                     </p>
                   </div>
                 </div>
@@ -348,10 +348,10 @@ export default function PetugasDashboard() {
             <section className="anim-fade-up space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h2 className="flex items-center gap-2 font-display text-xl font-extrabold">
-                  <ClipboardList size={20} className="text-brand-600" /> Daftar Tugas Lapangan
+                  <ClipboardList size={20} className="text-brand-600" /> Daftar Tugas
                 </h2>
                 <span className="text-xs text-ink-500 font-medium">
-                  Menampilkan {filteredTasks.length} tugas
+                  {filteredTasks.length} tugas ditemukan
                 </span>
               </div>
 
@@ -362,7 +362,7 @@ export default function PetugasDashboard() {
                   <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-500" />
                   <input
                     type="text"
-                    placeholder="Cari ID tiket, judul, atau alamat lokasi…"
+                    placeholder="Cari nomor tiket, judul, atau alamat..."
                     value={search}
                     onChange={(e) => {
                       setSearch(e.target.value);
@@ -382,9 +382,9 @@ export default function PetugasDashboard() {
                   className="rounded-xl border border-ink-300/60 bg-ground/50 px-3 py-2.5 text-sm font-medium text-cream outline-none focus:border-brand-600"
                 >
                   <option value="all">Semua Status</option>
-                  <option value="assigned">Diteruskan ke Petugas</option>
-                  <option value="in_progress">Dikerjakan Petugas</option>
-                  <option value="resolved">Selesai & Terverifikasi</option>
+                  <option value="assigned">Tugas Baru</option>
+                  <option value="in_progress">Sedang Dikerjakan</option>
+                  <option value="resolved">Selesai</option>
                 </select>
 
                 {/* Filter Kategori */}
@@ -409,7 +409,7 @@ export default function PetugasDashboard() {
               {filteredTasks.length === 0 && (
                 <div className="rounded-2xl bg-surface p-10 text-center shadow-[var(--shadow-card)]">
                   <CheckCircle2 size={40} className="mx-auto text-ink-300" />
-                  <p className="mt-3 font-semibold text-ink-700">Tidak ada tugas yang sesuai</p>
+                  <p className="mt-3 font-semibold text-ink-700">Tidak ada tugas</p>
                   <p className="mt-1 text-xs text-ink-500">Coba ubah kata kunci pencarian atau filter status.</p>
                 </div>
               )}
@@ -449,7 +449,7 @@ export default function PetugasDashboard() {
                               )}
                               {st === "resolved" && (
                                 <span className="rounded-full bg-success-bg px-2.5 py-0.5 text-[10px] font-bold text-success border border-success/30">
-                                  Diverifikasi Selesai oleh Dinas
+                                  Selesai Diverifikasi
                                 </span>
                               )}
                             </div>
@@ -464,7 +464,7 @@ export default function PetugasDashboard() {
                         {/* Foto Bukti Pelapor (Warga) */}
                         <div className="mt-3.5 rounded-xl border border-ink-300/30 bg-ground/40 p-3">
                           <p className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-ink-500">
-                            <Camera size={13} className="text-brand-600" /> Foto Laporan Kerusakan Awal (Warga)
+                            <Camera size={13} className="text-brand-600" /> Foto Laporan Warga
                             <span className="ml-auto font-normal normal-case text-ink-400">
                               {fotoUrls.length} foto
                             </span>
@@ -494,7 +494,7 @@ export default function PetugasDashboard() {
                         {hasBukti && (
                           <div className="mt-3 rounded-xl border border-brand-600/30 bg-brand-600/10 p-3">
                             <p className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-brand-500">
-                              <CheckCircle2 size={13} /> {st === "resolved" ? "Foto Bukti Penanganan Selesai (Terverifikasi)" : "Foto Bukti Hasil Penanganan (Petugas)"}
+                              <CheckCircle2 size={13} /> {st === "resolved" ? "Foto Penanganan Selesai" : "Foto Penanganan Petugas"}
                               <span className="ml-auto font-normal normal-case text-ink-400">
                                 {proofPhotos.length} foto terlampir
                               </span>
@@ -517,7 +517,7 @@ export default function PetugasDashboard() {
                             </div>
                             {(bukti?.catatan || st === "resolved") && (
                               <p className="mt-2 text-xs text-cream-hi">
-                                <span className="font-bold text-brand-500">Catatan Tindakan:</span> {bukti?.catatan || "Penanganan lapangan telah diselesaikan dan diverifikasi tuntas."}
+                                <span className="font-bold text-brand-500">Catatan Tindakan:</span> {bukti?.catatan || "Penanganan lapangan telah diselesaikan."}
                               </p>
                             )}
                           </div>
@@ -527,11 +527,11 @@ export default function PetugasDashboard() {
                         {l.catatanRevisi && (
                           <div className="mt-3 rounded-xl border border-amber-500/40 bg-amber-500/15 p-3 text-xs text-amber-400">
                             <div className="flex items-center gap-1.5 font-bold">
-                              <AlertCircle size={15} /> Catatan Revisi dari Dinas:
+                              <AlertCircle size={15} /> Catatan Revisi Dinas:
                             </div>
                             <p className="mt-1 text-cream font-medium">{l.catatanRevisi}</p>
                             <p className="mt-1 text-[11px] text-amber-300">
-                              Harap lakukan perbaikan pengerjaan di lokasi dan kirim ulang foto bukti kamera real-time.
+                              Lakukan perbaikan di lokasi dan kirim ulang foto bukti penanganan.
                             </p>
                           </div>
                         )}
@@ -544,13 +544,13 @@ export default function PetugasDashboard() {
                             </p>
                           </div>
                           <div className="rounded-xl bg-brand-50/70 dark:bg-ground/60 p-3 border border-ink-300/20">
-                            <p className="text-[11px] font-bold uppercase text-ink-500">Skor Urgensi</p>
+                            <p className="text-[11px] font-bold uppercase text-ink-500">Prioritas</p>
                             <p className="mt-0.5 text-sm font-extrabold" style={{ color: priorityColor(l.ai.priorityScore) }}>
                               {l.ai.priorityScore} / 10
                             </p>
                           </div>
                           <div className="rounded-xl bg-brand-50/70 dark:bg-ground/60 p-3 border border-ink-300/20">
-                            <p className="text-[11px] font-bold uppercase text-ink-500">Estimasi SLA</p>
+                            <p className="text-[11px] font-bold uppercase text-ink-500">Target Waktu</p>
                             <p className="mt-0.5 text-sm font-extrabold text-cream">{l.sla}</p>
                           </div>
                         </div>
@@ -561,7 +561,7 @@ export default function PetugasDashboard() {
                             onClick={() => handleNavigateMaps(l.lokasi.lat, l.lokasi.lng)}
                             className="btn-anim inline-flex items-center gap-1.5 rounded-xl border border-ink-300 px-4 py-2.5 text-sm font-semibold text-ink-700 transition-colors hover:border-brand-600 hover:text-cream"
                           >
-                            <Navigation size={16} /> Menuju Lokasi (Maps)
+                            <Navigation size={16} /> Buka di Maps
                           </button>
 
                           {st === "assigned" && (
@@ -578,14 +578,14 @@ export default function PetugasDashboard() {
                               onClick={() => handleOpenUploadModal(l)}
                               className="btn-anim inline-flex items-center gap-1.5 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-700 shadow-md"
                             >
-                              <Camera size={16} /> {hasBukti ? "Ubah / Tambah Foto Bukti" : "Form Upload Bukti (Kirim ke Dinas)"}
+                              <Camera size={16} /> {hasBukti ? "Edit Bukti Penanganan" : "Kirim Bukti Penanganan"}
                             </button>
                           )}
 
                           {st === "resolved" && (
                             <div className="flex items-center gap-2">
                               <span className="inline-flex items-center gap-1.5 rounded-xl bg-success-bg px-4 py-2 text-xs font-bold text-success border border-success/30">
-                                <CheckCircle2 size={15} /> Telah Diverifikasi Selesai oleh Dinas
+                                <CheckCircle2 size={15} /> Selesai Diverifikasi
                               </span>
                               <button
                                 onClick={() => handleOpenUploadModal(l)}
@@ -629,7 +629,6 @@ export default function PetugasDashboard() {
                 </div>
               )}
             </section>
-
             {/* MODAL FORM UPLOAD BUKTI / LIHAT BUKTI PENANGANAN */}
             {modalTask && (() => {
               const isResolved = modalTask.status === "resolved";
@@ -651,16 +650,16 @@ export default function PetugasDashboard() {
                           <span className="font-mono text-xs font-extrabold text-brand-600">{modalTask.id}</span>
                           {isResolved ? (
                             <span className="rounded-full bg-success-bg px-2.5 py-0.5 text-[10px] font-bold text-success border border-success/30">
-                              Diverifikasi Selesai oleh Dinas
+                              Selesai Diverifikasi
                             </span>
                           ) : (
                             <span className="rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[10px] font-bold text-amber-500 border border-amber-500/30">
-                              Dalam Proses Penanganan
+                              Sedang Dikerjakan
                             </span>
                           )}
                         </div>
                         <h3 className="mt-1 font-display text-xl font-extrabold text-cream">
-                          {isResolved ? "Bukti Hasil Penanganan Selesai" : "Form Bukti Hasil Penanganan"}
+                          {isResolved ? "Detail Penanganan" : "Bukti Penanganan"}
                         </h3>
                         <p className="mt-0.5 text-xs text-ink-500">{modalTask.judul}</p>
                       </div>
@@ -678,7 +677,7 @@ export default function PetugasDashboard() {
                       {/* Foto Laporan Warga untuk Acuan Petugas */}
                       <div className="rounded-2xl border border-ink-300/40 bg-ground/50 p-3.5">
                         <label className="mb-2 flex items-center gap-1.5 text-xs font-bold text-ink-500 uppercase tracking-wider">
-                          <Camera size={14} className="text-brand-600" /> Referensi Foto Kerusakan Awal (Warga)
+                          <Camera size={14} className="text-brand-600" /> Foto Laporan Warga
                         </label>
                         <div className="flex flex-wrap gap-2">
                           {getFotoUrls(modalTask).map((url, i) => (
@@ -686,7 +685,7 @@ export default function PetugasDashboard() {
                               key={i}
                               src={url}
                               onClick={() => setLightboxFoto(url)}
-                              alt={`Referensi foto ${i + 1}`}
+                              alt={`Foto laporan ${i + 1}`}
                               className="h-20 w-28 rounded-xl object-cover border border-ink-300/40 cursor-pointer transition-transform hover:scale-105"
                             />
                           ))}
@@ -700,7 +699,7 @@ export default function PetugasDashboard() {
                           <div className="rounded-2xl border border-success/30 bg-success/10 p-4">
                             <div className="flex items-center gap-2 text-sm font-bold text-success mb-3">
                               <CheckCircle2 size={18} />
-                              <span>Foto Bukti Penanganan Petugas (Telah Diverifikasi)</span>
+                              <span>Foto Penanganan Petugas</span>
                             </div>
 
                             {taskProofPhotos.length > 0 ? (
@@ -720,17 +719,17 @@ export default function PetugasDashboard() {
                                 ))}
                               </div>
                             ) : (
-                              <p className="text-xs text-ink-500 italic">Foto bukti penanganan telah diverifikasi secara langsung di lapangan.</p>
+                              <p className="text-xs text-ink-500 italic">Foto bukti penanganan telah diverifikasi.</p>
                             )}
                           </div>
 
                           <div className="rounded-2xl border border-ink-300/40 bg-ground/60 p-4">
                             <p className="text-xs font-bold text-ink-500 uppercase tracking-wider mb-1">Catatan Tindakan Petugas</p>
                             <p className="text-sm text-cream font-medium">
-                              {modalTask.buktiPetugas?.catatan || modalCatatan || "Penanganan lapangan telah diselesaikan dan diverifikasi tuntas oleh dinas terkait."}
+                              {modalTask.buktiPetugas?.catatan || modalCatatan || "Penanganan lapangan telah selesai."}
                             </p>
                             <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-ink-400 border-t border-ink-300/30 pt-2">
-                              <span>Petugas: <strong className="text-cream">{modalTask.buktiPetugas?.petugas || "Tim Petugas Lapangan"}</strong></span>
+                              <span>Petugas: <strong className="text-cream">{modalTask.buktiPetugas?.petugas || "Petugas Lapangan"}</strong></span>
                               {modalTask.buktiPetugas?.waktu && (
                                 <span>Waktu: <strong className="text-cream">{new Date(modalTask.buktiPetugas.waktu).toLocaleString("id-ID")}</strong></span>
                               )}
@@ -743,7 +742,7 @@ export default function PetugasDashboard() {
                           <div>
                             <div className="mb-2 flex items-center justify-between">
                               <label className="flex items-center gap-1.5 text-sm font-semibold text-cream">
-                                <Camera size={16} className="text-brand-600" /> Foto Bukti Perbaikan Real-Time Kamera
+                                <Camera size={16} className="text-brand-600" /> Foto Bukti Penanganan
                               </label>
                               <span className="text-xs text-ink-500">{modalPreviews.length} / 5 foto</span>
                             </div>
@@ -758,35 +757,25 @@ export default function PetugasDashboard() {
                                 >
                                   <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white shadow-md group-hover:scale-105 transition-transform">
                                     <Camera size={20} />
-                                    <span className="absolute -top-0.5 -right-0.5 flex h-3 w-3">
-                                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                      <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 border-2 border-white"></span>
-                                    </span>
                                   </div>
                                   <div className="text-left">
                                     <p className="font-display text-sm font-bold text-cream group-hover:text-brand-400 transition-colors">
-                                      Ambil Foto Bukti dari Kamera Langsung
+                                      Ambil Foto
                                     </p>
                                     <p className="text-[11px] text-ink-400">
-                                      Mengambil snapshot penanganan terkini di lokasi kejadian.
+                                      Ambil foto hasil perbaikan di lokasi.
                                     </p>
                                   </div>
                                 </button>
                               </div>
                             )}
 
-                            {/* Strict Real-Time Notice for Officers */}
-                            <div className="mt-2 flex items-center gap-2 rounded-xl border border-warning/30 bg-warning/10 p-2.5 text-xs text-warning">
-                              <span className="flex h-2 w-2 rounded-full bg-warning animate-pulse shrink-0" />
-                              <span>Petugas wajib mengambil foto bukti hasil perbaikan secara langsung dari kamera di lokasi.</span>
-                            </div>
-
                             {/* Preview Thumbnails */}
                             {modalPreviews.length > 0 && (
                               <div className="mt-3 flex flex-wrap gap-2.5">
                                 {modalPreviews.map((url, idx) => (
                                   <div key={idx} className="relative group h-20 w-24 rounded-xl overflow-hidden border border-brand-600/40 shadow-sm">
-                                    <img src={url} alt={`Bukti preview ${idx + 1}`} className="h-full w-full object-cover" />
+                                    <img src={url} alt={`Bukti ${idx + 1}`} className="h-full w-full object-cover" />
                                     <button
                                       type="button"
                                       onClick={(e) => {
@@ -806,11 +795,11 @@ export default function PetugasDashboard() {
                           {/* Catatan Penanganan */}
                           <div>
                             <label className="mb-2 block text-sm font-semibold text-cream">
-                              Catatan / Deskripsi Penanganan Lapangan
+                              Catatan Penanganan
                             </label>
                             <textarea
                               className="w-full min-h-[100px] rounded-xl border border-ink-300 bg-surface px-4 py-3 text-sm text-cream outline-none transition-colors placeholder:text-ink-500 focus:border-brand-600 focus:ring-1 focus:ring-brand-600"
-                              placeholder="Contoh: Perbaikan jalan berlubang telah ditambal dengan aspal hotmix dan diratakan. Aliran drainase telah dinormalisasi…"
+                              placeholder="Jelaskan tindakan perbaikan yang telah dilakukan di lokasi..."
                               value={modalCatatan}
                               onChange={(e) => setModalCatatan(e.target.value)}
                             />
@@ -847,11 +836,11 @@ export default function PetugasDashboard() {
                           >
                             {isSubmittingBukti ? (
                               <>
-                                <Loader2 size={16} className="animate-spin" /> Mengirim Bukti ke Dinas…
+                                <Loader2 size={16} className="animate-spin" /> Mengirim ke Dinas…
                               </>
                             ) : (
                               <>
-                                <Upload size={16} /> Simpan &amp; Kirim ke Dinas
+                                <Upload size={16} /> Kirim ke Dinas
                               </>
                             )}
                           </button>
@@ -872,7 +861,7 @@ export default function PetugasDashboard() {
                 <div className="relative max-h-[90vh] max-w-4xl overflow-hidden rounded-2xl border border-white/20 bg-surface p-2 shadow-2xl">
                   <img
                     src={lightboxFoto}
-                    alt="Pratinjau foto bukti"
+                    alt="Foto bukti"
                     className="max-h-[82vh] w-auto rounded-xl object-contain"
                   />
                   <button
@@ -890,7 +879,7 @@ export default function PetugasDashboard() {
               isOpen={isCameraOpen}
               onClose={() => setIsCameraOpen(false)}
               onCapture={handleCameraCapture}
-              title="Foto Kamera Bukti Perbaikan"
+              title="Ambil Foto Bukti"
             />
           </>
         )}

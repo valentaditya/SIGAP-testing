@@ -45,9 +45,9 @@ const ROLES: RoleDef[] = [
     icon: UserRound,
     tujuan: "/warga",
     janji: [
-      "Kirim laporan dengan foto & titik lokasi",
-      "Pantau status dari Diterima sampai Selesai",
-      "Kumpulkan poin, lencana, dan naik peringkat",
+      "Kirim laporan dengan foto & lokasi",
+      "Pantau status penanganan laporan",
+      "Kumpulkan poin dan lencana kontribusi",
     ],
     demo: { nama: "Budi Santoso", email: "budi@gmail.com" },
   },
@@ -55,13 +55,13 @@ const ROLES: RoleDef[] = [
     id: "admin",
     label: "Admin / Pemerintah",
     singkat: "Admin",
-    desc: "Manajemen user & audit log sistem",
+    desc: "Kelola akun & log aktivitas",
     icon: ShieldCheck,
     tujuan: "/dashboard",
     janji: [
-      "Kelola akun dinas, petugas lapangan, dan warga",
-      "Audit log aktivitas & jejak rekam data",
-      "Pemeliharaan sistem dan data master",
+      "Kelola akun dinas, petugas, dan warga",
+      "Pantau log aktivitas penanganan",
+      "Kelola data laporan wilayah",
     ],
     demo: { nama: "Super Admin SIGAP", email: "admin@sigap.go.id" },
   },
@@ -69,13 +69,13 @@ const ROLES: RoleDef[] = [
     id: "petugas",
     label: "Petugas Lapangan",
     singkat: "Petugas",
-    desc: "Tangani laporan yang ditugaskan",
+    desc: "Tangani laporan di lapangan",
     icon: HardHat,
     tujuan: "/petugas",
     janji: [
-      "Daftar tugas harian beserta target SLA",
+      "Lihat daftar tugas penanganan harian",
       "Navigasi ke titik lokasi laporan",
-      "Unggah foto bukti kamera live & kirim ke dinas",
+      "Kirim foto bukti hasil penanganan",
     ],
     demo: { nama: "Petugas Surya", email: "surya@petugaslapangan.go.id" },
   },
@@ -83,13 +83,13 @@ const ROLES: RoleDef[] = [
     id: "dinas",
     label: "Dinas / Instansi",
     singkat: "Dinas",
-    desc: "Verifikasi, penugasan & validasi laporan",
+    desc: "Verifikasi & tugaskan laporan",
     icon: Building2,
     tujuan: "/dinas",
     janji: [
-      "Verifikasi laporan masuk & disposisi ke petugas",
-      "Auto-route laporan darurat (Skor AI >= 9)",
-      "Validasi foto bukti penyelesaian & selesaikan laporan",
+      "Verifikasi laporan masuk & tugaskan petugas",
+      "Pantau laporan darurat wilayah",
+      "Verifikasi bukti selesai dari petugas",
     ],
     demo: { nama: "Pak Hendra Wijaya", email: "kepala.dinas@slemankab.go.id" },
   },
@@ -364,16 +364,16 @@ export default function LoginClient() {
             <p className="mt-3 max-w-[34ch] text-sm text-sage-pale">
               {mode === "masuk"
                 ? `${aktif.desc}.`
-                : "Bergabung bersama ribuan warga Yogyakarta untuk melapor dan menjaga keasrian kota."}
+                : "Laporkan dan pantau masalah fasilitas umum di wilayah Anda."}
             </p>
 
             <ul className="mt-7 space-y-3 border-t border-ink-300 pt-6">
               {(mode === "masuk"
                 ? aktif.janji
                 : [
-                    "Registrasi cepat dalam beberapa langkah sederhana",
-                    "Akses penuh fitur pelaporan & pemantauan real-time",
-                    "Dapatkan poin partisipasi dan lencana kontribusi warga",
+                    "Pendaftaran mudah dan cepat",
+                    "Pantau status penanganan laporan",
+                    "Dapatkan poin dan lencana kontribusi",
                   ]
               ).map((j) => (
                 <li key={j} className="flex gap-3 text-sm text-cream">
@@ -438,24 +438,24 @@ export default function LoginClient() {
               }`}
             >
               <UserPlus size={15} className="mr-1.5 inline-block" />
-              Daftar Akun Baru
+              Daftar
             </button>
           </div>
 
           <h1 className="font-display text-[26px] leading-tight text-cream-hi sm:text-[30px]">
-            {mode === "masuk" ? "Masuk ke SIGAP" : "Buat Akun Warga"}
+            {mode === "masuk" ? "Masuk ke SIGAP" : "Daftar Akun"}
           </h1>
           <p className="mt-1 text-sm text-ink-500">
             {mode === "masuk"
-              ? "Masukkan email dan kata sandi untuk mengakses akun Anda"
-              : "Lengkapi nama, email, dan kata sandi untuk pendaftaran cepat"}
+              ? "Masukkan email dan kata sandi akun Anda"
+              : "Lengkapi data untuk membuat akun"}
           </p>
 
           {loginError && (
             <div className="mt-4 flex items-center gap-3 rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-xs font-bold text-red-400 backdrop-blur-sm animate-fade-in">
               <ShieldAlert size={20} className="shrink-0 text-red-500" />
               <div className="flex-1">
-                <p className="font-extrabold text-red-300">Login Gagal!</p>
+                <p className="font-extrabold text-red-300">Gagal Masuk</p>
                 <p className="mt-0.5 text-red-400 font-normal">{loginError}</p>
               </div>
             </div>
@@ -479,7 +479,7 @@ export default function LoginClient() {
               {/* Email */}
               <Field
                 id="f-email"
-                label="Alamat Email"
+                label="Email"
                 type="email"
                 value={email}
                 onChange={(v) => ubah("email", v)}
@@ -517,7 +517,7 @@ export default function LoginClient() {
                 <>
                   <Field
                     id="f-reSandi"
-                    label="Ulangi Kata Sandi (Re-Password)"
+                    label="Ulangi Kata Sandi"
                     type={lihatRe ? "text" : "password"}
                     value={reSandi}
                     onChange={(v) => ubah("reSandi", v)}
@@ -538,7 +538,7 @@ export default function LoginClient() {
 
                   {/* Real-time Password Checklist */}
                   <div className="rounded-xl border border-ink-300 bg-ground/60 p-3.5 space-y-1.5 text-xs">
-                    <p className="font-semibold text-sage mb-2">Syarat Kata Sandi:</p>
+                    <p className="font-semibold text-sage mb-2">Ketentuan Kata Sandi:</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                       <div className={`flex items-center gap-1.5 ${reqMinLen ? "text-success font-medium" : "text-ink-500"}`}>
                         {reqMinLen ? <CheckCircle2 size={13} /> : <XCircle size={13} />}
@@ -546,15 +546,15 @@ export default function LoginClient() {
                       </div>
                       <div className={`flex items-center gap-1.5 ${reqUpper && reqLower ? "text-success font-medium" : "text-ink-500"}`}>
                         {reqUpper && reqLower ? <CheckCircle2 size={13} /> : <XCircle size={13} />}
-                        <span>Huruf besar & kecil (A-z)</span>
+                        <span>Huruf besar &amp; kecil</span>
                       </div>
                       <div className={`flex items-center gap-1.5 ${reqNumber ? "text-success font-medium" : "text-ink-500"}`}>
                         {reqNumber ? <CheckCircle2 size={13} /> : <XCircle size={13} />}
-                        <span>Minimal 1 angka (0-9)</span>
+                        <span>Minimal 1 angka</span>
                       </div>
                       <div className={`flex items-center gap-1.5 ${reqMatch ? "text-success font-medium" : "text-ink-500"}`}>
                         {reqMatch ? <CheckCircle2 size={13} /> : <XCircle size={13} />}
-                        <span>Re-password cocok</span>
+                        <span>Kata sandi cocok</span>
                       </div>
                     </div>
                   </div>
@@ -586,17 +586,17 @@ export default function LoginClient() {
               {loading ? (
                 <>
                   <Loader2 size={18} className="spin" aria-hidden="true" />
-                  {mode === "masuk" ? "Memproses Masuk..." : "Mendaftarkan Akun..."}
+                  {mode === "masuk" ? "Memproses..." : "Mendaftarkan..."}
                 </>
               ) : mode === "masuk" ? (
                 <>
                   <LogIn size={18} aria-hidden="true" />
-                  Masuk ke SIGAP
+                  Masuk
                 </>
               ) : (
                 <>
                   <UserPlus size={18} aria-hidden="true" />
-                  Daftar Sekarang
+                  Daftar
                 </>
               )}
             </button>
@@ -608,7 +608,7 @@ export default function LoginClient() {
                 href="/lapor?darurat=1"
                 className="flex min-h-[44px] items-center justify-center gap-2 border border-danger/60 px-4 text-xs font-semibold text-danger no-underline transition-colors hover:bg-danger/10 rounded-xl"
               >
-                <Siren size={15} aria-hidden="true" /> Sinyal Kondisi Darurat
+                <Siren size={15} aria-hidden="true" /> Lapor Darurat (SOS)
               </Link>
             </div>
           </form>
@@ -616,7 +616,7 @@ export default function LoginClient() {
       </div>
 
       {/* =========================================================
-          MODAL 1: NOTIFIKASI "Whoops, bentar lagi data kamu lengkap!"
+          MODAL 1: NOTIFIKASI LENGKAPI PROFIL
           ========================================================= */}
       {modalNotifLengkap && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm animate-fade-in">
@@ -627,13 +627,13 @@ export default function LoginClient() {
 
             <div className="text-center">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-tan/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-tan border border-tan/20 mb-2">
-                Pendaftaran Berhasil!
+                Pendaftaran Berhasil
               </span>
               <h3 className="font-display text-2xl font-extrabold text-cream-hi sm:text-3xl">
-                Whoops, bentar lagi data kamu lengkap! 
+                Lengkapi Profil Anda
               </h3>
               <p className="mt-3 text-sm leading-relaxed text-sage-pale">
-                Akun SIGAP kamu telah berhasil dibuat. Biar laporan masalah lingkunganmu bisa diproses lebih cepat dan akurat oleh tim lapangan, yuk lengkapi nomor telepon dan alamatmu sekarang!
+                Akun Anda berhasil dibuat. Lengkapi nomor telepon dan alamat agar penanganan laporan lebih cepat.
               </p>
             </div>
 
@@ -650,7 +650,7 @@ export default function LoginClient() {
                 onClick={handleLengkapiNanti}
                 className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-ink-300 bg-ground/50 font-semibold text-sage transition-colors hover:text-cream hover:bg-ground"
               >
-                Nanti Saja
+                Nanti
               </button>
             </div>
           </div>
@@ -669,22 +669,22 @@ export default function LoginClient() {
               </div>
               <div>
                 <h3 className="font-display text-xl font-bold text-cream-hi">
-                  Lengkapi Profil Kamu
+                  Lengkapi Profil
                 </h3>
-                <p className="text-xs text-sage">Informasi kontak & lokasi penanganan</p>
+                <p className="text-xs text-sage">Nomor telepon dan alamat domisili</p>
               </div>
             </div>
 
             <form onSubmit={handleSimpanKelengkapan} className="space-y-4">
               <Field
                 id="f-telepon"
-                label="Nomor Telepon / WhatsApp"
+                label="Nomor Telepon"
                 type="text"
                 value={telepon}
                 onChange={(v) => ubah("telepon", v)}
                 autoComplete="tel"
                 inputMode="tel"
-                hint="Digunakan petugas untuk konfirmasi titik lokasi laporan"
+                hint="Untuk konfirmasi lokasi laporan"
               />
 
               <div>
@@ -699,7 +699,7 @@ export default function LoginClient() {
                       placeholder=" "
                       className="field-input border-0"
                     />
-                    <label htmlFor="f-alamat" className="field-label">Alamat Lengkap / Domisili</label>
+                    <label htmlFor="f-alamat" className="field-label">Alamat</label>
                   </div>
                 </div>
                 <p className="mt-1.5 text-xs text-sage">Contoh: Jl. Babarsari No. 44, Depok, Sleman</p>
@@ -717,7 +717,7 @@ export default function LoginClient() {
                   type="submit"
                   className="btn-anim flex h-11 items-center justify-center gap-2 rounded-xl bg-tan-solid px-6 font-bold text-white shadow-md hover:bg-brand-700"
                 >
-                  Simpan & Lanjutkan <Check size={16} />
+                  Simpan <Check size={16} />
                 </button>
               </div>
             </form>

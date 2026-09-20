@@ -71,7 +71,7 @@ export function NotifBell() {
       <div ref={ref} className="relative">
         <button
           onClick={() => setOpen(!open)}
-          aria-label={`Notifikasi Dinas, ${belumBaca} belum dibaca`}
+          aria-label={`Notifikasi, ${belumBaca} belum dibaca`}
           className="relative grid h-[42px] w-[42px] place-items-center rounded-[10px] text-ink-700 transition-colors hover:bg-ground"
         >
           <Bell size={20} />
@@ -87,7 +87,7 @@ export function NotifBell() {
             {/* Header */}
             <div className="flex items-center justify-between border-b border-white/[.08] px-4 py-3">
               <div className="flex items-center gap-2">
-                <p className="font-display text-sm font-bold">Notifikasi Dinas</p>
+                <p className="font-display text-sm font-bold">Notifikasi</p>
                 {belumBaca > 0 && (
                   <span className="rounded-full bg-danger px-2 py-0.5 text-[10px] font-bold text-white">
                     {belumBaca} baru
@@ -98,7 +98,7 @@ export function NotifBell() {
                 onClick={tandaiSemuaBaca}
                 className="inline-flex items-center gap-1 text-xs font-semibold text-brand-500 hover:text-brand-600"
               >
-                <CheckCheck size={14} /> Tandai semua dibaca
+                <CheckCheck size={14} /> Tandai dibaca
               </button>
             </div>
 
@@ -107,8 +107,7 @@ export function NotifBell() {
               {notifs.length === 0 ? (
                 <li className="flex flex-col items-center gap-2 py-10 text-center">
                   <Bell size={28} className="text-ink-400 opacity-40" />
-                  <p className="text-xs text-ink-400">Belum ada notifikasi baru</p>
-                  <p className="text-[11px] text-ink-300">Notifikasi muncul saat ada laporan warga / sinyal darurat masuk</p>
+                  <p className="text-xs font-semibold text-ink-400">Belum ada notifikasi</p>
                 </li>
               ) : (
                 notifs.map((n) => {
@@ -196,7 +195,7 @@ export function NotifBell() {
               </div>
             </div>
 
-            {/* Tombol Aksi Tangani untuk Dinas */}
+            {/* Tombol Aksi */}
             <div className="px-6 pb-6 flex flex-wrap gap-2.5">
               <button
                 onClick={() => {
@@ -208,7 +207,7 @@ export function NotifBell() {
                   detail.tone === "warning" ? "bg-amber-600 hover:bg-amber-500" : "bg-sky-600 hover:bg-sky-500"
                 }`}
               >
-                <CheckCircle2 size={16} /> Tangani Sekarang
+                <CheckCircle2 size={16} /> Lihat Detail
               </button>
 
               <button

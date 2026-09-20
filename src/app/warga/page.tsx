@@ -91,13 +91,13 @@ export default function WargaDashboard() {
 
             <div className="text-center">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-tan/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-tan border border-tan/20 mb-2">
-                Pendaftaran Berhasil!
+                Pendaftaran Berhasil
               </span>
               <h3 className="font-display text-2xl font-extrabold text-cream-hi sm:text-3xl">
-                Whoops, bentar lagi data kamu lengkap! 🎉
+                Lengkapi Profil Anda
               </h3>
               <p className="mt-3 text-sm leading-relaxed text-sage-pale">
-                Akun SIGAP kamu telah berhasil dibuat. Biar laporan masalah lingkunganmu bisa diproses lebih cepat dan akurat oleh tim lapangan, yuk lengkapi nomor telepon dan alamatmu sekarang!
+                Lengkapi nomor telepon dan alamat agar petugas dapat menghubungi Anda dan menindaklanjuti laporan dengan cepat.
               </p>
             </div>
 
@@ -130,8 +130,8 @@ export default function WargaDashboard() {
                 <UserCheck size={20} />
               </div>
               <div>
-                <h3 className="font-display text-xl font-bold text-cream-hi">Lengkapi Profil Kamu</h3>
-                <p className="text-xs text-sage">Informasi kontak & lokasi penanganan</p>
+                <h3 className="font-display text-xl font-bold text-cream-hi">Lengkapi Profil</h3>
+                <p className="text-xs text-sage">Nomor kontak dan domisili</p>
               </div>
             </div>
 
@@ -150,7 +150,7 @@ export default function WargaDashboard() {
                   <label htmlFor="wl-telepon" className="field-label">Nomor Telepon / WhatsApp</label>
                 </div>
               </div>
-              <p className="text-xs text-sage">Digunakan petugas untuk konfirmasi titik lokasi laporan</p>
+              <p className="text-xs text-sage">Nomor aktif untuk konfirmasi petugas di lokasi</p>
 
               {/* Alamat */}
               <div className="field flex items-stretch border border-ink-400 focus-within:border-tan transition-colors">
@@ -163,7 +163,7 @@ export default function WargaDashboard() {
                     placeholder=" "
                     className="field-input border-0"
                   />
-                  <label htmlFor="wl-alamat" className="field-label">Alamat Lengkap / Domisili</label>
+                  <label htmlFor="wl-alamat" className="field-label">Alamat / Domisili</label>
                 </div>
               </div>
               <p className="text-xs text-sage">Contoh: Jl. Babarsari No. 44, Depok, Sleman</p>
@@ -181,7 +181,7 @@ export default function WargaDashboard() {
                   disabled={savingLengkap}
                   className="btn-anim flex h-11 items-center justify-center gap-2 rounded-xl bg-tan-solid px-6 font-bold text-white shadow-md hover:bg-brand-700 disabled:opacity-60"
                 >
-                  <CheckCircle2 size={16} /> Simpan & Lanjutkan
+                  <CheckCircle2 size={16} /> Simpan
                 </button>
               </div>
             </form>
@@ -197,7 +197,7 @@ export default function WargaDashboard() {
               Halo, <span className="text-brand-600">{nama}</span>
             </h1>
             <p className="mt-1 text-xs sm:text-sm text-ink-500">
-              Pantau laporanmu dan jelajahi perkembangan fasilitas serta kondisi lingkungan terkini.
+              Pantau laporan Anda dan perkembangan penanganan di lingkungan sekitar.
             </p>
           </div>
           <Link
@@ -228,7 +228,7 @@ export default function WargaDashboard() {
                 : "bg-surface text-ink-700 hover:bg-brand-50 hover:text-cream"
             }`}
           >
-            <History size={15} /> History ({riwayatSaya.length})
+            <History size={15} /> Riwayat ({riwayatSaya.length})
           </button>
           <button
             onClick={() => setActiveTab("peta")}
@@ -248,7 +248,7 @@ export default function WargaDashboard() {
                 : "bg-surface text-ink-700 hover:bg-brand-50 hover:text-cream"
             }`}
           >
-            <User size={15} /> Profil Akun
+            <User size={15} /> Profil
           </button>
         </div>
 
@@ -369,7 +369,7 @@ export default function WargaDashboard() {
                   <History size={20} className="text-brand-600" /> Riwayat Laporan Selesai
                 </h2>
                 <p className="mt-1 text-sm text-ink-500">
-                  Daftar laporan yang telah berhasil ditangani dan diselesaikan oleh tim dinas terkait.
+                  Daftar laporan yang telah ditangani dan diselesaikan oleh dinas terkait.
                 </p>
               </div>
             </div>
@@ -377,8 +377,8 @@ export default function WargaDashboard() {
             {riwayatSaya.length === 0 ? (
               <div className="rounded-2xl bg-surface p-10 text-center shadow-[var(--shadow-card)]">
                 <CheckCircle2 size={40} className="mx-auto text-ink-300" />
-                <p className="mt-3 font-semibold text-ink-700">Belum ada riwayat laporan selesai</p>
-                <p className="mt-1 text-xs text-ink-500">Laporan yang Anda buat dan telah berhasil diselesaikan akan muncul di sini.</p>
+                <p className="mt-3 font-semibold text-ink-700">Belum ada laporan selesai</p>
+                <p className="mt-1 text-xs text-ink-500">Laporan yang sudah ditangani akan muncul di sini.</p>
               </div>
             ) : (
               <div className="grid gap-4 md:grid-cols-2">
@@ -425,10 +425,10 @@ export default function WargaDashboard() {
           <section className="anim-fade-up space-y-4">
             <div>
               <h2 className="flex items-center gap-2 font-display text-xl font-extrabold">
-                <MapIcon size={20} className="text-brand-600" /> Peta Sebaran Laporan Lingkungan
+                <MapIcon size={20} className="text-brand-600" /> Peta Sebaran Laporan
               </h2>
               <p className="mt-1 text-sm text-ink-500">
-                Lihat titik lokasi seluruh laporan aktif dan penyelesaian di wilayah Yogyakarta secara aktual.
+                Lihat titik lokasi seluruh laporan aktif dan penyelesaian di wilayah Yogyakarta.
               </p>
             </div>
             <div className="overflow-hidden rounded-2xl border border-white/10 shadow-[var(--shadow-card)]" style={{ height: "480px" }}>
@@ -473,7 +473,7 @@ export default function WargaDashboard() {
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="rounded-2xl border border-ink-300/40 bg-brand-50/40 p-4">
                     <p className="flex items-center gap-1.5 text-xs font-semibold text-ink-500">
-                      <MapPin size={14} className="text-brand-600" /> Lokasi Laporan
+                      <MapPin size={14} className="text-brand-600" /> Lokasi Kejadian
                     </p>
                     <p className="mt-1 text-sm font-bold text-cream">{detail.lokasi.alamat}</p>
                     <p className="mt-0.5 text-[11px] font-mono text-ink-500">
@@ -483,7 +483,7 @@ export default function WargaDashboard() {
 
                   <div className="rounded-2xl border border-ink-300/40 bg-brand-50/40 p-4">
                     <p className="flex items-center gap-1.5 text-xs font-semibold text-ink-500">
-                      <User size={14} className="text-brand-600" /> Informasi Pelapor
+                      <User size={14} className="text-brand-600" /> Pelapor
                     </p>
                     <p className="mt-1 text-sm font-bold text-cream">{detail.pelapor}</p>
                     <p className="mt-0.5 flex items-center gap-1 text-[11px] text-ink-500">
@@ -501,17 +501,17 @@ export default function WargaDashboard() {
                     </p>
                   </div>
                   <div className="rounded-xl border border-ink-300/40 p-3 text-center">
-                    <p className="text-[11px] font-bold text-ink-500 uppercase">Dukungan</p>
+                    <p className="text-[11px] font-bold text-ink-500 uppercase">Dukungan Warga</p>
                     <p className="mt-1 flex items-center justify-center gap-1 text-xs font-bold text-brand-600">
                       <ThumbsUp size={13} /> {detail.dukungan} warga
                     </p>
                   </div>
                 </div>
 
-                {/* Foto Bukti Pelapor Gallery */}
+                {/* Foto Bukti Pelapor */}
                 <div className="rounded-2xl border border-ink-300/40 bg-ground/50 p-4">
                   <p className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase text-ink-500">
-                    <Camera size={13} className="text-brand-600" /> Foto Laporan Kerusakan Awal
+                    <Camera size={13} className="text-brand-600" /> Foto Laporan
                     <span className="ml-auto font-normal normal-case text-ink-400">
                       {(detail.fotoUrls && detail.fotoUrls.length > 0) ? `${detail.fotoUrls.length} foto` : "Tidak ada foto"}
                     </span>
@@ -539,20 +539,20 @@ export default function WargaDashboard() {
                     </div>
                   ) : (
                     <div className="flex h-20 items-center justify-center gap-2 rounded-xl border border-dashed border-ink-300/50 text-xs text-ink-500">
-                      <Camera size={16} className="opacity-40" /> Pelapor tidak melampirkan foto
+                      <Camera size={16} className="opacity-40" /> Tidak ada foto
                     </div>
                   )}
                 </div>
 
-                {/* Foto Bukti Hasil Penanganan Petugas jika sudah ada */}
+                {/* Foto Bukti Penanganan Petugas */}
                 {detail.buktiPetugas && detail.buktiPetugas.fotoUrls && detail.buktiPetugas.fotoUrls.length > 0 && (
                   <div className="rounded-2xl border border-success/40 bg-success-bg/15 p-4">
                     <div className="flex items-center justify-between mb-2">
                       <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-success">
-                        <CheckCircle2 size={15} /> Foto Bukti Hasil Penanganan (Petugas Lapangan)
+                        <CheckCircle2 size={15} /> Foto Penanganan Petugas
                       </p>
                       <span className="text-[10px] font-bold text-success bg-success-bg px-2.5 py-0.5 rounded-full border border-success/30">
-                        Hasil Lapangan
+                        Hasil Kerja
                       </span>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -576,20 +576,20 @@ export default function WargaDashboard() {
                     </div>
                     {detail.buktiPetugas.catatan && (
                       <p className="text-xs text-cream-hi mt-2 bg-surface/60 p-2.5 rounded-xl border border-success/20">
-                        <span className="font-bold text-success">Catatan Tindakan Petugas:</span> {detail.buktiPetugas.catatan}
+                        <span className="font-bold text-success">Catatan Petugas:</span> {detail.buktiPetugas.catatan}
                       </p>
                     )}
                   </div>
                 )}
 
-                {/* LOG TRANSPARANSI STATUS PENANGANAN (Flow: Pelapor -> Dinas -> Petugas -> Dinas -> Selesai) */}
+                {/* TIMELINE PERKEMBANGAN LAPORAN */}
                 <div className="rounded-2xl border border-brand-600/30 bg-surface/80 p-5 space-y-4">
                   <div className="flex items-center justify-between border-b border-ink-300/30 pb-3">
                     <h4 className="flex items-center gap-2 font-display text-sm font-extrabold text-cream">
-                      <Activity size={16} className="text-brand-600" /> Log Transparansi &amp; Riwayat Proses
+                      <Activity size={16} className="text-brand-600" /> Perkembangan Laporan
                     </h4>
                     <span className="text-[11px] font-semibold text-brand-600 bg-brand-50/70 dark:bg-brand-900/30 px-2.5 py-0.5 rounded-full border border-brand-600/20">
-                      Realtime Tracking
+                      Status Terkini
                     </span>
                   </div>
 
@@ -599,9 +599,9 @@ export default function WargaDashboard() {
                       <span className="absolute -left-6 top-0.5 grid h-5 w-5 place-items-center rounded-full bg-success text-white text-[10px] font-bold">
                         ✓
                       </span>
-                      <p className="text-xs font-bold text-cream">1. Laporan Masuk &amp; Dianalisis AI</p>
+                      <p className="text-xs font-bold text-cream">1. Laporan Diterima</p>
                       <p className="text-[11px] text-ink-500 mt-0.5">
-                        Laporan diterima sistem, dianalisis urgensinya (Skor {detail.ai.priorityScore}/10) dan dialokasikan ke dinas teknis wilayah.
+                        Laporan diterima oleh sistem dan diteruskan ke dinas terkait.
                       </p>
                       <p className="text-[10px] text-ink-400 mt-0.5 font-mono">{new Date(detail.waktu).toLocaleString("id-ID")}</p>
                     </div>
@@ -616,10 +616,10 @@ export default function WargaDashboard() {
                         {["verified", "assigned", "in_progress", "resolved"].includes(detail.status) ? "✓" : "2"}
                       </span>
                       <p className={`text-xs font-bold ${["verified", "assigned", "in_progress", "resolved"].includes(detail.status) ? "text-cream" : "text-ink-500"}`}>
-                        2. Ditinjau oleh Dinas Terkait
+                        2. Diverifikasi Dinas
                       </p>
                       <p className="text-[11px] text-ink-500 mt-0.5">
-                        Dinas teknis memeriksa kelayakan laporan dan menyiapkan disposisi petugas lapangan.
+                        Dinas memeriksa laporan dan menyiapkan penugasan ke petugas.
                       </p>
                     </div>
 
@@ -633,10 +633,10 @@ export default function WargaDashboard() {
                         {["assigned", "in_progress", "resolved"].includes(detail.status) ? "✓" : "3"}
                       </span>
                       <p className={`text-xs font-bold ${["assigned", "in_progress", "resolved"].includes(detail.status) ? "text-cream" : "text-ink-500"}`}>
-                        3. Diteruskan ke Petugas Lapangan
+                        3. Ditugaskan ke Petugas
                       </p>
                       <p className="text-[11px] text-ink-500 mt-0.5">
-                        Laporan telah diteruskan dan masuk ke daftar tugas kerja tim petugas lapangan.
+                        Laporan masuk ke daftar tugas kerja petugas lapangan.
                       </p>
                     </div>
 
@@ -652,18 +652,18 @@ export default function WargaDashboard() {
                         {detail.status === "resolved" ? "✓" : "4"}
                       </span>
                       <p className={`text-xs font-bold ${["in_progress", "resolved"].includes(detail.status) ? "text-cream" : "text-ink-500"}`}>
-                        4. Dikerjakan oleh Petugas &amp; Pengiriman Foto Bukti
+                        4. Dikerjakan Petugas
                       </p>
                       <p className="text-[11px] text-ink-500 mt-0.5">
                         {detail.buktiPetugas?.fotoUrls?.length
-                          ? "Petugas telah selesai menangani masalah di lokasi dan mengunggah foto bukti penyelesaian untuk diverifikasi dinas."
+                          ? "Petugas telah selesai menangani masalah dan melampirkan foto hasil kerja."
                           : detail.status === "in_progress"
-                          ? "Petugas sedang melakukan pengerjaan perbaikan di lapangan."
-                          : "Menunggu petugas memulai penanganan di titik lokasi."}
+                          ? "Petugas sedang melakukan pengerjaan di lapangan."
+                          : "Menunggu penanganan di lokasi."}
                       </p>
                       {detail.buktiPetugas?.waktu && (
                         <p className="text-[10px] text-brand-600 mt-0.5 font-mono">
-                          Bukti dikirim: {new Date(detail.buktiPetugas.waktu).toLocaleString("id-ID")}
+                          Waktu: {new Date(detail.buktiPetugas.waktu).toLocaleString("id-ID")}
                         </p>
                       )}
                     </div>
@@ -678,36 +678,36 @@ export default function WargaDashboard() {
                         {detail.status === "resolved" ? "✓" : "5"}
                       </span>
                       <p className={`text-xs font-bold ${detail.status === "resolved" ? "text-success" : "text-ink-500"}`}>
-                        5. Verifikasi Akhir &amp; Selesai
+                        5. Selesai
                       </p>
                       <p className="text-[11px] text-ink-500 mt-0.5">
                         {detail.status === "resolved"
-                          ? "Dinas telah mengonfirmasi dan memverifikasi foto bukti hasil perbaikan petugas. Laporan ditutup dengan status SELESAI."
-                          : "Menunggu peninjauan dan konfirmasi penyelesaian dari dinas terkait."}
+                          ? "Dinas telah menyetujui hasil penanganan. Laporan selesai."
+                          : "Menunggu konfirmasi penyelesaian dari dinas terkait."}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                {/* Card Analisis AI Multi-Agent */}
+                {/* Card Informasi Penanganan */}
                 <div className="rounded-2xl border border-brand-600/30 bg-gradient-to-br from-brand-600/10 to-transparent p-5">
                   <h4 className="flex items-center gap-2 font-display text-sm font-extrabold text-cream">
-                    <Sparkles size={16} className="text-brand-600" /> Analisis AI Multi-Agent
+                    <Sparkles size={16} className="text-brand-600" /> Informasi Penanganan
                   </h4>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
                     <div>
-                      <p className="text-xs text-ink-500">Skor Urgensi (Prioritas)</p>
+                      <p className="text-xs text-ink-500">Tingkat Prioritas</p>
                       <p className="mt-0.5 font-display text-lg font-extrabold" style={{ color: priorityColor(detail.ai.priorityScore) }}>
                         {detail.ai.priorityScore} / 10 · {priorityLabel(detail.ai.priorityScore)}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-ink-500">Estimasi Penanganan (SLA)</p>
+                      <p className="text-xs text-ink-500">Target Penanganan</p>
                       <p className="mt-0.5 font-display text-lg font-extrabold text-cream">{detail.sla}</p>
                     </div>
                   </div>
                   <div className="mt-3 border-t border-brand-600/20 pt-3">
-                    <p className="text-xs text-ink-500">Analisis Dampak:</p>
+                    <p className="text-xs text-ink-500">Catatan Kondisi:</p>
                     <p className="mt-1 text-xs font-semibold text-cream-hi">{detail.ai.dampak}</p>
                   </div>
                 </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useLayoutEffect } from "react";
 import { Menu, X, LogOut, LogIn, Sun, Moon, UserRound } from "lucide-react";
 import { useApp } from "@/lib/store";
@@ -10,9 +10,16 @@ import { PERAN, NAV_TAMU, berandaPeran } from "@/lib/roles";
 
 export function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const { user, logout, theme, toggleTheme, hydrated } = useApp();
   const panelRef = useRef<HTMLElement>(null);
+
+  const handleLogout = () => {
+    logout();
+    setOpen(false);
+    router.push("/");
+  };
 
   // State untuk melacak section aktif saat di Landing Page
   const [activeHash, setActiveHash] = useState<string>("");
@@ -221,7 +228,7 @@ export function Navbar() {
               </Link>
 
               <button
-                onClick={logout}
+                onClick={handleLogout}
                 className="btn-anim hidden items-center gap-2 rounded-full border border-ink-300 bg-surface px-4 py-2 font-mono text-xs font-semibold uppercase tracking-wider text-sage-pale transition-colors hover:border-danger hover:text-danger shadow-sm md:inline-flex"
               >
                 <LogOut size={14} aria-hidden="true" /> Keluar
@@ -290,7 +297,7 @@ export function Navbar() {
                     <UserRound size={16} aria-hidden="true" /> Profil Akun ({user.nama.split(" ")[0]})
                   </Link>
                   <button
-                    onClick={() => { logout(); setOpen(false); }}
+                    onClick={handleLogout}
                     className="flex min-h-[44px] w-full items-center gap-2 rounded-xl px-4 text-sm font-semibold text-danger hover:bg-danger/10"
                   >
                     <LogOut size={16} aria-hidden="true" /> Keluar

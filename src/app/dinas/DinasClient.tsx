@@ -257,7 +257,7 @@ export default function DinasClient() {
               </span>
               <div style={{ flex: 1 }}>
                 <p style={{ margin: 0, fontSize: "10px", fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,200,200,0.85)" }}>
-                  ⚠ SINYAL DARURAT MASUK
+                  Sinyal Darurat Masuk
                 </p>
                 <h4 style={{ margin: "2px 0 0", fontSize: "15px", fontWeight: 900, color: "#fff", lineHeight: 1.3 }}>
                   {sosToast.jenisLabel}
@@ -313,7 +313,7 @@ export default function DinasClient() {
                   cursor: "pointer",
                 }}
               >
-                Tangani
+                Tutup
               </button>
             </div>
           </div>
@@ -347,7 +347,7 @@ export default function DinasClient() {
                   : "text-ink-500 hover:text-cream hover:bg-ground/50"
               }`}
             >
-              <Home size={15} /> Home
+              <Home size={15} /> Beranda
             </button>
             <button
               onClick={() => setActiveTab("analitik")}
@@ -367,7 +367,7 @@ export default function DinasClient() {
                   : "text-ink-500 hover:text-cream hover:bg-ground/50"
               }`}
             >
-              <FileText size={15} /> Laporan &amp; Riwayat ({total})
+              <FileText size={15} /> Laporan ({total})
             </button>
             <button
               onClick={() => setActiveTab("profil")}
@@ -377,22 +377,19 @@ export default function DinasClient() {
                   : "text-ink-500 hover:text-cream hover:bg-ground/50"
               }`}
             >
-              <User size={15} /> Profil Akun
+              <User size={15} /> Profil
             </button>
           </div>
         </div>
 
-        {/* ============================================================
-            TAB 1: HOME (Ringkasan, Perlu Penanganan, Peta, Aktivitas Terkini)
-           ============================================================ */}
+        {/* TAB 1: HOME */}
         {activeTab === "home" && (
           <Reveal>
             <div className="space-y-6">
 
-              {/* 🚨 BANNER SINYAL DARURAT SOS — muncul jika ada SOS masuk ke wilayah ini */}
+              {/* BANNER SINYAL DARURAT SOS */}
               {sosDinas.length > 0 && (
                 <div className="relative overflow-hidden rounded-3xl border-2 border-danger bg-danger/10 p-5 shadow-lg shadow-danger/20">
-                  {/* Animated background pulse */}
                   <div className="pointer-events-none absolute inset-0 animate-pulse rounded-3xl bg-danger/5" />
 
                   <div className="relative flex flex-wrap items-start justify-between gap-4">
@@ -401,12 +398,12 @@ export default function DinasClient() {
                         <Siren size={24} />
                       </span>
                       <div>
-                        <p className="text-xs font-bold uppercase tracking-widest text-danger">⚠ Peringatan Darurat Masuk</p>
+                        <p className="text-xs font-bold uppercase tracking-widest text-danger">Sinyal Darurat Masuk</p>
                         <h3 className="font-display text-xl font-extrabold text-danger">
-                          {sosDinas.length} Sinyal SOS Aktif — {sosDinas[0].jenisLabel}
+                          {sosDinas.length} Sinyal Darurat — {sosDinas[0].jenisLabel}
                         </h3>
                         <p className="mt-0.5 text-xs font-medium text-danger/80">
-                          Lokasi GPS terlampir · Respons segera diperlukan
+                          Lokasi darurat terlampir. Segera lakukan penanganan.
                         </p>
                       </div>
                     </div>
@@ -450,36 +447,37 @@ export default function DinasClient() {
                   </div>
                 </div>
               )}
-              {/* 1. RINGKASAN LAPORAN (4 CARDS SEPERTI GAMBAR 2) */}
+
+              {/* 1. RINGKASAN LAPORAN */}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
                 {/* Total Laporan Wilayah */}
                 <div className="rounded-3xl border border-ink-300/40 bg-surface p-5 shadow-[var(--shadow-card)]">
-                  <p className="text-xs font-bold text-ink-500">Total Laporan Wilayah</p>
+                  <p className="text-xs font-bold text-ink-500">Total Laporan</p>
                   <p className="font-display text-3xl font-extrabold text-cream mt-2">{total}</p>
                   <p className="text-xs font-semibold text-brand-600 mt-2">
-                    Auto-routed ke {wilayahInfo?.nama}
+                    Wilayah {wilayahInfo?.nama}
                   </p>
                 </div>
 
                 {/* Prioritas Darurat */}
                 <div className="rounded-3xl border border-danger/30 bg-surface p-5 shadow-[var(--shadow-card)]">
                   <p className="text-xs font-bold text-danger flex items-center gap-1.5">
-                    <Flame size={14} className="text-danger shrink-0" /> Prioritas Darurat (Skor ≥ 9)
+                    <Flame size={14} className="text-danger shrink-0" /> Prioritas Darurat
                   </p>
                   <p className="font-display text-3xl font-extrabold text-danger mt-2">{mendesak}</p>
-                  <p className="text-xs text-ink-500 mt-2">Penanganan &lt; 12 jam</p>
+                  <p className="text-xs text-ink-500 mt-2">Target respons cepat</p>
                 </div>
 
                 {/* Sedang Diproses */}
                 <div className="rounded-3xl border border-warning/30 bg-surface p-5 shadow-[var(--shadow-card)]">
                   <p className="text-xs font-bold text-warning">Sedang Diproses</p>
                   <p className="font-display text-3xl font-extrabold text-warning mt-2">{diproses}</p>
-                  <p className="text-xs text-ink-500 mt-2">Dalam pengerjaan tim</p>
+                  <p className="text-xs text-ink-500 mt-2">Dalam pengerjaan petugas</p>
                 </div>
 
                 {/* Selesai Dituntaskan */}
                 <div className="rounded-3xl border border-success/30 bg-surface p-5 shadow-[var(--shadow-card)]">
-                  <p className="text-xs font-bold text-success">Selesai Dituntaskan</p>
+                  <p className="text-xs font-bold text-success">Selesai</p>
                   <p className="font-display text-3xl font-extrabold text-success mt-2">{selesai}</p>
                   <p className="text-xs font-bold text-success mt-2">
                     {total > 0 ? Math.round((selesai / total) * 100) : 0}% Tingkat Penyelesaian
@@ -489,16 +487,16 @@ export default function DinasClient() {
 
               {/* 2. MIDDLE SECTION: PERLU PENANGANAN & PETA MONITORING */}
               <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr]">
-                {/* 🚨 PERLU PENANGANAN */}
+                {/* PERLU PENANGANAN */}
                 <div className="flex flex-col justify-between rounded-3xl border border-ink-300/40 bg-surface p-6 shadow-[var(--shadow-card)]">
                   <div>
                     <h3 className="font-display text-base font-extrabold text-cream flex items-center gap-2 mb-4">
-                      🚨 PERLU PENANGANAN
+                      Perlu Ditangani
                     </h3>
 
                     {laporanPerluPenanganan.length === 0 ? (
                       <div className="py-8 text-center text-ink-500 text-xs">
-                        Tidak ada laporan aktif yang memerlukan penanganan saat ini.
+                        Tidak ada laporan yang memerlukan penanganan saat ini.
                       </div>
                     ) : (
                       <div className="space-y-3">
@@ -539,14 +537,14 @@ export default function DinasClient() {
                   </div>
                 </div>
 
-                {/* 🗺 PETA MONITORING */}
+                {/* PETA MONITORING */}
                 <div className="rounded-3xl border border-ink-300/40 bg-surface p-6 shadow-[var(--shadow-card)] flex flex-col justify-between">
                   <div>
                     <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
                       <h3 className="font-display text-base font-extrabold text-cream flex items-center gap-2">
-                        🗺 PETA MONITORING
+                        Peta Sebaran Laporan
                       </h3>
-                      {/* Filter Segmented Peta: Semua vs Wilayah Dinas */}
+                      {/* Filter Segmented Peta */}
                       <div className="flex items-center gap-1 rounded-xl bg-ground p-1 border border-ink-300/40 text-xs">
                         <button
                           onClick={() => setMapWilayahFilter("semua")}
@@ -583,24 +581,24 @@ export default function DinasClient() {
                         : `${laporanPerluPenanganan.length} titik aktif (${wilayahInfo?.nama})`}
                     </span>
                     <span className="text-xs text-ink-500 font-medium">
-                      Peta Terfokus
+                      Peta Wilayah
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* 3. AKTIVITAS PENANGANAN TERKINI */}
+              {/* 3. AKTIVITAS TERKINI */}
               <div className="rounded-3xl border border-ink-300/40 bg-surface p-6 shadow-[var(--shadow-card)]">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-display text-base font-extrabold text-cream flex items-center gap-2">
-                    AKTIVITAS PENANGANAN TERKINI
+                    Aktivitas Terkini
                   </h3>
-                  <span className="text-xs font-bold text-ink-500">15 Jan 2026</span>
+                  <span className="text-xs font-bold text-ink-500">Hari ini</span>
                 </div>
 
                 {logHariIni.length === 0 ? (
                   <div className="py-8 text-center text-ink-500 text-xs">
-                    Belum ada log aktivitas penanganan terkini hari ini.
+                    Belum ada aktivitas hari ini.
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -616,7 +614,7 @@ export default function DinasClient() {
                           <p className="font-bold text-cream text-sm">{log.aktor}</p>
                           <p className="mt-0.5 text-xs text-ink-700 font-medium">{log.catatan}</p>
                           <span className="mt-1.5 inline-block font-mono text-[10px] font-bold text-ink-500">
-                            ID Laporan: {log.laporanId}
+                            ID: {log.laporanId}
                           </span>
                         </div>
                       </div>
@@ -638,10 +636,10 @@ export default function DinasClient() {
               <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-ink-300/40 bg-surface p-5 shadow-sm">
                 <div>
                   <h3 className="font-display text-sm font-extrabold text-cream flex items-center gap-2">
-                    <Filter size={16} className="text-brand-600" /> Filter Rentang Waktu Analitik
+                    <Filter size={16} className="text-brand-600" /> Rentang Waktu
                   </h3>
                   <p className="text-xs text-ink-500 mt-0.5">
-                    Tampilkan visualisasi statistik &amp; grafik berdasarkan periode waktu terpilih
+                    Pilih periode untuk melihat data statistik
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-1.5 rounded-2xl bg-ground p-1.5 border border-ink-300/40 text-xs">
@@ -693,7 +691,7 @@ export default function DinasClient() {
                         : "text-ink-500 hover:text-cream"
                     }`}
                   >
-                    Semua Waktu
+                    Semua
                   </button>
                 </div>
               </div>
@@ -707,27 +705,27 @@ export default function DinasClient() {
                 return (
                   <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                     <div className="rounded-2xl border border-ink-300/40 bg-surface p-5 shadow-sm">
-                      <p className="text-xs font-semibold text-ink-500">Total Laporan Periode</p>
+                      <p className="text-xs font-semibold text-ink-500">Total Laporan</p>
                       <p className="font-display text-3xl font-extrabold text-cream mt-1">{totalA}</p>
-                      <p className="text-[11px] text-brand-600 mt-1 font-medium">Auto-routed ke {wilayahInfo?.nama}</p>
+                      <p className="text-[11px] text-brand-600 mt-1 font-medium">Wilayah {wilayahInfo?.nama}</p>
                     </div>
                     <div className="rounded-2xl border border-danger/30 bg-surface p-5 shadow-sm">
                       <p className="text-xs font-semibold text-danger flex items-center gap-1">
-                        <Flame size={13} /> Prioritas Darurat (Skor ≥ 9)
+                        <Flame size={13} /> Darurat (Skor ≥ 9)
                       </p>
                       <p className="font-display text-3xl font-extrabold text-danger mt-1">{mendesakA}</p>
-                      <p className="text-[11px] text-ink-500 mt-1">Penanganan &lt; 12 jam</p>
+                      <p className="text-[11px] text-ink-500 mt-1">&lt; 12 jam</p>
                     </div>
                     <div className="rounded-2xl border border-warning/30 bg-surface p-5 shadow-sm">
                       <p className="text-xs font-semibold text-warning">Sedang Diproses</p>
                       <p className="font-display text-3xl font-extrabold text-warning mt-1">{diprosesA}</p>
-                      <p className="text-[11px] text-ink-500 mt-1">Dalam pengerjaan tim</p>
+                      <p className="text-[11px] text-ink-500 mt-1">Dalam pengerjaan</p>
                     </div>
                     <div className="rounded-2xl border border-success/30 bg-surface p-5 shadow-sm">
-                      <p className="text-xs font-semibold text-success">Selesai Dituntaskan</p>
+                      <p className="text-xs font-semibold text-success">Selesai</p>
                       <p className="font-display text-3xl font-extrabold text-success mt-1">{selesaiA}</p>
                       <p className="text-[11px] text-success mt-1 font-bold">
-                        {totalA > 0 ? Math.round((selesaiA / totalA) * 100) : 0}% Tingkat Penyelesaian
+                        {totalA > 0 ? Math.round((selesaiA / totalA) * 100) : 0}% Selesai
                       </p>
                     </div>
                   </div>
@@ -739,18 +737,18 @@ export default function DinasClient() {
                 {/* 📊 CHART BATANG (BAR CHART) */}
                 <div className="rounded-3xl border border-ink-300/40 bg-surface p-6 shadow-sm">
                   <h3 className="font-display text-lg font-extrabold text-cream flex items-center gap-2 mb-1">
-                    <BarChart3 size={18} className="text-brand-600" /> Chart Batang — Urgensi per Kategori
+                    <BarChart3 size={18} className="text-brand-600" /> Prioritas per Kategori
                   </h3>
-                  <p className="text-xs text-ink-500 mb-4">Grafik batang stacked tingkat prioritas laporan per kategori</p>
+                  <p className="text-xs text-ink-500 mb-4">Tingkat prioritas laporan di setiap kategori</p>
                   <ChartBox def={{ kind: "barKatPrio" }} height={280} />
                 </div>
 
                 {/* 🍕 CHART PIE (PIE/DOUGHNUT CHART) */}
                 <div className="rounded-3xl border border-ink-300/40 bg-surface p-6 shadow-sm">
                   <h3 className="font-display text-lg font-extrabold text-cream flex items-center gap-2 mb-1">
-                    <Layers size={18} className="text-brand-600" /> Chart Pie — Distribusi Kategori
+                    <Layers size={18} className="text-brand-600" /> Distribusi Kategori
                   </h3>
-                  <p className="text-xs text-ink-500 mb-4">Proporsi persentase laporan per kategori di {wilayahInfo?.nama}</p>
+                  <p className="text-xs text-ink-500 mb-4">Persentase laporan per kategori di {wilayahInfo?.nama}</p>
                   <ChartBox
                     def={{
                       kind: "doughnut",
@@ -768,9 +766,9 @@ export default function DinasClient() {
                 {/* Visual Category Breakdown Progress Bars */}
                 <div className="rounded-3xl border border-ink-300/40 bg-surface p-6 shadow-sm">
                   <h3 className="font-display text-lg font-extrabold text-cream flex items-center gap-2 mb-1">
-                    <Layers size={18} className="text-brand-600" /> Persentase Distribusi Kategori (Visual)
+                    <Layers size={18} className="text-brand-600" /> Rincian Kategori
                   </h3>
-                  <p className="text-xs text-ink-500 mb-6">Detail volume &amp; rincian persentase per kategori</p>
+                  <p className="text-xs text-ink-500 mb-6">Jumlah dan persentase per kategori</p>
 
                   <div className="space-y-4">
                     {KATEGORI.map((kat) => {
@@ -801,9 +799,9 @@ export default function DinasClient() {
                 {/* Visual Bar Chart: Tren Bulanan Progress Bars */}
                 <div className="rounded-3xl border border-ink-300/40 bg-surface p-6 shadow-sm">
                   <h3 className="font-display text-lg font-extrabold text-cream flex items-center gap-2 mb-1">
-                    <TrendingUp size={18} className="text-brand-600" /> Volume Penanganan Per Bulan (Visual)
+                    <TrendingUp size={18} className="text-brand-600" /> Tren Bulanan
                   </h3>
-                  <p className="text-xs text-ink-500 mb-6">Perkembangan volume penanganan 6 bulan terakhir</p>
+                  <p className="text-xs text-ink-500 mb-6">Data penanganan 6 bulan terakhir</p>
 
                   <div className="space-y-4">
                     {TREN_BULANAN.labels.map((bulan, idx) => {
@@ -844,21 +842,21 @@ export default function DinasClient() {
                 </div>
               </div>
 
-              {/* TREN BULANAN LINE CHART & RADAR AI */}
+              {/* TREN BULANAN LINE CHART & RADAR */}
               <div className="grid gap-6 md:grid-cols-2">
                 <div className="rounded-3xl border border-ink-300/40 bg-surface p-6 shadow-sm">
                   <h3 className="font-display text-lg font-extrabold text-cream flex items-center gap-2 mb-1">
-                    <TrendingUp size={18} className="text-brand-600" /> Grafik Tren Line Chart — Laporan Masuk vs Selesai
+                    <TrendingUp size={18} className="text-brand-600" /> Grafik Laporan Masuk vs Selesai
                   </h3>
-                  <p className="text-xs text-ink-500 mb-4">Perkembangan tren volume penanganan 6 bulan terakhir</p>
+                  <p className="text-xs text-ink-500 mb-4">Tren penanganan 6 bulan terakhir</p>
                   <ChartBox def={{ kind: "tren" }} height={260} />
                 </div>
 
                 <div className="rounded-3xl border border-ink-300/40 bg-surface p-6 shadow-sm">
                   <h3 className="font-display text-lg font-extrabold text-cream flex items-center gap-2 mb-1">
-                    <Sparkles size={18} className="text-brand-600" /> Radar Evaluasi Multi-Agent AI
+                    <Sparkles size={18} className="text-brand-600" /> Evaluasi Laporan
                   </h3>
-                  <p className="text-xs text-ink-500 mb-4">Skor rata-rata performa &amp; kelengkapan laporan</p>
+                  <p className="text-xs text-ink-500 mb-4">Rata-rata kelengkapan dan akurasi laporan</p>
                   <ChartBox def={{ kind: "radar" }} height={260} />
                 </div>
               </div>
@@ -885,7 +883,7 @@ export default function DinasClient() {
                           : "text-ink-500 hover:text-cream"
                       }`}
                     >
-                      Semua Laporan Wilayah ({liveLaporan.length})
+                      Semua ({liveLaporan.length})
                     </button>
                     <button
                       onClick={() => setSubTabLaporan("riwayat")}
@@ -895,7 +893,7 @@ export default function DinasClient() {
                           : "text-ink-500 hover:text-cream"
                       }`}
                     >
-                      Riwayat Selesai ({selesai})
+                      Selesai ({selesai})
                     </button>
                   </div>
 
@@ -906,7 +904,7 @@ export default function DinasClient() {
                       <input
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Cari ID / judul / lokasi…"
+                        placeholder="Cari laporan atau lokasi..."
                         className="h-9.5 rounded-xl border border-ink-300/60 bg-ground pl-8 pr-3 text-xs text-cream placeholder-ink-500 focus:border-brand-600 focus:outline-none"
                       />
                     </div>
@@ -944,18 +942,18 @@ export default function DinasClient() {
                   <table className="w-full min-w-[650px] text-sm">
                     <thead>
                       <tr className="border-b border-ink-300/40 text-left text-xs font-bold uppercase tracking-wider text-ink-500">
-                        <th className="pb-3 pr-3">ID &amp; Judul Laporan</th>
+                        <th className="pb-3 pr-3">Laporan</th>
                         <th className="pb-3 pr-3">Kategori</th>
-                        <th className="pb-3 pr-3">Prioritas AI</th>
+                        <th className="pb-3 pr-3">Prioritas</th>
                         <th className="pb-3 pr-3">Status</th>
-                        <th className="pb-3 text-right">Tindakan</th>
+                        <th className="pb-3 text-right">Aksi</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-ink-300/20">
                       {filteredLaporan.length === 0 && (
                         <tr>
                           <td colSpan={5} className="py-10 text-center text-ink-500">
-                            Tidak ada laporan yang sesuai dengan kriteria filter.
+                            Tidak ada laporan yang sesuai.
                           </td>
                         </tr>
                       )}
@@ -1011,7 +1009,7 @@ export default function DinasClient() {
                                 onClick={() => setSelectedLaporan(l)}
                                 className="rounded-xl border border-brand-600/40 bg-brand-50 px-3.5 py-1.5 text-xs font-bold text-brand-700 hover:bg-brand-600 hover:text-white transition-all"
                               >
-                                Detail &amp; Respon
+                                Detail
                               </button>
                             </td>
                           </tr>
@@ -1063,14 +1061,14 @@ export default function DinasClient() {
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="rounded-2xl border border-ink-300/40 bg-ground/50 p-4">
                     <p className="flex items-center gap-1.5 text-xs font-semibold text-ink-500">
-                      <MapPin size={14} className="text-brand-600" /> Lokasi Laporan
+                      <MapPin size={14} className="text-brand-600" /> Lokasi
                     </p>
                     <p className="mt-1 text-sm font-bold text-cream">{selectedLaporan.lokasi.alamat}</p>
                   </div>
 
                   <div className="rounded-2xl border border-ink-300/40 bg-ground/50 p-4">
                     <p className="flex items-center gap-1.5 text-xs font-semibold text-ink-500">
-                      <User size={14} className="text-brand-600" /> Identitas Pelapor
+                      <User size={14} className="text-brand-600" /> Pelapor
                     </p>
                     <p className="mt-1 text-sm font-bold text-cream">{selectedLaporan.pelapor}</p>
                     <p className="mt-0.5 text-xs text-ink-500">Waktu: {new Date(selectedLaporan.waktu).toLocaleString("id-ID")}</p>
@@ -1080,9 +1078,9 @@ export default function DinasClient() {
                 {/* Foto Bukti Laporan Warga */}
                 <div className="rounded-2xl border border-ink-300/40 bg-ground/50 p-4">
                   <p className="mb-2.5 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-ink-500">
-                    <Camera size={14} className="text-brand-600" /> Foto Laporan Kerusakan Awal (Pelapor/Warga)
+                    <Camera size={14} className="text-brand-600" /> Foto Laporan Warga
                     <span className="ml-auto font-normal normal-case text-ink-400">
-                      {getFotoUrls(selectedLaporan).length} foto terlampir
+                      {getFotoUrls(selectedLaporan).length} foto
                     </span>
                   </p>
                   <div className="flex flex-wrap items-center gap-2">
@@ -1111,10 +1109,10 @@ export default function DinasClient() {
                   <div className="rounded-2xl border border-brand-600/40 bg-brand-600/10 p-4">
                     <div className="flex items-center justify-between mb-2">
                       <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-brand-500">
-                        <CheckCircle2 size={15} /> Foto Bukti Hasil Penanganan (Petugas Lapangan)
+                        <CheckCircle2 size={15} /> Foto Bukti Penanganan
                       </p>
                       <span className="text-[11px] font-semibold text-brand-600 bg-brand-50/80 dark:bg-brand-900/40 px-2 py-0.5 rounded-full border border-brand-600/30">
-                        Siap Diverifikasi Dinas
+                        Perlu diverifikasi
                       </span>
                     </div>
 
@@ -1140,11 +1138,11 @@ export default function DinasClient() {
 
                     {selectedLaporan.buktiPetugas.catatan && (
                       <div className="rounded-xl bg-surface/80 p-3 text-xs border border-brand-600/20">
-                        <p className="font-bold text-brand-600">Catatan Petugas ({selectedLaporan.buktiPetugas.petugas || "Petugas Lapangan"}):</p>
+                        <p className="font-bold text-brand-600">Catatan {selectedLaporan.buktiPetugas.petugas || "Petugas"}:</p>
                         <p className="mt-0.5 text-cream">{selectedLaporan.buktiPetugas.catatan}</p>
                         {selectedLaporan.buktiPetugas.waktu && (
                           <p className="mt-1 text-[10px] text-ink-500">
-                            Waktu Pengiriman Bukti: {new Date(selectedLaporan.buktiPetugas.waktu).toLocaleString("id-ID")}
+                            Waktu kirim: {new Date(selectedLaporan.buktiPetugas.waktu).toLocaleString("id-ID")}
                           </p>
                         )}
                       </div>
@@ -1155,17 +1153,17 @@ export default function DinasClient() {
                 {/* AI Priority & SLA */}
                 <div className="rounded-2xl border border-brand-600/30 bg-gradient-to-br from-brand-600/10 to-transparent p-5">
                   <h4 className="flex items-center gap-2 font-display text-sm font-extrabold text-cream">
-                    <Sparkles size={16} className="text-brand-600" /> AI Urgensi &amp; Target SLA
+                    <Sparkles size={16} className="text-brand-600" /> Prioritas &amp; Target Waktu
                   </h4>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
                     <div>
-                      <p className="text-xs text-ink-500">Skor Urgensi AI</p>
+                      <p className="text-xs text-ink-500">Skor Prioritas</p>
                       <p className="mt-0.5 font-display text-lg font-extrabold" style={{ color: priorityColor(selectedLaporan.ai.priorityScore) }}>
                         {selectedLaporan.ai.priorityScore} / 10 · {priorityLabel(selectedLaporan.ai.priorityScore)}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-ink-500">Estimasi Penanganan (SLA)</p>
+                      <p className="text-xs text-ink-500">Target Penanganan</p>
                       <p className="mt-0.5 font-display text-lg font-extrabold text-cream">{selectedLaporan.sla}</p>
                     </div>
                   </div>
@@ -1176,7 +1174,7 @@ export default function DinasClient() {
 
                 {/* Tindakan Status Dinas */}
                 <div className="rounded-2xl border border-ink-300/40 bg-ground/50 p-5 space-y-3">
-                  <h4 className="font-display text-sm font-extrabold text-cream">Tindakan &amp; Verifikasi Dinas</h4>
+                  <h4 className="font-display text-sm font-extrabold text-cream">Tindakan</h4>
                   <div className="grid gap-2 sm:grid-cols-2">
                     {selectedLaporan.status === "reported" && (
                       <>
@@ -1184,13 +1182,13 @@ export default function DinasClient() {
                           onClick={() => handleUpdateStatus(selectedLaporan.id, "assigned")}
                           className="flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-brand-700 transition-colors shadow-md"
                         >
-                          <CheckSquare size={14} /> Tinjau &amp; Teruskan ke Petugas Lapangan
+                          <CheckSquare size={14} /> Teruskan ke Petugas
                         </button>
                         <button
                           onClick={() => handleUpdateStatus(selectedLaporan.id, "verified")}
                           className="flex items-center justify-center gap-2 rounded-xl border border-brand-600/50 bg-surface px-4 py-2.5 text-xs font-bold text-cream hover:bg-brand-50 transition-colors"
                         >
-                          <CheckCircle2 size={14} /> Verifikasi Laporan Masuk
+                          <CheckCircle2 size={14} /> Verifikasi Laporan
                         </button>
                       </>
                     )}
@@ -1200,7 +1198,7 @@ export default function DinasClient() {
                         onClick={() => handleUpdateStatus(selectedLaporan.id, "in_progress")}
                         className="col-span-2 flex items-center justify-center gap-2 rounded-xl bg-warning px-4 py-2.5 text-xs font-bold text-white hover:opacity-90 transition-opacity shadow-md"
                       >
-                        <TrendingUp size={14} /> Instruksikan Petugas Mulai Penanganan
+                        <TrendingUp size={14} /> Mulai Penanganan
                       </button>
                     )}
 
@@ -1212,14 +1210,14 @@ export default function DinasClient() {
                               onClick={() => handleUpdateStatus(selectedLaporan.id, "resolved")}
                               className="flex w-full items-center justify-center gap-2 rounded-xl bg-success px-5 py-3 text-sm font-bold text-white hover:bg-success-hi transition-colors shadow-lg"
                             >
-                              <CheckCircle2 size={16} /> ✓ Setujui Foto Bukti &amp; Selesaikan Laporan
+                              <CheckCircle2 size={16} /> Setujui &amp; Selesaikan
                             </button>
 
                             <button
                               onClick={() => setRevisionModalLaporan(selectedLaporan)}
                               className="flex w-full items-center justify-center gap-2 rounded-xl border border-amber-500/50 bg-amber-500/15 px-4 py-2.5 text-xs font-bold text-amber-400 hover:bg-amber-500/25 transition-colors"
                             >
-                              <AlertCircle size={15} /> ⚠️ Tolak &amp; Minta Perbaikan Ulang ke Petugas
+                              <AlertCircle size={15} /> Minta Perbaikan ke Petugas
                             </button>
                           </>
                         ) : (
@@ -1228,11 +1226,11 @@ export default function DinasClient() {
                               onClick={() => handleUpdateStatus(selectedLaporan.id, "resolved")}
                               className="flex w-full items-center justify-center gap-2 rounded-xl bg-success px-5 py-3 text-sm font-bold text-white hover:bg-success-hi transition-colors shadow-lg"
                             >
-                              <CheckCircle2 size={16} /> ✓ Konfirmasi Selesai &amp; Terverifikasi
+                              <CheckCircle2 size={16} /> Tandai Selesai
                             </button>
 
                             <div className="rounded-xl border border-warning/30 bg-warning/10 p-2 text-center text-xs text-warning">
-                              <span>Petugas sedang dalam proses penanganan di lapangan. Dinas dapat langsung memverifikasi selesai atau memantau foto bukti live.</span>
+                              <span>Petugas sedang menangani laporan di lapangan.</span>
                             </div>
                           </>
                         )}
@@ -1241,7 +1239,7 @@ export default function DinasClient() {
 
                     {selectedLaporan.status === "resolved" && (
                       <div className="col-span-2 rounded-xl border border-success/30 bg-success-bg/20 p-3 text-center text-xs font-bold text-success flex items-center justify-center gap-1.5">
-                        <CheckCircle2 size={16} /> Penanganan Telah Tuntas &amp; Terverifikasi oleh Dinas
+                        <CheckCircle2 size={16} /> Laporan telah selesai dan terverifikasi
                       </div>
                     )}
                   </div>
@@ -1270,7 +1268,7 @@ export default function DinasClient() {
             <div className="relative max-h-[90vh] max-w-4xl overflow-hidden rounded-2xl border border-white/20 bg-surface p-2 shadow-2xl">
               <img
                 src={lightboxFoto}
-                alt="Pratinjau foto bukti"
+                alt="Foto bukti"
                 className="max-h-[82vh] w-auto rounded-xl object-contain"
               />
               <button
@@ -1287,16 +1285,16 @@ export default function DinasClient() {
           <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm animate-fade-in">
             <div className="w-full max-w-md overflow-hidden rounded-2xl border border-amber-500/40 bg-surface p-6 shadow-2xl">
               <h3 className="flex items-center gap-2 font-display text-base font-extrabold text-amber-400">
-                <AlertCircle size={18} /> Minta Perbaikan Ulang ke Petugas
+                <AlertCircle size={18} /> Minta Perbaikan ke Petugas
               </h3>
               <p className="mt-2 text-xs text-ink-400 leading-relaxed">
-                Tuliskan catatan kekurangan atau instruksi perbaikan untuk Petugas Lapangan mengenai laporan <strong>{revisionModalLaporan.id}</strong>.
+                Tulis catatan perbaikan untuk petugas terkait laporan <strong>{revisionModalLaporan.id}</strong>.
               </p>
 
               <textarea
                 value={catatanRevisiText}
                 onChange={(e) => setCatatanRevisiText(e.target.value)}
-                placeholder="Contoh: Foto bukti kurang jelas / Pengerjaan pembersihan drainase belum tuntas..."
+                placeholder="Contoh: Foto bukti kurang jelas atau pekerjaan belum tuntas..."
                 className="mt-4 h-28 w-full rounded-xl border border-ink-300/40 bg-ground/80 p-3 text-xs text-cream outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
               />
 
@@ -1322,8 +1320,8 @@ export default function DinasClient() {
                       catatanRevisi: catatanRevisiText.trim(),
                     });
                     tambahNotif({
-                      judul: "Permintaan Revisi Bukti",
-                      pesan: `Dinas meminta perbaikan bukti untuk ${targetId}: "${catatanRevisiText.trim()}".`,
+                      judul: "Permintaan Revisi",
+                      pesan: `Catatan untuk ${targetId}: "${catatanRevisiText.trim()}".`,
                       waktu: "Baru saja",
                       tone: "warning",
                     });
@@ -1335,7 +1333,7 @@ export default function DinasClient() {
                   }}
                   className="rounded-xl bg-amber-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-amber-500 disabled:opacity-50 shadow-md"
                 >
-                  Kirim Catatan Revisi
+                  Kirim Catatan
                 </button>
               </div>
             </div>

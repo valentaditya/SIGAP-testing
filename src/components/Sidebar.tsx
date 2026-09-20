@@ -3,12 +3,12 @@ import { Users, FileText, Activity, UserRound } from "lucide-react";
 
 export type DashboardView = "pengguna" | "laporan" | "log" | "profil";
 
-/* Menu dashboard Admin — Fokus Manajemen User, Manajemen Laporan, Log Keseluruhan Data & Profil */
+/* Menu dashboard Admin */
 const MENU: { id: DashboardView; label: string; icon: any; no: string; desc: string }[] = [
-  { id: "pengguna", label: "Manajemen User", icon: Users, no: "01", desc: "Kelola akun Dinas, Petugas & Warga" },
-  { id: "laporan", label: "Manajemen Laporan", icon: FileText, no: "02", desc: "CRUD Data laporan & infrastruktur" },
-  { id: "log", label: "Log Aktivitas Data", icon: Activity, no: "03", desc: "Riwayat & aktivitas seluruh dinas" },
-  { id: "profil", label: "Profil Admin", icon: UserRound, no: "04", desc: "Lihat & ubah informasi akun" },
+  { id: "pengguna", label: "Pengguna", icon: Users, no: "01", desc: "Kelola akun pengguna" },
+  { id: "laporan", label: "Laporan", icon: FileText, no: "02", desc: "Kelola data laporan" },
+  { id: "log", label: "Log Aktivitas", icon: Activity, no: "03", desc: "Riwayat aktivitas sistem" },
+  { id: "profil", label: "Profil", icon: UserRound, no: "04", desc: "Informasi akun admin" },
 ];
 
 export function Sidebar({
@@ -21,7 +21,7 @@ export function Sidebar({
   return (
     <>
       {/* Mobile Horizontal Tabs (< lg) */}
-      <nav aria-label="Navigasi dashboard mobile" className="lg:hidden sticky top-[var(--nav-h)] z-30 border-b border-ink-300 bg-ground/95 backdrop-blur-md px-3 py-2.5 shadow-sm">
+      <nav aria-label="Navigasi dashboard" className="lg:hidden sticky top-[var(--nav-h)] z-30 border-b border-ink-300 bg-ground/95 backdrop-blur-md px-3 py-2.5 shadow-sm">
         <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
           {MENU.map((s) => {
             const Icon = s.icon;
@@ -46,9 +46,9 @@ export function Sidebar({
       </nav>
 
       {/* Desktop Vertical Sidebar (>= lg) */}
-      <aside aria-label="Navigasi dashboard desktop" className="hidden lg:block border-r border-ink-300 bg-ground">
+      <aside aria-label="Navigasi dashboard" className="hidden lg:block border-r border-ink-300 bg-ground">
         <div className="sticky top-[var(--nav-h)] h-[calc(100vh-var(--nav-h))] overflow-y-auto py-7">
-          <p className="micro-label mb-4 px-6 text-sage font-bold">Admin Portal</p>
+          <p className="micro-label mb-4 px-6 text-sage font-bold">Menu Admin</p>
           <nav className="space-y-1">
             {MENU.map((s) => {
               const Icon = s.icon;
@@ -74,8 +74,8 @@ export function Sidebar({
               );
             })}
           </nav>
-          <p className="micro-label mt-8 px-6 text-sage font-bold">Wilayah Cangkupan</p>
-          <p className="px-6 text-xs text-sage-pale font-medium">Kota Yogyakarta &amp; DIY</p>
+          <p className="micro-label mt-8 px-6 text-sage font-bold">Wilayah Kerja</p>
+          <p className="px-6 text-xs text-sage-pale font-medium">Daerah Istimewa Yogyakarta</p>
         </div>
       </aside>
     </>

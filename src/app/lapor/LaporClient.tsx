@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import dynamic from "next/dynamic";
 import { KATEGORI, priorityLabel, priorityColor, deteksiWilayah, getWilayah, type KategoriId } from "@/lib/data";
 import { Icon } from "@/components/Icon";
@@ -11,7 +12,7 @@ import {
   Upload, X, Cpu, AlertTriangle, Crosshair, Loader2
 } from "lucide-react";
 import { useApp } from "@/lib/store";
-import { bisa } from "@/lib/roles";
+import { bisa, berandaPeran } from "@/lib/roles";
 import { useSearchParams } from "next/navigation";
 import type { AIAnalysisResult } from "@/app/api/analyze-priority/route";
 import { CameraCaptureModal } from "@/components/CameraCaptureModal";
@@ -25,9 +26,9 @@ type Step = 1 | 2 | 3;
 type Phase = "form" | "running" | "done";
 
 const AGENT_STEPS = [
-  { icon: Bot, nama: "Agent 1 — Klasifikasi & Multi-AI Router", desc: "Mengirimkan sampel ke Google Gemini / OpenAI…" },
-  { icon: Network, nama: "Agent 2 — Analisis Visual & Dampak", desc: "Menganalisis gambar & skala bahaya sosial/lokasi…" },
-  { icon: Gauge, nama: "Agent 3 — Penentuan Prioritas & SLA", desc: "Mengevaluasi Skor Urgensi (1–10) & rute dinas…" },
+  { icon: Bot, nama: "Memeriksa data laporan", desc: "Mengecek kelengkapan informasi…" },
+  { icon: Network, nama: "Menganalisis urgensi", desc: "Menghitung tingkat keparahan & dampak…" },
+  { icon: Gauge, nama: "Meneruskan ke dinas terkait", desc: "Menetapkan estimasi waktu penanganan…" },
 ];
 
 function buatNomorTiket() {
@@ -96,7 +97,7 @@ export default function LaporClient() {
   // GPS Auto Detection
   function deteksiLokasiGPS() {
     if (typeof window === "undefined" || !navigator.geolocation) {
-      setLocatingError("Browser Anda tidak mendukung fitur lokasi GPS.");
+      setLocatingError("Browser tidak mendukung deteksi lokasi.");
       return;
     }
 
@@ -118,13 +119,11 @@ export default function LaporClient() {
         setIsLocating(false);
         setPos({ lat: -7.7956, lng: 110.3695 });
         setAlamat("Jl. Malioboro, Kota Yogyakarta (Default)");
-        setLocatingError("Gagal membaca GPS (Izin lokasi belum diberikan). Silakan pilih titik langsung di peta.");
+        setLocatingError("Lokasi tidak dapat dideteksi. Silakan pilih titik langsung di peta.");
       },
       { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
     );
   }
-
-
 
   function removePhoto(index: number) {
     setFotoPreviews((prev) => prev.filter((_, i) => i !== index));
@@ -140,21 +139,10 @@ export default function LaporClient() {
 
     const kData = KATEGORI.find((x) => x.id === kategori)!;
 
-    console.log("%c📤 [SIGAP CLIENT] Mengirim Data Laporan ke Multi-AI Engine...", "color: #0284C7; font-size: 13px; font-weight: bold;");
-    console.log("📌 Data Input:", {
-      kategori: kData.nama,
-      judul,
-      deskripsi,
-      alamat,
-      jumlahFoto: fotoFiles.length,
-      hasFotoBase64: !!fotoPreviews[0],
-    });
-
     // === STEP 1: Upload foto ke Supabase Storage dulu ===
     let storageUrls: string[] = [];
     if (fotoFiles.length > 0) {
       setIsUploadingFoto(true);
-      console.log("%c☁️ [SIGAP CLIENT] Mengupload foto ke Supabase Storage...", "color: #7C3AED; font-size: 13px; font-weight: bold;");
       try {
         const fd = new FormData();
         fd.append("laporanId", nomor);
@@ -166,19 +154,15 @@ export default function LaporClient() {
         if (uploadData.success && uploadData.urls?.length > 0) {
           storageUrls = uploadData.urls;
           setFotoStorageUrls(storageUrls);
-          console.log("%c✅ [SIGAP CLIENT] Foto berhasil diupload ke Supabase Storage!", "color: #0E9F6E; font-size: 13px; font-weight: bold;");
-          console.log("📎 Storage URLs:", storageUrls);
-        } else {
-          console.warn("⚠️ [SIGAP CLIENT] Upload foto gagal, melanjutkan tanpa foto storage.", uploadData);
         }
       } catch (uploadErr) {
-        console.warn("⚠️ [SIGAP CLIENT] Upload foto error:", uploadErr);
+        console.warn("Upload foto error:", uploadErr);
       } finally {
         setIsUploadingFoto(false);
       }
     }
 
-    // === STEP 2: Kirim ke Multi-AI Engine (base64 untuk vision) ===
+    // === STEP 2: Kirim analisis ===
     const aiPromise = fetch("/api/analyze-priority", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -187,31 +171,22 @@ export default function LaporClient() {
         description: deskripsi,
         judul: judul,
         alamat: alamat,
-        imageBase64: fotoPreviews[0] || undefined, // base64 hanya untuk AI vision, tidak disimpan ke DB
+        imageBase64: fotoPreviews[0] || undefined,
       }),
     })
       .then((res) => res.json())
       .then((data) => {
-        const resultData = data.data as AIAnalysisResult;
-        console.log("%c📥 [SIGAP CLIENT] HASIL ANALISIS MULTI-AI BERHASIL DITERIMA!", "color: #0E9F6E; font-size: 14px; font-weight: bold;");
-        console.log("🤖 Model AI Aktif  :", resultData.modelUsed);
-        console.log("⭐ Skor Urgensi    :", resultData.priorityScore, "/ 10");
-        console.log("💥 Severity        :", resultData.severity, "/ 10");
-        console.log("🎯 Confidence      :", (resultData.confidence * 100).toFixed(0) + "%");
-        console.log("⏱️ SLA             :", resultData.sla);
-        console.log("💡 Alasan Analisis  :", resultData.reasoning);
-        console.log("📦 Raw Output Data :", resultData);
-        return resultData;
+        return data.data as AIAnalysisResult;
       })
       .catch((err) => {
-        console.warn("⚠️ [SIGAP CLIENT] Fetch error, menggunakan local fallback...", err);
+        console.warn("Fetch error, fallback:", err);
         return {
-          modelUsed: "Local Heuristic Engine (Fallback)",
+          modelUsed: "Sistem SIGAP",
           priorityScore: 7.5,
           severity: 7.5,
           confidence: 0.85,
-          dampak: "Dianalisis secara otomatis oleh sistem internal SIGAP.",
-          reasoning: "Analisis prioritas dihitung berdasarkan kategori dan bobot laporan.",
+          dampak: "Kondisi memerlukan penanganan di lapangan.",
+          reasoning: "Tingkat penanganan dihitung berdasarkan kategori dan detail laporan.",
           sla: "24 jam",
           isDarurat: false,
         };
@@ -236,7 +211,6 @@ export default function LaporClient() {
 
   function selesaiAnalisis(nomor: string, aiRes: AIAnalysisResult, storageUrls: string[]) {
     const k = KATEGORI.find((x) => x.id === kategori)!;
-    // Gunakan URL Storage permanen jika ada, fallback ke preview base64 (tidak disimpan ke DB)
     const finalFotoUrls = storageUrls.length > 0 ? storageUrls : [];
 
     tambahLaporan({
@@ -256,7 +230,7 @@ export default function LaporClient() {
         severity: aiRes.severity,
         dampak: aiRes.dampak,
         priorityScore: aiRes.priorityScore,
-        modelUsed: aiRes.modelUsed,  // simpan nama model AI yang aktif
+        modelUsed: aiRes.modelUsed,
       },
       sla: aiRes.sla,
       wilayah: deteksiWilayah(alamat),
@@ -266,7 +240,7 @@ export default function LaporClient() {
     if (dapatPoin) tambahPoin(25);
     tambahNotif({
       judul: "Laporan Terkirim",
-      pesan: `${nomor} — ${judul}. Analyzed by ${aiRes.modelUsed}.${dapatPoin ? " +25 poin" : ""}`,
+      pesan: `${nomor} — ${judul}.${dapatPoin ? " +25 poin" : ""}`,
       waktu: "Baru saja",
       tone: "success",
     });
@@ -279,10 +253,23 @@ export default function LaporClient() {
 
   return (
     <main className="mx-auto max-w-[860px] px-3.5 sm:px-6 py-6 sm:py-12">
+      {/* Tombol Kembali ke Beranda / Dashboard seperti di Login */}
+      <div className="mb-2 sm:mb-4">
+        <Link
+          href={user ? berandaPeran(user.role) : "/"}
+          className="group relative -ml-1 inline-flex min-h-[44px] w-fit items-center gap-2 self-start px-1 no-underline"
+        >
+          <ArrowLeft size={15} className="text-sage transition-transform group-hover:-translate-x-0.5" aria-hidden="true" />
+          <span className="micro-label text-sage transition-colors group-hover:text-cream-hi">
+            Kembali ke Beranda
+          </span>
+        </Link>
+      </div>
+
       <div className="mb-6 sm:mb-8 text-center">
-        <Chip tone="brand" className="mb-4"><FileText size={13} /> Form Pelaporan Multi-AI</Chip>
-        <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-extrabold">Laporkan Masalah di Sekitarmu</h1>
-        <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-ink-500">Unggah foto, tentukan lokasi GPS & detail — Multi-AI Agent yang menganalisis prioritasnya.</p>
+        <Chip tone="brand" className="mb-4"><FileText size={13} /> Buat Laporan</Chip>
+        <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-extrabold">Laporkan Masalah Lingkungan</h1>
+        <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-ink-500">Ambil foto, tentukan lokasi, dan jelaskan kondisi kerusakan di lapangan.</p>
       </div>
 
       {phase === "form" && (
@@ -299,7 +286,7 @@ export default function LaporClient() {
                   {n}
                 </span>
                 <span className={`hidden text-sm font-semibold sm:block ${step >= n ? "text-ink-900" : "text-ink-500"}`}>
-                  {n === 1 ? "Kategori & Foto" : n === 2 ? "Detail & Lokasi" : "Tinjau"}
+                  {n === 1 ? "Kategori & Foto" : n === 2 ? "Lokasi & Detail" : "Tinjau"}
                 </span>
                 {n < 3 && <span className={`h-0.5 flex-1 rounded ${step > n ? "bg-brand-600" : "bg-ink-300"}`} />}
               </li>
@@ -335,11 +322,11 @@ export default function LaporClient() {
                 </div>
               </div>
 
-              {/* Real Camera Capture & Image Uploader */}
+              {/* Camera Capture */}
               <div>
                 <label className="mb-2 flex items-center justify-between text-sm font-semibold">
                   <span className="flex items-center gap-1.5">
-                    <Camera size={16} className="text-brand-600" /> Foto Kejadian Real-Time Kamera
+                    <Camera size={16} className="text-brand-600" /> Foto Kejadian
                   </span>
                   <span className="text-xs text-ink-500">{fotoPreviews.length} / 5 foto</span>
                 </label>
@@ -354,17 +341,13 @@ export default function LaporClient() {
                     >
                       <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white shadow-md group-hover:scale-105 transition-transform">
                         <Camera size={24} />
-                        <span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-red-500 border-2 border-white"></span>
-                        </span>
                       </div>
                       <div className="text-left">
                         <p className="font-display text-base font-bold text-cream group-hover:text-brand-400 transition-colors">
-                          Ambil Foto dari Kamera Langsung
+                          Ambil Foto
                         </p>
                         <p className="text-xs text-ink-400 mt-0.5">
-                          Ambil snapshot terkini secara otomatis dengan watermark otentikasi lokasi & waktu.
+                          Ambil foto langsung di lokasi kejadian.
                         </p>
                       </div>
                     </button>
@@ -377,10 +360,7 @@ export default function LaporClient() {
                     {fotoPreviews.map((src, idx) => (
                       <div key={idx} className="relative group aspect-square rounded-xl overflow-hidden border border-ink-300 bg-black/5">
                         {/* eslint-disable-next-html-loader */}
-                        <img src={src} alt={`Kamera ${idx + 1}`} className="h-full w-full object-cover" />
-                        <span className="absolute bottom-1 left-1 rounded bg-black/70 px-1.5 py-0.5 text-[9px] font-bold text-sky-400 backdrop-blur-xs">
-                          LIVE
-                        </span>
+                        <img src={src} alt={`Foto ${idx + 1}`} className="h-full w-full object-cover" />
                         <button
                           type="button"
                           onClick={() => removePhoto(idx)}
@@ -393,14 +373,6 @@ export default function LaporClient() {
                     ))}
                   </div>
                 )}
-
-                {/* Strict Real-Time Notice */}
-                <div className="flex items-center gap-2 rounded-xl border border-sky-500/30 bg-sky-500/10 p-3 text-xs font-semibold text-sky-400">
-                  <span className="flex h-2 w-2 rounded-full bg-sky-400 animate-pulse shrink-0" />
-                  <span>
-                    <strong>Strict Real-Time Capture:</strong> Hanya menerima foto langsung dari kamera (Upload file galeri dinonaktifkan demi otentisitas laporan).
-                  </span>
-                </div>
               </div>
 
               {formError && step === 1 && (
@@ -410,12 +382,18 @@ export default function LaporClient() {
                 </div>
               )}
 
-              <div className="flex justify-end">
+              <div className="flex items-center justify-between">
+                <Link
+                  href={user ? berandaPeran(user.role) : "/"}
+                  className="inline-flex items-center gap-2 rounded-xl border border-ink-300 px-5 py-2.5 text-sm font-semibold text-ink-700 hover:border-brand-600 hover:text-cream no-underline transition-colors"
+                >
+                  <ArrowLeft size={16} /> Kembali
+                </Link>
                 <button
                   type="button"
                   onClick={() => {
                     if (fotoPreviews.length === 0) {
-                      setFormError("Wajib mengunggah minimal 1 foto bukti laporan!");
+                      setFormError("Ambil minimal 1 foto kejadian.");
                       return;
                     }
                     setFormError(null);
@@ -436,16 +414,16 @@ export default function LaporClient() {
                 <label className="mb-2 block text-sm font-semibold">Judul Laporan <span className="text-red-500">*</span></label>
                 <input
                   className={input}
-                  placeholder="cth: Pohon tumbang menimpa kabel jalan raya"
+                  placeholder="cth: Jalan berlubang di dekat simpang empat"
                   value={judul}
                   onChange={(e) => { setJudul(e.target.value); if (formError) setFormError(null); }}
                 />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-semibold">Deskripsi Detail <span className="text-red-500">*</span></label>
+                <label className="mb-2 block text-sm font-semibold">Deskripsi <span className="text-red-500">*</span></label>
                 <textarea
                   className={`${input} min-h-[120px] resize-y`}
-                  placeholder="Jelaskan kondisi lokasi, potensi bahaya, seberapa parah kejadian ini..."
+                  placeholder="Jelaskan kondisi kerusakan dan dampaknya bagi warga sekitar..."
                   value={deskripsi}
                   onChange={(e) => { setDeskripsi(e.target.value); if (formError) setFormError(null); }}
                 />
@@ -463,11 +441,11 @@ export default function LaporClient() {
                   >
                     {isLocating ? (
                       <>
-                        <Loader2 size={13} className="animate-spin text-brand-600" /> Mendeteksi GPS...
+                        <Loader2 size={13} className="animate-spin text-brand-600" /> Mencari lokasi...
                       </>
                     ) : (
                       <>
-                        <Crosshair size={13} className="text-brand-600" /> Deteksi Lokasi Otomatis (GPS)
+                        <Crosshair size={13} className="text-brand-600" /> Gunakan Lokasi Saat Ini
                       </>
                     )}
                   </button>
@@ -487,7 +465,7 @@ export default function LaporClient() {
                 />
                 <input
                   className={`${input} mt-3`}
-                  placeholder="Atau ketik alamat lengkap (cth: Jl. Malioboro No. 12, Kota Yogyakarta)..."
+                  placeholder="Ketik alamat lengkap atau patokan lokasi..."
                   value={alamat}
                   onChange={(e) => { setAlamat(e.target.value); if (formError) setFormError(null); }}
                 />
@@ -512,15 +490,15 @@ export default function LaporClient() {
                   type="button"
                   onClick={() => {
                     if (!judul.trim() || judul.trim().length < 5) {
-                      setFormError("Judul laporan wajib diisi (minimal 5 karakter)!");
+                      setFormError("Judul minimal 5 karakter.");
                       return;
                     }
                     if (!deskripsi.trim() || deskripsi.trim().length < 10) {
-                      setFormError("Deskripsi detail wajib diisi (minimal 10 karakter)!");
+                      setFormError("Deskripsi minimal 10 karakter.");
                       return;
                     }
                     if (!alamat.trim()) {
-                      setFormError("Alamat / lokasi kejadian wajib diisi!");
+                      setFormError("Tentukan lokasi kejadian.");
                       return;
                     }
                     setFormError(null);
@@ -538,16 +516,16 @@ export default function LaporClient() {
           {step === 3 && (
             <div className="space-y-6">
               <div className="rounded-xl bg-brand-50 p-5 border border-brand-600/20">
-                <h3 className="mb-3 font-display font-bold text-brand-900">Ringkasan Laporan Sebelum Analisis AI</h3>
+                <h3 className="mb-3 font-display font-bold text-brand-900">Ringkasan Laporan</h3>
                 <dl className="space-y-2 text-sm">
                   <div className="flex gap-2"><dt className="w-28 shrink-0 text-ink-500">Kategori</dt><dd className="font-semibold">{kat.nama}</dd></div>
                   <div className="flex gap-2"><dt className="w-28 shrink-0 text-ink-500">Lokasi</dt><dd className="font-semibold">{alamat}</dd></div>
                   <div className="flex gap-2"><dt className="w-28 shrink-0 text-ink-500">Judul</dt><dd className="font-semibold">{judul}</dd></div>
                   <div className="flex gap-2"><dt className="w-28 shrink-0 text-ink-500">Deskripsi</dt><dd className="text-ink-700">{deskripsi}</dd></div>
                   <div className="flex gap-2">
-                    <dt className="w-28 shrink-0 text-ink-500">Foto Bukti</dt>
+                    <dt className="w-28 shrink-0 text-ink-500">Foto</dt>
                     <dd className="font-semibold flex items-center gap-2">
-                      {fotoPreviews.length} Foto Terlampir
+                      {fotoPreviews.length} foto
                       {fotoPreviews.length > 0 && (
                         <div className="flex gap-1">
                           {fotoPreviews.map((src, i) => (
@@ -575,8 +553,8 @@ export default function LaporClient() {
                     {anonim ? <EyeOff size={18} /> : <UserRound size={18} />}
                   </span>
                   <span className="text-left">
-                    <span className="block text-sm font-bold text-cream">Lapor sebagai anonim</span>
-                    <span className="block text-xs text-ink-500">Identitasmu tidak ditampilkan ke publik (untuk laporan sensitif)</span>
+                    <span className="block text-sm font-bold text-cream">Kirim sebagai anonim</span>
+                    <span className="block text-xs text-ink-500">Nama Anda tidak akan ditampilkan ke publik.</span>
                   </span>
                 </span>
                 <span className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${anonim ? "bg-brand-600" : "bg-ink-300"}`}>
@@ -597,7 +575,7 @@ export default function LaporClient() {
                   onClick={submit}
                   className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-brand-700 shadow-md"
                 >
-                  <Sparkles size={18} /> Kirim & Analisis Multi-AI
+                  <Sparkles size={18} /> Kirim Laporan
                 </button>
               </div>
             </div>
@@ -605,11 +583,11 @@ export default function LaporClient() {
         </div>
       )}
 
-      {/* RUNNING / AGENT PROCESSING PHASE */}
+      {/* PROCESSING PHASE */}
       {phase === "running" && (
         <div className="rounded-2xl bg-surface p-6 shadow-[var(--shadow-card)] md:p-8">
-          <h2 className="mb-1 text-center font-display text-2xl font-extrabold">Multi-AI Agent Menganalisis…</h2>
-          <p className="mb-8 text-center text-sm text-ink-500">Laporan & gambar diproses oleh 3 agen AI dengan sistem fallback otomatis.</p>
+          <h2 className="mb-1 text-center font-display text-2xl font-extrabold">Memproses Laporan…</h2>
+          <p className="mb-8 text-center text-sm text-ink-500">Laporan dan foto sedang diverifikasi dan diteruskan ke dinas terkait.</p>
           <div className="mx-auto max-w-[520px] space-y-3">
             {/* Upload foto indicator */}
             {fotoFiles.length > 0 && (
@@ -626,12 +604,12 @@ export default function LaporClient() {
                   {fotoStorageUrls.length > 0 ? <CheckCircle2 size={20} /> : <Upload size={20} className={isUploadingFoto ? "animate-bounce" : ""} />}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-cream">Upload Foto ke Supabase Storage</p>
+                  <p className="font-semibold text-cream">Menyimpan Foto</p>
                   <p className="text-xs text-ink-500">
                     {isUploadingFoto
-                      ? `Mengupload ${fotoFiles.length} foto…`
+                      ? `Mengunggah ${fotoFiles.length} foto…`
                       : fotoStorageUrls.length > 0
-                      ? `${fotoStorageUrls.length} foto tersimpan permanen ✓`
+                      ? `${fotoStorageUrls.length} foto berhasil disimpan ✓`
                       : "Menunggu…"}
                   </p>
                 </div>
@@ -670,28 +648,23 @@ export default function LaporClient() {
         <div className="rounded-2xl bg-surface p-6 shadow-[var(--shadow-card)] md:p-8">
           <div className="mb-6 text-center">
             <span className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full bg-success-bg text-success"><CheckCircle2 size={34} /></span>
-            <h2 className="font-display text-2xl font-extrabold">Laporan Terkirim & Teranalisis Multi-AI</h2>
+            <h2 className="font-display text-2xl font-extrabold">Laporan Berhasil Dikirim</h2>
             <p className="mt-1 inline-flex items-center gap-1.5 text-sm text-ink-500">
               <Ticket size={15} /> Nomor tiket: <span className="font-mono font-bold text-ink-900">{tiket}</span>
             </p>
           </div>
 
-          {/* AI MODEL BADGE & ROUTER INFO */}
+          {/* AI SUMMARY NOTE */}
           <div className="mb-6 rounded-xl border border-brand-600/30 bg-brand-50/60 p-4">
-            <div className="flex items-center justify-between gap-3 mb-2">
-              <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-brand-700">
-                <Cpu size={15} /> Model AI Aktif
-              </span>
-              <span className="rounded-full bg-brand-600 px-3 py-1 text-xs font-bold text-white shadow-sm">
-                {aiResult.modelUsed}
-              </span>
-            </div>
+            <p className="text-xs font-bold uppercase tracking-wider text-brand-700 mb-1">
+              Catatan Penanganan
+            </p>
             <p className="text-sm text-ink-700 leading-relaxed font-medium">
-              <span className="font-bold text-ink-900">Hasil Analisis:</span> &quot;{aiResult.reasoning}&quot;
+              &quot;{aiResult.reasoning}&quot;
             </p>
           </div>
 
-          {/* AUTO-ROUTING TO DINAS BANNER */}
+          {/* ROUTING TO DINAS BANNER */}
           {(() => {
             const wTarget = getWilayah(deteksiWilayah(alamat));
             return (
@@ -700,38 +673,37 @@ export default function LaporClient() {
                   <Building2 size={22} />
                 </span>
                 <div className="min-w-0 flex-1 text-left">
-                  <p className="text-xs font-bold uppercase tracking-wide text-brand-700">Diteruskan Otomatis Ke Instansi Dinas</p>
+                  <p className="text-xs font-bold uppercase tracking-wide text-brand-700">Diteruskan ke Dinas</p>
                   <p className="font-display text-base font-extrabold text-cream">{wTarget.nama}</p>
                   <p className="text-xs text-ink-500 font-mono mt-0.5">{wTarget.dinasEmail}</p>
                 </div>
                 <span className="rounded-full bg-success-bg px-3 py-1 text-xs font-bold text-success shrink-0">
-                  Tersampaikan ✓
+                  Terkirim ✓
                 </span>
               </div>
             );
           })()}
 
-          {/* AI SCORES GRID */}
+          {/* SCORES GRID */}
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-xl border border-ink-300/60 p-5">
-              <p className="text-xs font-bold uppercase tracking-wide text-ink-500">Kategori & Kepercayaan AI</p>
+              <p className="text-xs font-bold uppercase tracking-wide text-ink-500">Kategori</p>
               <p className="mt-1 flex items-center gap-2 font-display text-lg font-bold">
                 <span className="grid h-8 w-8 place-items-center rounded-lg text-white" style={{ background: kat.warna }}>
                   <Icon name={kat.ikon} size={16} />
                 </span>
                 {kat.nama}
               </p>
-              <p className="mt-1 text-xs text-ink-500">Confidence: {(aiResult.confidence * 100).toFixed(0)}%</p>
             </div>
 
             <div className="rounded-xl border border-ink-300/60 p-5">
-              <p className="text-xs font-bold uppercase tracking-wide text-ink-500">Keparahan Kerusakan (Severity)</p>
+              <p className="text-xs font-bold uppercase tracking-wide text-ink-500">Tingkat Kerusakan</p>
               <p className="mt-1 font-display text-lg font-bold">{aiResult.severity} / 10</p>
               <p className="mt-1 text-xs text-ink-500">{aiResult.dampak}</p>
             </div>
 
             <div className="rounded-xl border border-ink-300/60 p-5">
-              <p className="text-xs font-bold uppercase tracking-wide text-ink-500">Skor Urgensi (Priority)</p>
+              <p className="text-xs font-bold uppercase tracking-wide text-ink-500">Prioritas Penanganan</p>
               <p className="mt-1 font-display text-lg font-bold" style={{ color: priorityColor(aiResult.priorityScore) }}>
                 {aiResult.priorityScore} / 10 <span className="text-sm font-semibold text-ink-500">· {priorityLabel(aiResult.priorityScore)}</span>
               </p>
@@ -740,22 +712,22 @@ export default function LaporClient() {
               </div>
               {aiResult.isDarurat && (
                 <p className="mt-2 inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-xs font-bold text-red-600">
-                  <AlertTriangle size={13} /> Prioritas Darurat — Diteruskan ke respon cepat
+                  <AlertTriangle size={13} /> Prioritas Darurat — Segera ditindaklanjuti
                 </p>
               )}
             </div>
 
             <div className="rounded-xl border border-ink-300/60 p-5">
-              <p className="text-xs font-bold uppercase tracking-wide text-ink-500">Estimasi Target SLA</p>
+              <p className="text-xs font-bold uppercase tracking-wide text-ink-500">Estimasi Waktu Penanganan</p>
               <p className="mt-1 font-display text-lg font-bold">{aiResult.sla}</p>
-              <p className="mt-1 text-xs text-ink-500">Waktu penyelesaian oleh petugas</p>
+              <p className="mt-1 text-xs text-ink-500">Target penyelesaian oleh petugas</p>
             </div>
           </div>
 
-          {/* Foto yang berhasil diupload ke storage */}
+          {/* Foto terlampir */}
           {fotoStorageUrls.length > 0 && (
             <div className="mt-4 rounded-xl border border-ink-300/60 p-4">
-              <p className="mb-3 text-xs font-bold uppercase tracking-wide text-ink-500">Foto Tersimpan di Storage ({fotoStorageUrls.length})</p>
+              <p className="mb-3 text-xs font-bold uppercase tracking-wide text-ink-500">Foto Terlampir ({fotoStorageUrls.length})</p>
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
                 {fotoStorageUrls.map((url, i) => (
                   <a key={i} href={url} target="_blank" rel="noopener noreferrer" title="Buka foto">
@@ -768,8 +740,8 @@ export default function LaporClient() {
           )}
 
           <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <a href="/dashboard" className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-3 font-semibold text-white no-underline hover:bg-brand-700 shadow-md">
-              Lihat di Dashboard <ArrowRight size={18} />
+            <a href="/warga" className="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-3 font-semibold text-white no-underline hover:bg-brand-700 shadow-md">
+              Lihat Laporan Saya <ArrowRight size={18} />
             </a>
             <button
               type="button"
@@ -798,7 +770,7 @@ export default function LaporClient() {
         isOpen={isCameraOpen}
         onClose={() => setIsCameraOpen(false)}
         onCapture={handleCameraCapture}
-        title="Ambil Foto Kejadian Real-Time"
+        title="Ambil Foto"
       />
     </main>
   );

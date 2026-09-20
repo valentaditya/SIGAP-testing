@@ -247,7 +247,7 @@ export default function PetaClient() {
                 Peta Sebaran Laporan
               </h1>
               <p className="text-[11px] sm:text-xs text-sage">
-                Yogyakarta &amp; Wilayah Sekitar · Real-time Open Data
+                Wilayah D.I. Yogyakarta
               </p>
             </div>
           </div>
@@ -259,7 +259,7 @@ export default function PetaClient() {
             </div>
             <div className="flex items-center gap-2 rounded-2xl border border-danger/30 bg-danger/10 px-3 py-1 text-xs font-semibold text-danger">
               <ShieldAlert size={14} />
-              <span>{totalDarurat} Urgensi Tinggi</span>
+              <span>{totalDarurat} Darurat</span>
             </div>
             {sinyalDarurat.length > 0 && (
               <div className="flex animate-pulse items-center gap-2 rounded-2xl border border-danger bg-danger px-3 py-1 text-xs font-bold text-white shadow-lg shadow-danger/30">
@@ -277,7 +277,7 @@ export default function PetaClient() {
             <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sage" />
             <input
               type="text"
-              placeholder="Cari lokasi atau kata kunci..."
+              placeholder="Cari laporan atau lokasi..."
               value={cari}
               onChange={(e) => setCari(e.target.value)}
               className="h-9 sm:h-10 w-full rounded-xl border border-ink-400 bg-ground pl-9 pr-3 text-xs text-cream focus:border-tan focus:outline-none"
@@ -347,7 +347,7 @@ export default function PetaClient() {
         <aside className={`${mobileTab === "daftar" ? "flex w-full" : "hidden"} md:flex md:w-[360px] flex-col border-l border-ink-300 bg-surface`}>
           <div className="border-b border-ink-300 p-4">
             <h2 className="font-display text-sm font-bold uppercase tracking-wider text-sage">
-              Daftar Titik Laporan ({laporanFiltered.length})
+              Daftar Laporan ({laporanFiltered.length})
             </h2>
           </div>
 
@@ -385,7 +385,7 @@ export default function PetaClient() {
 
             {laporanFiltered.length === 0 ? (
               <div className="py-12 text-center text-xs text-sage">
-                Tidak ada laporan yang cocok dengan filter.
+                Belum ada laporan yang sesuai.
               </div>
             ) : (
               laporanFiltered.map((l) => {

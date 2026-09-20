@@ -605,8 +605,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setNotifs((ns) => [
         {
           id: Date.now(),
-          judul: "🚨 DARURAT — Auto-Route ke Dinas",
-          pesan: `${l.id} (Skor ${l.ai.priorityScore}/10) di ${namaWilayah} — diteruskan otomatis ke dinas.`,
+          judul: "🚨 Laporan Darurat Masuk",
+          pesan: `${l.id} di ${namaWilayah} memerlukan penanganan segera.`,
           waktu: "Baru saja",
           baca: false,
           tone: "danger" as const,
@@ -636,7 +636,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // Buat objek Laporan darurat dengan priorityScore = 10 agar langsung naik ke prioritas tertinggi Dinas
     const sosLaporan: Laporan = {
       id: s.id,
-      judul: `🚨 SOS DARURAT — ${s.jenisLabel}`,
+      judul: `🚨 SOS Darurat — ${s.jenisLabel}`,
       kategori: kat,
       status: "reported",
       lokasi: { lat: s.lat, lng: s.lng, alamat: `GPS ${s.lat.toFixed(5)}, ${s.lng.toFixed(5)}` },
@@ -650,9 +650,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         kategori: s.jenisLabel,
         confidence: 1.0,
         severity: 10,
-        dampak: `Sinyal Darurat Tombol SOS ${s.pelapor} di ${namaWilayah} — Respons Segera Diperlukan!`,
+        dampak: `Sinyal Darurat SOS ${s.pelapor} di ${namaWilayah}`,
         priorityScore: 10,
-        modelUsed: "Emergency SOS Broadcast",
+        modelUsed: "Emergency SOS",
       },
     };
 
@@ -663,8 +663,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setNotifs((ns) => [
       {
         id: Date.now(),
-        judul: `🚨 SOS DARURAT — ${s.jenisLabel}`,
-        pesan: `${s.pelapor} mengirim sinyal darurat di ${namaWilayah}. Lokasi GPS terlampir. Respons segera diperlukan!`,
+        judul: `🚨 Sinyal SOS — ${s.jenisLabel}`,
+        pesan: `${s.pelapor} mengirim sinyal darurat di ${namaWilayah}.`,
         waktu: "Baru saja",
         baca: false,
         tone: "danger" as const,

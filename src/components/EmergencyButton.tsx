@@ -261,9 +261,9 @@ export function EmergencyButton() {
                   <div className="mt-4 flex items-start gap-3 rounded-2xl border border-danger/40 bg-danger-bg p-4">
                     <MapPin size={18} className="mt-0.5 shrink-0 text-danger" aria-hidden="true" />
                     <div className="flex-1">
-                      <p className="text-sm font-bold text-danger">Wajib mengaktifkan lokasi GPS!</p>
+                      <p className="text-sm font-bold text-danger">Lokasi belum aktif</p>
                       <p className="mt-0.5 text-xs text-danger/80">
-                        Izin lokasi diperlukan agar tim darurat tahu posisi Anda. Aktifkan di pengaturan browser, lalu coba lagi.
+                        Aktifkan izin lokasi di browser agar petugas dapat menemukan posisi Anda.
                       </p>
                     </div>
                   </div>
@@ -273,7 +273,7 @@ export function EmergencyButton() {
                 {gpsStatus === "loading" && (
                   <div className="mt-4 flex items-center gap-3 rounded-2xl border border-tan/30 bg-tan/10 p-4">
                     <Loader2 size={18} className="shrink-0 animate-spin text-tan" aria-hidden="true" />
-                    <p className="text-sm font-semibold text-cream">Mengambil lokasi GPS Anda…</p>
+                    <p className="text-sm font-semibold text-cream">Mencari lokasi...</p>
                   </div>
                 )}
 
@@ -282,7 +282,7 @@ export function EmergencyButton() {
                   <div className="mt-4 flex items-center gap-3 rounded-2xl border border-success/30 bg-success-bg/30 p-4">
                     <MapPin size={18} className="shrink-0 text-success" aria-hidden="true" />
                     <div>
-                      <p className="text-sm font-bold text-success">Lokasi GPS terkunci ✓</p>
+                      <p className="text-sm font-bold text-success">Lokasi siap</p>
                       <p className="mt-0.5 font-mono text-[11px] text-sage">
                         {gpsCoords.lat.toFixed(5)}, {gpsCoords.lng.toFixed(5)}
                       </p>
@@ -299,7 +299,7 @@ export function EmergencyButton() {
                         className="btn-anim flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full border border-danger bg-danger/10 px-6 font-bold text-danger transition-colors hover:bg-danger/20"
                       >
                         <RotateCcw size={18} aria-hidden="true" />
-                        Coba Aktifkan Lokasi Lagi
+                        Coba Lagi
                       </button>
                     ) : (
                       <button
@@ -312,7 +312,7 @@ export function EmergencyButton() {
                         ) : (
                           <PhoneCall size={18} aria-hidden="true" />
                         )}
-                        {gpsStatus === "idle" ? "Aktifkan Lokasi & Kirim Sinyal" : gpsStatus === "loading" ? "Mengambil GPS…" : "Kirim Sinyal Darurat"}
+                        {gpsStatus === "idle" ? "Gunakan Lokasi & Kirim" : gpsStatus === "loading" ? "Mencari lokasi..." : "Kirim Sinyal Darurat"}
                       </button>
                     )}
                   </div>
@@ -338,14 +338,14 @@ export function EmergencyButton() {
                       className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full border border-ink-300 font-bold text-cream transition-colors hover:bg-ground"
                     >
                       <X size={18} aria-hidden="true" />
-                      Batalkan Pengiriman
+                      Batal
                     </button>
                   </div>
                 )}
                 <p className="mt-3 text-center text-xs text-sage">
                   {gpsStatus === "ok"
-                    ? "Lokasi GPS Anda akan dilampirkan otomatis."
-                    : "Lokasi GPS wajib untuk mengirim sinyal darurat."}
+                    ? "Lokasi Anda akan dikirim ke petugas."
+                    : "Izin lokasi diperlukan untuk mengirim bantuan."}
                 </p>
               </>
             ) : (
@@ -354,9 +354,9 @@ export function EmergencyButton() {
                 <span className="anim-pop mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full bg-success-bg text-success">
                   <PhoneCall size={30} aria-hidden="true" />
                 </span>
-                <h2 className="font-display text-2xl font-bold text-success">Sinyal Terkirim!</h2>
+                <h2 className="font-display text-2xl font-bold text-success">Sinyal Terkirim</h2>
                 <p className="mt-2 text-sm text-sage">
-                  Lokasi GPS dilampirkan. Tim darurat terdekat telah diberitahu dan menuju lokasi Anda.
+                  Petugas terdekat telah menerima sinyal dan segera menuju lokasi Anda.
                 </p>
                 {gpsCoords && (
                   <p className="mt-2 font-mono text-xs text-sage">

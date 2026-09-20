@@ -14,7 +14,7 @@ export function CameraCaptureModal({
   isOpen,
   onClose,
   onCapture,
-  title = "Ambil Foto Kamera Langsung (HD)",
+  title = "Ambil Foto",
 }: CameraCaptureModalProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -40,7 +40,7 @@ export function CameraCaptureModal({
     setStream(null);
   }, []);
 
-  // Start camera stream with HD constraints & progressive fallbacks
+  // Start camera stream with constraints & progressive fallbacks
   const startCamera = useCallback(async () => {
     stopStream();
     setErrorMsg(null);
@@ -49,13 +49,12 @@ export function CameraCaptureModal({
     await new Promise((res) => setTimeout(res, 150));
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      setErrorMsg("Akses kamera WebRTC tidak didukung pada browser/perangkat ini.");
+      setErrorMsg("Kamera tidak didukung pada browser ini.");
       return;
     }
 
     let mediaStream: MediaStream | null = null;
 
-    // Attempt 1: Full HD (1080p / 1920x1080) with requested facingMode
     try {
       mediaStream = await navigator.mediaDevices.getUserMedia({
         video: {
@@ -65,9 +64,7 @@ export function CameraCaptureModal({
         },
         audio: false,
       });
-    } catch (err1: unknown) {
-      console.warn("HD Attempt 1 (1080p) failed, trying 720p facingMode...", err1);
-      // Attempt 2: Standard HD (720p) with facingMode
+    } catch {
       try {
         mediaStream = await navigator.mediaDevices.getUserMedia({
           video: {
@@ -77,32 +74,24 @@ export function CameraCaptureModal({
           },
           audio: false,
         });
-      } catch (err2: unknown) {
-        console.warn("Attempt 2 (720p facingMode) failed, trying basic video...", err2);
-        // Attempt 3: Basic video fallback (accept any camera source on device)
+      } catch {
         try {
           mediaStream = await navigator.mediaDevices.getUserMedia({
             video: true,
             audio: false,
           });
         } catch (err3: unknown) {
-          console.warn("Attempt 3 (basic video) failed:", err3);
-          const errName =
-            (err3 as { name?: string })?.name ||
-            (err2 as { name?: string })?.name ||
-            (err1 as { name?: string })?.name ||
-            "";
+          const errName = (err3 as { name?: string })?.name || "";
           let msg = "Tidak dapat mengakses kamera.";
           if (errName === "NotReadableError") {
-            msg =
-              "Kamera sedang digunakan oleh aplikasi/tab lain. Silakan tutup aplikasi kamera lain, atau gunakan tombol 'Buka Kamera HP Direct' di bawah.";
+            msg = "Kamera sedang digunakan aplikasi lain. Tutup aplikasi tersebut atau gunakan kamera HP.";
           } else if (
             errName === "NotAllowedError" ||
             errName === "PermissionDeniedError"
           ) {
-            msg = "Izin kamera ditolak. Harap izinkan akses kamera di browser Anda.";
+            msg = "Izin kamera belum diberikan. Aktifkan izin kamera di browser Anda.";
           } else if (errName === "NotFoundError" || errName === "DevicesNotFoundError") {
-            msg = "Perangkat kamera tidak ditemukan pada HP/Laptop ini.";
+            msg = "Kamera tidak ditemukan pada perangkat ini.";
           }
           setErrorMsg(msg);
           return;
@@ -137,7 +126,7 @@ export function CameraCaptureModal({
     setFacingMode((prev) => (prev === "environment" ? "user" : "environment"));
   };
 
-  // Capture ultra-crisp HD photo from video feed with watermark
+  // Capture photo from video feed with watermark
   const takeSnapshot = () => {
     if (!videoRef.current || !canvasRef.current) return;
 
@@ -149,17 +138,14 @@ export function CameraCaptureModal({
 
     if (!ctx) return;
 
-    // Set canvas dimensions to native video resolution (HD 1080p / 4K sensor output)
     const width = video.videoWidth || 1920;
     const height = video.videoHeight || 1080;
     canvas.width = width;
     canvas.height = height;
 
-    // Enable max quality smoothing
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
 
-    // Draw video frame (handle mirror effect for user/front camera)
     ctx.save();
     if (facingMode === "user") {
       ctx.translate(width, 0);
@@ -168,7 +154,7 @@ export function CameraCaptureModal({
     ctx.drawImage(video, 0, 0, width, height);
     ctx.restore();
 
-    // Draw Watermark timestamp in HD
+    // Draw Watermark timestamp
     const now = new Date();
     const timeStr =
       now.toLocaleDateString("id-ID", {
@@ -184,33 +170,29 @@ export function CameraCaptureModal({
       }) +
       " WIB";
 
-    // Watermark Background Bar
     const barHeight = Math.max(50, Math.floor(height * 0.08));
     ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
     ctx.fillRect(0, height - barHeight, width, barHeight);
 
-    // HD Indicator Accent Line
     ctx.fillStyle = "#0EA5E9";
     ctx.fillRect(0, height - barHeight, width, 3);
 
-    // Watermark Text
     const fontSize = Math.max(16, Math.floor(height * 0.035));
     ctx.font = `bold ${fontSize}px sans-serif`;
-    ctx.fillStyle = "#38BDF8"; // Sky blue brand accent
-    ctx.fillText("SIGAP REAL-TIME HD CAPTURE", 20, height - barHeight / 2 + fontSize / 3);
+    ctx.fillStyle = "#38BDF8";
+    ctx.fillText("SIGAP", 20, height - barHeight / 2 + fontSize / 3);
 
     ctx.fillStyle = "#FFFFFF";
-    const textWidth = ctx.measureText("SIGAP REAL-TIME HD CAPTURE").width;
+    const textWidth = ctx.measureText("SIGAP").width;
     ctx.fillText(` |  ${timeStr}`, 24 + textWidth, height - barHeight / 2 + fontSize / 3);
 
-    // Convert canvas to ultra HD Data URL & File (0.95 quality)
     const dataUrl = canvas.toDataURL("image/jpeg", 0.95);
     setCapturedPreview(dataUrl);
 
     canvas.toBlob(
       (blob) => {
         if (blob) {
-          const file = new File([blob], `sigap_hd_camera_${Date.now()}.jpg`, {
+          const file = new File([blob], `sigap_foto_${Date.now()}.jpg`, {
             type: "image/jpeg",
           });
           setCapturedFile(file);
@@ -221,7 +203,6 @@ export function CameraCaptureModal({
       0.95
     );
 
-    // Stop video stream during review
     stopStream();
   };
 
@@ -235,7 +216,6 @@ export function CameraCaptureModal({
     if (capturedPreview && capturedFile) {
       onCapture(capturedFile, capturedPreview);
       onClose();
-      // Reset state for next use
       setCapturedPreview(null);
       setCapturedFile(null);
     }
@@ -264,12 +244,8 @@ export function CameraCaptureModal({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-ink-300/20 bg-surface px-5 py-4">
           <div className="flex items-center gap-2 font-display text-base font-bold text-cream">
-            <span className="flex h-3 w-3 rounded-full bg-red-500 animate-pulse" />
             <Camera className="text-sky-400" size={20} />
             {title}
-            <span className="rounded bg-sky-500/20 border border-sky-400/40 px-2 py-0.5 text-[10px] font-extrabold text-sky-400">
-              HD 1080P
-            </span>
           </div>
           <button
             type="button"
@@ -288,18 +264,18 @@ export function CameraCaptureModal({
               {/* eslint-disable-next-html-loader */}
               <img
                 src={capturedPreview}
-                alt="Live Camera Snapshot HD"
+                alt="Foto Laporan"
                 className="h-full w-full object-cover"
               />
               <div className="absolute top-3 right-3 flex items-center gap-1.5 rounded-full bg-sky-600/90 px-3 py-1 text-xs font-bold text-white shadow-md backdrop-blur-md">
-                <Sparkles size={14} /> Snapshot HD Terambil
+                <Sparkles size={14} /> Foto Siap Digunakan
               </div>
             </div>
           ) : errorMsg ? (
             /* Error / Permission Fallback View */
             <div className="flex h-full flex-col items-center justify-center p-6 text-center">
               <AlertTriangle className="mb-3 text-amber-500" size={42} />
-              <p className="text-sm font-semibold text-cream mb-1">Akses Kamera Terkendala</p>
+              <p className="text-sm font-semibold text-cream mb-1">Kamera Tidak Bisa Dibuka</p>
               <p className="text-xs text-ink-500 mb-6 max-w-xs">{errorMsg}</p>
               <div className="flex flex-col gap-2.5 w-full max-w-xs">
                 <button
@@ -307,14 +283,14 @@ export function CameraCaptureModal({
                   onClick={startCamera}
                   className="flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-brand-500"
                 >
-                  <RefreshCw size={15} /> Coba Ulang Akses Kamera
+                  <RefreshCw size={15} /> Coba Lagi
                 </button>
                 <button
                   type="button"
                   onClick={() => fileFallbackRef.current?.click()}
                   className="flex items-center justify-center gap-2 rounded-xl border border-sky-500/50 bg-sky-600/20 px-4 py-2.5 text-xs font-bold text-cream hover:bg-sky-600/40"
                 >
-                  <Camera size={15} /> Buka Kamera HP Direct
+                  <Camera size={15} /> Buka Kamera HP
                 </button>
               </div>
             </div>
@@ -333,8 +309,8 @@ export function CameraCaptureModal({
 
               {/* Live Overlay Badge */}
               <div className="absolute top-3 left-3 flex items-center gap-2 rounded-full bg-black/70 px-3 py-1 text-xs font-semibold text-white backdrop-blur-md border border-white/10">
-                <span className="h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse" />
-                <span>KAMERA REAL-TIME HD</span>
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                <span>Kamera Aktif</span>
               </div>
 
               {/* Camera Switcher Button */}
@@ -342,7 +318,7 @@ export function CameraCaptureModal({
                 type="button"
                 onClick={toggleFacingMode}
                 className="absolute top-3 right-3 grid h-10 w-10 place-items-center rounded-full bg-black/60 text-white backdrop-blur-md hover:bg-black/80 transition-transform active:scale-95"
-                title="Tukar Kamera (Depan/Belakang)"
+                title="Ganti Kamera"
               >
                 <SwitchCamera size={18} />
               </button>
@@ -352,7 +328,7 @@ export function CameraCaptureModal({
           {/* Hidden Canvas for Frame Capture */}
           <canvas ref={canvasRef} className="hidden" />
 
-          {/* Direct Native Camera Input Fallback with capture="environment" (Forces camera viewfinder on mobile) */}
+          {/* Direct Native Camera Input Fallback */}
           <input
             ref={fileFallbackRef}
             type="file"
@@ -379,7 +355,7 @@ export function CameraCaptureModal({
                 onClick={handleConfirm}
                 className="flex w-full sm:flex-1 items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 py-3 text-xs font-bold text-white hover:bg-sky-500 transition-colors shadow-lg shadow-sky-600/20"
               >
-                <Check size={16} /> Gunakan Foto HD Ini
+                <Check size={16} /> Gunakan Foto
               </button>
             </div>
           ) : (
@@ -391,7 +367,7 @@ export function CameraCaptureModal({
                 className="order-1 sm:order-2 flex w-full sm:w-auto items-center justify-center gap-2.5 rounded-full bg-sky-600 px-7 py-3 text-sm font-bold text-white hover:bg-sky-500 active:scale-95 transition-all shadow-lg shadow-sky-600/30 disabled:opacity-50"
               >
                 <div className="h-4 w-4 shrink-0 rounded-full border-2 border-white bg-red-500" />
-                <span className="whitespace-nowrap">{isCapturing ? "Mengambil Snapshot HD..." : "Ambil Foto Sekarang (HD)"}</span>
+                <span className="whitespace-nowrap">{isCapturing ? "Mengambil foto..." : "Ambil Foto"}</span>
               </button>
 
               <div className="order-2 sm:order-1 flex w-full sm:w-auto items-center justify-between sm:justify-start gap-4">
@@ -399,9 +375,9 @@ export function CameraCaptureModal({
                   type="button"
                   onClick={() => fileFallbackRef.current?.click()}
                   className="flex items-center gap-1.5 rounded-xl px-2 py-1.5 text-xs font-semibold text-ink-400 hover:text-cream transition-colors"
-                  title="Buka Kamera Native Perangkat"
+                  title="Buka Kamera HP"
                 >
-                  <Camera size={14} /> Kamera HP Direct
+                  <Camera size={14} /> Kamera HP
                 </button>
                 <button
                   type="button"

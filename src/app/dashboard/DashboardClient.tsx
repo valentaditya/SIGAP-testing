@@ -169,7 +169,7 @@ export default function DashboardClient() {
       aktif: true,
     });
     if (result.error) {
-      showToast(`Gagal tambah user: ${result.error}`, "danger");
+      showToast(`Gagal menambahkan pengguna: ${result.error}`, "danger");
       return;
     }
     setNewNama("");
@@ -177,7 +177,7 @@ export default function DashboardClient() {
     setNewTelepon("");
     setNewAlamat("");
     setShowAddUserModal(false);
-    showToast(`User ${newNama} berhasil ditambahkan!`);
+    showToast(`Pengguna ${newNama} berhasil ditambahkan.`);
   };
 
   const handleOpenEditUser = (u: UserRecord) => {
@@ -204,13 +204,13 @@ export default function DashboardClient() {
     });
     setShowEditUserModal(false);
     setEditingUser(null);
-    showToast(`Perubahan data user ${editNama} berhasil disimpan!`);
+    showToast(`Perubahan berhasil disimpan.`);
   };
 
   const handleConfirmDeleteUser = () => {
     if (!userToDelete) return;
     hapusUser(userToDelete.id);
-    showToast(`User ${userToDelete.nama} berhasil dihapus!`, "danger");
+    showToast(`Pengguna berhasil dihapus.`, "danger");
     setUserToDelete(null);
   };
 
@@ -228,7 +228,7 @@ export default function DashboardClient() {
   const [newLapKategori, setNewLapKategori] = useState<KategoriId>("jalan");
   const [newLapWilayah, setNewLapWilayah] = useState<WilayahId>("sleman");
   const [newLapAlamat, setNewLapAlamat] = useState("");
-  const [newLapPelapor, setNewLapPelapor] = useState("Admin System");
+  const [newLapPelapor, setNewLapPelapor] = useState("Admin");
   const [newLapSla, setNewLapSla] = useState("48 jam");
   const [newLapSeverity, setNewLapSeverity] = useState(7);
   const [newLapFotoUrl, setNewLapFotoUrl] = useState("https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=600");
@@ -280,7 +280,7 @@ export default function DashboardClient() {
       judul: newLapJudul,
       kategori: newLapKategori,
       lokasi: { lat: -7.7825, lng: 110.366, alamat: newLapAlamat },
-      pelapor: newLapPelapor || "Admin System",
+      pelapor: newLapPelapor || "Admin",
       waktu: new Date().toISOString(),
       status: "reported",
       foto: 1,
@@ -289,10 +289,10 @@ export default function DashboardClient() {
       sla: newLapSla,
       wilayah: newLapWilayah,
       ai: {
-        kategori: KATEGORI.find((k) => k.id === newLapKategori)?.nama || "Jalan & Infrastruktur",
+        kategori: KATEGORI.find((k) => k.id === newLapKategori)?.nama || "Jalan",
         confidence: 0.95,
         severity: newLapSeverity,
-        dampak: "Dianalisis oleh Admin SIGAP",
+        dampak: "Analisis Admin SIGAP",
         priorityScore: newLapSeverity,
         modelUsed: "Admin Input",
       },
@@ -302,7 +302,7 @@ export default function DashboardClient() {
     setNewLapJudul("");
     setNewLapAlamat("");
     setShowAddLaporanModal(false);
-    showToast(`Laporan ${newId} berhasil dibuat!`);
+    showToast(`Laporan berhasil dibuat.`);
   };
 
   const handleOpenEditLaporan = (l: Laporan) => {
@@ -340,13 +340,13 @@ export default function DashboardClient() {
 
     setShowEditLaporanModal(false);
     setEditingLaporan(null);
-    showToast(`Laporan ${editingLaporan.id} berhasil diperbarui!`);
+    showToast(`Laporan berhasil diperbarui.`);
   };
 
   const handleConfirmDeleteLaporan = () => {
     if (!laporanToDelete) return;
     hapusLaporan(laporanToDelete.id);
-    showToast(`Laporan ${laporanToDelete.id} berhasil dihapus!`, "danger");
+    showToast(`Laporan berhasil dihapus.`, "danger");
     setLaporanToDelete(null);
   };
 
@@ -366,7 +366,7 @@ export default function DashboardClient() {
         ...k,
         laporanObj: lap,
         wilayah: lap?.wilayah ?? "sleman",
-        judulLaporan: lap?.judul ?? "Laporan Infrastruktur",
+        judulLaporan: lap?.judul ?? "Laporan",
       };
     });
   }, [logHariFilter, laporanWarga]);
@@ -412,17 +412,17 @@ export default function DashboardClient() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-ink-300/40 pb-5">
                 <div>
                   <h1 className="font-display text-xl sm:text-2xl md:text-3xl font-extrabold text-cream-hi flex items-center gap-2.5">
-                    <Users className="text-brand-600 shrink-0" /> Kelola Manajemen User System
+                    <Users className="text-brand-600 shrink-0" /> Manajemen Pengguna
                   </h1>
                   <p className="mt-1 text-xs sm:text-sm text-ink-500">
-                    Sistem Pengelolaan Akun &amp; Hak Akses Instansi Dinas dan Petugas Lapangan.
+                    Kelola akun dan hak akses dinas serta petugas.
                   </p>
                 </div>
                 <button
                   onClick={() => setShowAddUserModal(true)}
                   className="btn-anim inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-xs font-bold text-white shadow-md hover:bg-brand-700 shrink-0"
                 >
-                  <UserPlus size={16} /> Tambah User Baru
+                  <UserPlus size={16} /> Tambah Pengguna
                 </button>
               </div>
 
@@ -435,7 +435,7 @@ export default function DashboardClient() {
                   }`}
                 >
                   <p className="text-xs font-bold text-ink-500 flex items-center justify-between gap-1.5">
-                    <span className="flex items-center gap-1.5"><Building2 size={14} className="text-brand-600" /> Akun Dinas</span>
+                    <span className="flex items-center gap-1.5"><Building2 size={14} className="text-brand-600" /> Dinas</span>
                     <span className="text-[10px] text-ink-500 font-normal">Aktif | Total</span>
                   </p>
                   <p className="font-display text-2xl font-extrabold text-cream mt-1 flex items-baseline gap-1.5">
@@ -450,7 +450,7 @@ export default function DashboardClient() {
                   }`}
                 >
                   <p className="text-xs font-bold text-ink-500 flex items-center justify-between gap-1.5">
-                    <span className="flex items-center gap-1.5"><HardHat size={14} className="text-warning" /> Petugas Lapangan</span>
+                    <span className="flex items-center gap-1.5"><HardHat size={14} className="text-warning" /> Petugas</span>
                     <span className="text-[10px] text-ink-500 font-normal">Aktif | Total</span>
                   </p>
                   <p className="font-display text-2xl font-extrabold text-cream mt-1 flex items-baseline gap-1.5">
@@ -461,7 +461,7 @@ export default function DashboardClient() {
 
                 <div className="rounded-2xl border border-ink-300/40 bg-surface p-4 sm:col-span-2 md:col-span-2">
                   <p className="text-xs font-bold text-success flex items-center justify-between gap-1.5">
-                    <span className="flex items-center gap-1.5"><CheckCircle2 size={14} /> Total User System</span>
+                    <span className="flex items-center gap-1.5"><CheckCircle2 size={14} /> Total Pengguna</span>
                     <span className="text-[10px] text-ink-500 font-normal">Aktif | Total</span>
                   </p>
                   <p className="font-display text-2xl font-extrabold text-success mt-1 flex items-baseline gap-1.5">
@@ -499,7 +499,7 @@ export default function DashboardClient() {
                         roleTab === "semua" ? "bg-brand-600 text-white shadow" : "text-ink-500 hover:text-cream"
                       }`}
                     >
-                      Semua User ({daftarUser.length})
+                      Semua ({daftarUser.length})
                     </button>
                   </div>
 
@@ -510,7 +510,7 @@ export default function DashboardClient() {
                       <input
                         value={userSearch}
                         onChange={(e) => setUserSearch(e.target.value)}
-                        placeholder="Cari nama / email…"
+                        placeholder="Cari nama atau email..."
                         className="h-9 rounded-xl border border-ink-300/60 bg-ground pl-8 pr-3 text-xs text-cream placeholder-ink-500 focus:border-brand-600 focus:outline-none"
                       />
                     </div>
@@ -521,8 +521,8 @@ export default function DashboardClient() {
                       className="h-9 rounded-xl border border-ink-300/60 bg-ground px-2.5 text-xs text-cream focus:border-brand-600 focus:outline-none"
                     >
                       <option value="semua">Semua Status</option>
-                      <option value="aktif">Status: Aktif</option>
-                      <option value="nonaktif">Status: Nonaktif</option>
+                      <option value="aktif">Aktif</option>
+                      <option value="nonaktif">Nonaktif</option>
                     </select>
 
                     <select
@@ -543,18 +543,18 @@ export default function DashboardClient() {
                   <table className="w-full min-w-[700px] text-sm">
                     <thead>
                       <tr className="border-b border-ink-300/40 text-left text-xs font-bold uppercase tracking-wider text-ink-500">
-                        <th className="pb-3 pr-3">User &amp; Kontak</th>
-                        <th className="pb-3 pr-3">Peran / Role</th>
-                        <th className="pb-3 pr-3">Wilayah / Instansi</th>
-                        <th className="pb-3 pr-3">Status Switch</th>
-                        <th className="pb-3 text-right">Aksi CRUD</th>
+                        <th className="pb-3 pr-3">Pengguna</th>
+                        <th className="pb-3 pr-3">Peran</th>
+                        <th className="pb-3 pr-3">Wilayah</th>
+                        <th className="pb-3 pr-3">Status</th>
+                        <th className="pb-3 text-right">Aksi</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-ink-300/20">
                       {filteredUsers.length === 0 && (
                         <tr>
                           <td colSpan={5} className="py-8 text-center text-ink-500">
-                            Tidak ada data user yang sesuai kriteria filter.
+                            Belum ada pengguna yang sesuai.
                           </td>
                         </tr>
                       )}
@@ -636,17 +636,17 @@ export default function DashboardClient() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-ink-300/40 pb-5">
                 <div>
                   <h1 className="font-display text-xl sm:text-2xl md:text-3xl font-extrabold text-cream-hi flex items-center gap-2.5">
-                    <FileText className="text-brand-600 shrink-0" /> CRUD Manajemen Laporan &amp; Infrastruktur
+                    <FileText className="text-brand-600 shrink-0" /> Manajemen Laporan
                   </h1>
                   <p className="mt-1 text-xs sm:text-sm text-ink-500">
-                    Kelola, tambah, perbarui status/prioritas AI, dan hapus laporan pengaduan masyarakat.
+                    Kelola data, status, dan prioritas laporan.
                   </p>
                 </div>
                 <button
                   onClick={() => setShowAddLaporanModal(true)}
                   className="btn-anim inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-xs font-bold text-white shadow-md hover:bg-brand-700 shrink-0"
                 >
-                  <Plus size={16} /> Buat Laporan Baru
+                  <Plus size={16} /> Tambah Laporan
                 </button>
               </div>
 
@@ -681,7 +681,7 @@ export default function DashboardClient() {
                   }`}
                 >
                   <p className="text-xs font-bold text-amber-500 flex items-center gap-1.5">
-                    <Wrench size={14} /> Dalam Penanganan
+                    <Wrench size={14} /> Diproses
                   </p>
                   <p className="font-display text-2xl font-extrabold text-amber-500 mt-1">{countInProgress}</p>
                 </div>
@@ -692,7 +692,7 @@ export default function DashboardClient() {
                   }`}
                 >
                   <p className="text-xs font-bold text-success flex items-center gap-1.5">
-                    <CheckCircle2 size={14} /> Selesai Ditangani
+                    <CheckCircle2 size={14} /> Selesai
                   </p>
                   <p className="font-display text-2xl font-extrabold text-success mt-1">{countResolved}</p>
                 </div>
@@ -707,7 +707,7 @@ export default function DashboardClient() {
                     <input
                       value={laporanSearch}
                       onChange={(e) => setLaporanSearch(e.target.value)}
-                      placeholder="Cari ID / Judul / Pelapor…"
+                      placeholder="Cari ID, judul, atau pelapor..."
                       className="w-full h-9 rounded-xl border border-ink-300/60 bg-ground pl-8 pr-3 text-xs text-cream placeholder-ink-500 focus:border-brand-600 focus:outline-none"
                     />
                   </div>
@@ -722,8 +722,8 @@ export default function DashboardClient() {
                       <option value="semua">Semua Status</option>
                       <option value="reported">Dilaporkan</option>
                       <option value="verified">Diverifikasi</option>
-                      <option value="assigned">Penugasan Tim</option>
-                      <option value="in_progress">Dalam Penanganan</option>
+                      <option value="assigned">Ditugaskan</option>
+                      <option value="in_progress">Diproses</option>
                       <option value="resolved">Selesai</option>
                     </select>
 
@@ -756,18 +756,18 @@ export default function DashboardClient() {
                   <table className="w-full min-w-[800px] text-sm">
                     <thead>
                       <tr className="border-b border-ink-300/40 text-left text-xs font-bold uppercase tracking-wider text-ink-500">
-                        <th className="pb-3 pr-3">ID &amp; Judul Laporan</th>
+                        <th className="pb-3 pr-3">Laporan</th>
                         <th className="pb-3 pr-3">Kategori &amp; Wilayah</th>
-                        <th className="pb-3 pr-3">Skor Severity AI</th>
-                        <th className="pb-3 pr-3">Status Workflow</th>
-                        <th className="pb-3 text-right">Aksi CRUD</th>
+                        <th className="pb-3 pr-3">Prioritas</th>
+                        <th className="pb-3 pr-3">Status</th>
+                        <th className="pb-3 text-right">Aksi</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-ink-300/20">
                       {filteredLaporan.length === 0 && (
                         <tr>
                           <td colSpan={5} className="py-8 text-center text-ink-500">
-                            Tidak ada data laporan yang sesuai kriteria pencarian/filter.
+                            Belum ada laporan yang sesuai.
                           </td>
                         </tr>
                       )}
@@ -847,10 +847,10 @@ export default function DashboardClient() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-ink-300/40 pb-5">
                 <div>
                   <h1 className="font-display text-xl sm:text-2xl md:text-3xl font-extrabold text-cream-hi flex items-center gap-2.5">
-                    <Activity className="text-brand-600 shrink-0" /> Log Keseluruhan Aktivitas Data Dinas
+                    <Activity className="text-brand-600 shrink-0" /> Log Aktivitas
                   </h1>
                   <p className="mt-1 text-xs sm:text-sm text-ink-500">
-                    Jejak rekam aktivitas verifikasi, penugasan, dan penanganan di seluruh wilayah instansi dinas.
+                    Riwayat aktivitas verifikasi, penugasan, dan penanganan.
                   </p>
                 </div>
               </div>
@@ -878,7 +878,7 @@ export default function DashboardClient() {
                       <input
                         value={logSearch}
                         onChange={(e) => setLogSearch(e.target.value)}
-                        placeholder="Cari ID laporan / aktor / catatan…"
+                        placeholder="Cari ID, petugas, atau catatan..."
                         className="h-9 rounded-xl border border-ink-300/60 bg-ground pl-8 pr-3 text-xs text-cream placeholder-ink-500 focus:border-brand-600 focus:outline-none"
                       />
                     </div>
@@ -888,7 +888,7 @@ export default function DashboardClient() {
                       onChange={(e) => setLogWilayahFilter(e.target.value as any)}
                       className="h-9 rounded-xl border border-ink-300/60 bg-ground px-2.5 text-xs text-cream focus:border-brand-600 focus:outline-none"
                     >
-                      <option value="semua">Semua Wilayah Dinas</option>
+                      <option value="semua">Semua Wilayah</option>
                       {WILAYAH.map((w) => (
                         <option key={w.id} value={w.id}>{w.nama}</option>
                       ))}
@@ -899,7 +899,7 @@ export default function DashboardClient() {
                       onChange={(e) => setLogTipeFilter(e.target.value as any)}
                       className="h-9 rounded-xl border border-ink-300/60 bg-ground px-2.5 text-xs text-cream focus:border-brand-600 focus:outline-none"
                     >
-                      <option value="semua">Semua Tipe Aktivitas</option>
+                      <option value="semua">Semua Aktivitas</option>
                       <option value="baru">Laporan Baru</option>
                       <option value="verifikasi">Verifikasi</option>
                       <option value="penugasan">Penugasan</option>
@@ -912,7 +912,7 @@ export default function DashboardClient() {
                 {/* Timeline Log List */}
                 {filteredLogs.length === 0 ? (
                   <div className="py-12 text-center text-ink-500 text-sm">
-                    Tidak ada catatan log kegiatan yang memenuhi kriteria filter.
+                    Belum ada aktivitas yang sesuai.
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -949,7 +949,7 @@ export default function DashboardClient() {
 
                           <div className="text-right shrink-0">
                             <span className="font-mono text-xs font-bold text-ink-500 block">{log.jam}</span>
-                            <span className="text-[10px] text-ink-500">Waktu Aktivitas</span>
+                            <span className="text-[10px] text-ink-500">Waktu</span>
                           </div>
                         </div>
                       );
@@ -980,7 +980,7 @@ export default function DashboardClient() {
             <div className="anim-fade-up relative w-full max-w-md rounded-3xl border border-white/15 bg-surface p-6 shadow-2xl md:p-8">
               <div className="flex items-center justify-between border-b border-ink-300/30 pb-4">
                 <h3 className="font-display text-lg font-extrabold text-cream flex items-center gap-2">
-                  <UserPlus size={18} className="text-brand-600" /> Tambah User Akun Baru
+                  <UserPlus size={18} className="text-brand-600" /> Tambah Pengguna Baru
                 </h3>
                 <button
                   onClick={() => setShowAddUserModal(false)}
@@ -997,47 +997,47 @@ export default function DashboardClient() {
                     required
                     value={newNama}
                     onChange={(e) => setNewNama(e.target.value)}
-                    placeholder="cth: Pak Budi Rahardjo"
+                    placeholder="Contoh: Budi Rahardjo"
                     className="w-full rounded-xl border border-ink-300/60 bg-ground p-3 text-cream outline-none focus:border-brand-600"
                   />
                   {newNama && (
                     <p className="mt-1.5 flex items-center gap-1.5 rounded-lg border border-brand-600/20 bg-brand-50/10 px-2.5 py-1.5 text-[11px] text-ink-500">
-                      <span className="shrink-0 font-bold text-brand-600">🔑 Password Default:</span>
+                      <span className="shrink-0 font-bold text-brand-600">🔑 Password awal:</span>
                       <code className="font-mono font-bold text-cream select-all">
                         {newNama.toLowerCase().replace(/\s+/g, "")}
                       </code>
-                      <span className="text-ink-500">(bisa diubah di Profil)</span>
+                      <span className="text-ink-500">(dapat diubah nanti)</span>
                     </p>
                   )}
                 </div>
 
                 <div>
-                  <label className="mb-1 block font-bold text-ink-500">Alamat Email</label>
+                  <label className="mb-1 block font-bold text-ink-500">Email</label>
                   <input
                     required
                     type="email"
                     value={newEmail}
                     onChange={(e) => setNewEmail(e.target.value)}
-                    placeholder="cth: budi@dinas.go.id"
+                    placeholder="Contoh: budi@dinas.go.id"
                     className="w-full rounded-xl border border-ink-300/60 bg-ground p-3 text-cream outline-none focus:border-brand-600"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-1 block font-bold text-ink-500">Peran / Role User</label>
+                  <label className="mb-1 block font-bold text-ink-500">Peran</label>
                   <select
                     value={newRole}
                     onChange={(e) => setNewRole(e.target.value as Role)}
                     className="w-full rounded-xl border border-ink-300/60 bg-ground p-3 text-cream outline-none focus:border-brand-600"
                   >
-                    <option value="dinas">Instansi Dinas</option>
-                    <option value="petugas">Petugas Lapangan</option>
+                    <option value="dinas">Dinas</option>
+                    <option value="petugas">Petugas</option>
                   </select>
                 </div>
 
                 {newRole === "dinas" && (
                   <div>
-                    <label className="mb-1 block font-bold text-ink-500">Wilayah Kerja Dinas</label>
+                    <label className="mb-1 block font-bold text-ink-500">Wilayah</label>
                     <select
                       value={newWilayah}
                       onChange={(e) => setNewWilayah(e.target.value as WilayahId)}
@@ -1051,11 +1051,11 @@ export default function DashboardClient() {
                 )}
 
                 <div>
-                  <label className="mb-1 block font-bold text-ink-500">Nomor Telepon (Opsional)</label>
+                  <label className="mb-1 block font-bold text-ink-500">Nomor Telepon (opsional)</label>
                   <input
                     value={newTelepon}
                     onChange={(e) => setNewTelepon(e.target.value)}
-                    placeholder="cth: 081234567890"
+                    placeholder="Contoh: 081234567890"
                     className="w-full rounded-xl border border-ink-300/60 bg-ground p-3 text-cream outline-none focus:border-brand-600"
                   />
                 </div>
@@ -1072,7 +1072,7 @@ export default function DashboardClient() {
                     type="submit"
                     className="rounded-xl bg-brand-600 px-5 py-2.5 font-bold text-white hover:bg-brand-700"
                   >
-                    Simpan User
+                    Simpan
                   </button>
                 </div>
               </form>
@@ -1092,7 +1092,7 @@ export default function DashboardClient() {
             <div className="anim-fade-up relative w-full max-w-md rounded-3xl border border-white/15 bg-surface p-6 shadow-2xl md:p-8">
               <div className="flex items-center justify-between border-b border-ink-300/30 pb-4">
                 <h3 className="font-display text-lg font-extrabold text-cream flex items-center gap-2">
-                  <Pencil size={18} className="text-brand-600" /> Edit Detail User
+                  <Pencil size={18} className="text-brand-600" /> Edit Pengguna
                 </h3>
                 <button
                   onClick={() => setShowEditUserModal(false)}
@@ -1125,20 +1125,20 @@ export default function DashboardClient() {
                 </div>
 
                 <div>
-                  <label className="mb-1 block font-bold text-ink-500">Peran / Role User</label>
+                  <label className="mb-1 block font-bold text-ink-500">Peran</label>
                   <select
                     value={editRole}
                     onChange={(e) => setEditRole(e.target.value as Role)}
                     className="w-full rounded-xl border border-ink-300/60 bg-ground p-3 text-cream outline-none focus:border-brand-600"
                   >
-                    <option value="dinas">Instansi Dinas</option>
-                    <option value="petugas">Petugas Lapangan</option>
+                    <option value="dinas">Dinas</option>
+                    <option value="petugas">Petugas</option>
                   </select>
                 </div>
 
                 {editRole === "dinas" && (
                   <div>
-                    <label className="mb-1 block font-bold text-ink-500">Wilayah Kerja Dinas</label>
+                    <label className="mb-1 block font-bold text-ink-500">Wilayah</label>
                     <select
                       value={editWilayah}
                       onChange={(e) => setEditWilayah(e.target.value as WilayahId)}
@@ -1172,7 +1172,7 @@ export default function DashboardClient() {
                     type="submit"
                     className="rounded-xl bg-brand-600 px-5 py-2.5 font-bold text-white hover:bg-brand-700"
                   >
-                    Simpan Perubahan
+                    Simpan
                   </button>
                 </div>
               </form>
@@ -1193,9 +1193,9 @@ export default function DashboardClient() {
               <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-2xl bg-danger-bg text-danger">
                 <AlertTriangle size={24} />
               </div>
-              <h3 className="font-display text-base font-extrabold text-cream">Hapus User Akun Ini?</h3>
+              <h3 className="font-display text-base font-extrabold text-cream">Hapus pengguna ini?</h3>
               <p className="mt-2 text-xs text-ink-500">
-                Apakah Anda yakin ingin menghapus user <strong className="text-cream">{userToDelete.nama}</strong> ({userToDelete.email})? Tindakan ini tidak dapat dibatalkan.
+                Hapus akun <strong className="text-cream">{userToDelete.nama}</strong> ({userToDelete.email})?
               </p>
               <div className="mt-6 flex justify-center gap-3">
                 <button
@@ -1208,7 +1208,7 @@ export default function DashboardClient() {
                   onClick={handleConfirmDeleteUser}
                   className="rounded-xl bg-danger px-5 py-2 text-xs font-bold text-white hover:bg-red-700"
                 >
-                  Ya, Hapus User
+                  Hapus
                 </button>
               </div>
             </div>
@@ -1227,7 +1227,7 @@ export default function DashboardClient() {
             <div className="anim-fade-up relative w-full max-w-lg rounded-3xl border border-white/15 bg-surface p-6 shadow-2xl md:p-8 max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between border-b border-ink-300/30 pb-4">
                 <h3 className="font-display text-lg font-extrabold text-cream flex items-center gap-2">
-                  <Plus size={18} className="text-brand-600" /> Buat Laporan Infrastruktur Baru
+                  <Plus size={18} className="text-brand-600" /> Tambah Laporan
                 </h3>
                 <button
                   onClick={() => setShowAddLaporanModal(false)}
@@ -1239,12 +1239,12 @@ export default function DashboardClient() {
 
               <form onSubmit={handleCreateLaporan} className="mt-5 space-y-4 text-xs">
                 <div>
-                  <label className="mb-1 block font-bold text-ink-500">Judul Laporan</label>
+                  <label className="mb-1 block font-bold text-ink-500">Judul</label>
                   <input
                     required
                     value={newLapJudul}
                     onChange={(e) => setNewLapJudul(e.target.value)}
-                    placeholder="cth: Jalan berlubang parah di Jl. Kaliurang"
+                    placeholder="Contoh: Jalan berlubang di Jl. Kaliurang"
                     className="w-full rounded-xl border border-ink-300/60 bg-ground p-3 text-cream outline-none focus:border-brand-600"
                   />
                 </div>
@@ -1278,29 +1278,29 @@ export default function DashboardClient() {
                 </div>
 
                 <div>
-                  <label className="mb-1 block font-bold text-ink-500">Alamat Lengkap</label>
+                  <label className="mb-1 block font-bold text-ink-500">Lokasi</label>
                   <input
                     required
                     value={newLapAlamat}
                     onChange={(e) => setNewLapAlamat(e.target.value)}
-                    placeholder="cth: Jl. Kaliurang KM 7, Depok, Sleman"
+                    placeholder="Contoh: Jl. Kaliurang KM 7, Depok, Sleman"
                     className="w-full rounded-xl border border-ink-300/60 bg-ground p-3 text-cream outline-none focus:border-brand-600"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="mb-1 block font-bold text-ink-500">Nama Pelapor</label>
+                    <label className="mb-1 block font-bold text-ink-500">Pelapor</label>
                     <input
                       value={newLapPelapor}
                       onChange={(e) => setNewLapPelapor(e.target.value)}
-                      placeholder="Nama Warga / Admin"
+                      placeholder="Nama pelapor"
                       className="w-full rounded-xl border border-ink-300/60 bg-ground p-3 text-cream outline-none focus:border-brand-600"
                     />
                   </div>
 
                   <div>
-                    <label className="mb-1 block font-bold text-ink-500">Target SLA</label>
+                    <label className="mb-1 block font-bold text-ink-500">Target Waktu</label>
                     <select
                       value={newLapSla}
                       onChange={(e) => setNewLapSla(e.target.value)}
@@ -1315,7 +1315,7 @@ export default function DashboardClient() {
                 </div>
 
                 <div>
-                  <label className="mb-1 block font-bold text-ink-500">Skor Severitas Kerusakan (1 - 10)</label>
+                  <label className="mb-1 block font-bold text-ink-500">Tingkat Keparahan (1-10)</label>
                   <input
                     type="number"
                     min={1}
@@ -1327,7 +1327,7 @@ export default function DashboardClient() {
                 </div>
 
                 <div>
-                  <label className="mb-1 block font-bold text-ink-500">URL Foto Bukti (Opsional)</label>
+                  <label className="mb-1 block font-bold text-ink-500">URL Foto (opsional)</label>
                   <input
                     value={newLapFotoUrl}
                     onChange={(e) => setNewLapFotoUrl(e.target.value)}
@@ -1348,7 +1348,7 @@ export default function DashboardClient() {
                     type="submit"
                     className="rounded-xl bg-brand-600 px-5 py-2.5 font-bold text-white hover:bg-brand-700"
                   >
-                    Simpan Laporan
+                    Simpan
                   </button>
                 </div>
               </form>
@@ -1380,7 +1380,7 @@ export default function DashboardClient() {
 
               <form onSubmit={handleSaveEditLaporan} className="mt-5 space-y-4 text-xs">
                 <div>
-                  <label className="mb-1 block font-bold text-ink-500">Judul Laporan</label>
+                  <label className="mb-1 block font-bold text-ink-500">Judul</label>
                   <input
                     required
                     value={editLapJudul}
@@ -1391,17 +1391,17 @@ export default function DashboardClient() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="mb-1 block font-bold text-ink-500">Status Workflow</label>
+                    <label className="mb-1 block font-bold text-ink-500">Status</label>
                     <select
                       value={editLapStatus}
                       onChange={(e) => setEditLapStatus(e.target.value as StatusId)}
                       className="w-full rounded-xl border border-ink-300/60 bg-ground p-3 font-bold text-cream outline-none focus:border-brand-600"
                     >
-                      <option value="reported">Dilaporkan (Reported)</option>
-                      <option value="verified">Diverifikasi (Verified)</option>
-                      <option value="assigned">Penugasan (Assigned)</option>
-                      <option value="in_progress">Dalam Penanganan (In Progress)</option>
-                      <option value="resolved">Selesai (Resolved)</option>
+                      <option value="reported">Dilaporkan</option>
+                      <option value="verified">Diverifikasi</option>
+                      <option value="assigned">Ditugaskan</option>
+                      <option value="in_progress">Diproses</option>
+                      <option value="resolved">Selesai</option>
                     </select>
                   </div>
 
@@ -1421,7 +1421,7 @@ export default function DashboardClient() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="mb-1 block font-bold text-ink-500">Wilayah Instansi</label>
+                    <label className="mb-1 block font-bold text-ink-500">Wilayah</label>
                     <select
                       value={editLapWilayah}
                       onChange={(e) => setEditLapWilayah(e.target.value as WilayahId)}
@@ -1434,7 +1434,7 @@ export default function DashboardClient() {
                   </div>
 
                   <div>
-                    <label className="mb-1 block font-bold text-ink-500">Target SLA</label>
+                    <label className="mb-1 block font-bold text-ink-500">Target Waktu</label>
                     <select
                       value={editLapSla}
                       onChange={(e) => setEditLapSla(e.target.value)}
@@ -1449,7 +1449,7 @@ export default function DashboardClient() {
                 </div>
 
                 <div>
-                  <label className="mb-1 block font-bold text-ink-500">Alamat Lokasi</label>
+                  <label className="mb-1 block font-bold text-ink-500">Lokasi</label>
                   <input
                     required
                     value={editLapAlamat}
@@ -1460,7 +1460,7 @@ export default function DashboardClient() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="mb-1 block font-bold text-ink-500">Skor Severitas AI (1-10)</label>
+                    <label className="mb-1 block font-bold text-ink-500">Tingkat Keparahan (1-10)</label>
                     <input
                       type="number"
                       step="0.1"
@@ -1487,7 +1487,7 @@ export default function DashboardClient() {
                 </div>
 
                 <div>
-                  <label className="mb-1 block font-bold text-ink-500">Catatan Analisis Dampak AI</label>
+                  <label className="mb-1 block font-bold text-ink-500">Catatan Dampak</label>
                   <textarea
                     rows={2}
                     value={editLapDampak}
@@ -1508,7 +1508,7 @@ export default function DashboardClient() {
                     type="submit"
                     className="rounded-xl bg-brand-600 px-5 py-2.5 font-bold text-white hover:bg-brand-700"
                   >
-                    Simpan Laporan
+                    Simpan
                   </button>
                 </div>
               </form>
@@ -1529,9 +1529,9 @@ export default function DashboardClient() {
               <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-2xl bg-danger-bg text-danger">
                 <AlertTriangle size={24} />
               </div>
-              <h3 className="font-display text-base font-extrabold text-cream">Hapus Laporan Ini?</h3>
+              <h3 className="font-display text-base font-extrabold text-cream">Hapus laporan ini?</h3>
               <p className="mt-2 text-xs text-ink-500">
-                Apakah Anda yakin ingin menghapus laporan <strong className="text-cream">{laporanToDelete.id}</strong> ("{laporanToDelete.judul}")?
+                Hapus laporan <strong className="text-cream">{laporanToDelete.id}</strong> ("{laporanToDelete.judul}")?
               </p>
               <div className="mt-6 flex justify-center gap-3">
                 <button
@@ -1544,7 +1544,7 @@ export default function DashboardClient() {
                   onClick={handleConfirmDeleteLaporan}
                   className="rounded-xl bg-danger px-5 py-2 text-xs font-bold text-white hover:bg-red-700"
                 >
-                  Ya, Hapus Laporan
+                  Hapus
                 </button>
               </div>
             </div>
