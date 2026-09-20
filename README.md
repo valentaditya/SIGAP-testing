@@ -1,8 +1,8 @@
 # SIGAP - Smart Community Platform
 
-> **Sistem Informasi & Gerak Aktif Pelaporan** — platform pelaporan warga dengan **AI Multi-Agent** untuk kota yang lebih responsif, transparan, dan partisipatif.
+> **Sistem Informasi & Gerak Aktif Pelaporan** - platform pelaporan warga dengan **AI Multi-Agent** untuk kota yang lebih responsif, transparan, dan partisipatif.
 
-Dibangun untuk **INFINITERA 2.0 Web Development Competition** oleh **Tim Susah Senang Bareng** — Universitas Atma Jaya Yogyakarta.
+Dibangun untuk **INFINITERA 2.0 Web Development Competition** oleh **Tim Susah Senang Bareng** - Universitas Atma Jaya Yogyakarta.
 
 
 ## 🛠️ Tech Stack
@@ -26,6 +26,11 @@ Build produksi:
 npm run build
 npm start
 ```
+## Link Vidio Demo
+https://drive.google.com/drive/folders/1b1HK3drCBRbz9upoD5YGtTMf7-kXskm8?usp=sharing
+
+## Link Deploy Vercel
+https://sigap-testing.vercel.app/
 
 ## Peran & Halaman
 
@@ -38,8 +43,8 @@ npm start
 
 ## 👨‍💻 Tim
 
-- Valent Aditya Hermanus — 241712920
-- Christian Vieri Santosa — 241712892
-- Made Kresna Praba Wistara — 241712921
+- Valent Aditya Hermanus - 241712920
+- Christian Vieri Santosa - 241712892
+- Made Kresna Praba Wistara - 241712921
 
 Universitas Atma Jaya Yogyakarta · Sistem Informasi · 2026
